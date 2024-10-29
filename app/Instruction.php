@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 class Instruction extends Model
 {
     public $table = "instruction";
-    protected $fillable = ['id','user_id','post_id','title','file','description','thumbnail','type'];
+    protected $fillable = ['id','user_id','post_id','title','file','description','thumbnail','type', 'order'];
 
     
     public function getFileAttribute($val)

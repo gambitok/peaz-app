@@ -90,12 +90,27 @@ class UserController extends ResponseController
     {  
         $rules = [
             'username' => ['required', 'max:255',Rule::unique('users')->where("username", $request->username)],
+            'name' => ['required'],
         ];
          $this->directValidation($rules);
          $user = $request->user();
-         $user->update(['username'=>$request->username,'reg_step'=>2]);
+         $user->update(['name'=>$request->name,'username'=>$request->username,'reg_step'=>2]);
         if($user){
              $this->sendResponse(200, __('api.suc_username'), $this->get_user_data());
+         }
+         else {
+            $this->sendError(__('api.err_fail_to_auth'), false);
+        }
+    }
+
+    public function addFullname(Request $request)
+    {  
+        $rules = [ 'full_name' => ['required'] ];
+         $this->directValidation($rules);
+         $user = $request->user();
+         $user->update(['name'=>$request->name,'reg_step'=>1]);
+        if($user){
+             $this->sendResponse(200, __('api.suc_name'), $this->get_user_data());
          }
          else {
             $this->sendError(__('api.err_fail_to_auth'), false);

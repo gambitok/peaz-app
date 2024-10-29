@@ -36,12 +36,12 @@ class ResponseController extends Controller
 
     public function directValidation($rules, $messages = [], $direct = true, $data = null)
     {
-        $data = ($data) ? $data : request()->all();
+        $data = $data ?? request()->all();
         $validator = Validator::make($data, $rules, $messages);
         if ($validator->fails()) {
-            $this->errors = $validator->errors()->first();
+            $this->errors = implode(', ', $validator->errors()->all());
             if ($direct) {
-                $this->sendError(null, null);
+               return $this->sendError($this->errors, null);
             } else {
                 return false;
             }

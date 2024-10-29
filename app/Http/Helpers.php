@@ -666,6 +666,7 @@ function upload_base_64_img($base64 = "", $path = "uploads/product/")
 }
 function upload_file($file_name = "", $path = null)
 {
+   try {
     $file = "";
     $request = \request();
     if ($request->hasFile($file_name) && $path) {
@@ -679,6 +680,10 @@ function upload_file($file_name = "", $path = null)
         die();
     }
     return $file;
+   } catch (\Throwable $th) {
+     echo 'An error occured ' . $th->getMessage();
+     return null;
+   }
 }
 function get_fancy_box_html_new($path = "", $class = "img_75"): string
 {

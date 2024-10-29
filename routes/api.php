@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
 
-    Route::post('send-OTP-mobile', 'GuestController@sendOTPMobile')->middleware('Message_Limit');
+    // Route::post('send-OTP-mobile', 'GuestController@sendOTPMobile')->middleware('Message_Limit');
     Route::post('verify-OTP-mobile', 'GuestController@verifyOTPmobile');
     Route::post('send-OTP-email', 'GuestController@sendOTPemail');
     Route::post('verify-OTP-email', 'GuestController@verifyOTPemail');
@@ -31,6 +31,7 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
     Route::group(['middleware' => 'ApiTokenChecker'], function () {
         Route::group(['prefix' => 'user'], function () {
             Route::post('add-user-name', 'UserController@addUsername');
+            Route::post('add-user-fullname', 'UserController@addFullname');
             Route::post('serch-user-name', 'UserController@serchUsername');
             Route::post('save-user-Interested', 'UserController@saveUserInterested');
             Route::post('userDiet', 'UserController@userDiet');
@@ -48,9 +49,14 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
             Route::post('comment-like', 'PostController@commentLike');
             Route::post('post-like-list', 'PostController@postLikeList');
             Route::post('delete-post', 'PostController@destory');
+            Route::post('delete-comment', 'PostController@deleteComment');
+            Route::post('update-comment', 'PostController@updateComment');
             Route::post('not-interested', 'PostController@notInterested');
             Route::post('search-username','PostController@searchUsername');
             Route::post('user-tag','PostController@userTag');
+            Route::get('get-user-posts','PostController@getUserPosts');
+            Route::get('get-user-liked-posts','PostController@getUserLikedPosts');
+            Route::get('get-user-recipes-and-comments','PostController@getUserRecipesAndComments');
 
             Route::get('report-list','ReportController@reportList');
             Route::post('report-status','ReportController@reportStatus');

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Ingredient extends Model
 {
     public $table = "ingredients";
-    protected $fillable = ['id','user_id','post_id','name','type','measurement'];
+    protected $fillable = ['id','user_id','post_id','name','type','measurement', 'order'];
     
     public function saveIngredient($data=[],$object_id=0,$object = null){
         if(!empty($object)){

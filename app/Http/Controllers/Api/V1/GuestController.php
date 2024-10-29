@@ -173,22 +173,27 @@ class GuestController extends ResponseController
         }
     }
         public function sendOTPMobile(Request $request)
-        {
-            $this->directValidation([ 
-                'country_code' => ['required', 'max:4'],
-                'mobile' => ['required','numeric'],
+    {
+        print("Inside sendOTPMobile OhOh \n");
+        $this->directValidation([ 
+            'country_code' => ['required', 'max:4'],
+            'mobile' => ['required','numeric'],
+        ]);
+        print("Validation done \n " . $request->country_code . $request->mobile . "\n");
+
+        if (register_user_authy($request->country_code . $request->mobile)) {
+            print("inside register_user_authy \n");
+            OtpRequestLog::create([
+                'country_code' => $request->country_code,
+                'mobile' => $request->mobile,
+                'type' => "signup",
+                'ip' => $request->ip(),
             ]);
-            if (register_user_authy($request->country_code . $request->mobile)) {
-                OtpRequestLog::create([
-                    'country_code' => $request->country_code,
-                    'mobile' => $request->mobile,
-                    'type' => "signup",
-                    'ip' => $request->ip(),
-                ]);
-                $this->sendResponse(200, __('api.succ_otp_sent'), false);
-            }
-            $this->sendError(__("api.err_something_went_wrong"));
+            $this->sendResponse(200, __('api.succ_otp_sent'), false);
         }
+        print("Outside register_user_authy \n");
+        $this->sendError(__("api.err_something_went_wrong"));
+    }
 
        
 
@@ -231,7 +236,16 @@ class GuestController extends ResponseController
     );  
         if($user){
             $mail = Mail::to($request->email)->send(new SendOTPmail($user));
-            $this->sendResponse(200, __('api.succ_sent_mail'), false);
+            if (Mail::failures()) {
+                print("Mail NOT sent \n " . Mail::failures() . "\n");
+
+                $this->sendError(__("api.err_something_went_wrong"));
+            } else {
+                $this->sendResponse(200, __('api.succ_sent_mail'), false);  
+                print("Mail sent \n " . $mail . "\n");
+
+            }
+
         }
         else{
             $this->sendError(__("api.err_something_went_wrong"));
@@ -240,9 +254,16 @@ class GuestController extends ResponseController
 
     public function verifyOTPemail(Request $request)
     { 
+        \Log::info('OTP value: ' . $request->otp);
+        \Log::info('Current time: ' . Carbon::now());
+        \Log::info('Subtracting 1 minute: ' . Carbon::now()->subMinutes(1));
+
         $this->directValidation([
             'email' => ['required','max:50', 'email', Rule::exists("otp_verify")],
             'otp' => ['required', 'numeric', Rule::exists('otp_verify')->where(function ($query) use ($request) {
+                \Log::info('Checking for OTP in database...');
+                \Log::info('Current time: ' . Carbon::now());
+                \Log::info('Subtracting 1 minute: ' . Carbon::now()->subMinutes(1));
                 $query->where('updated_at', '>=', Carbon::now()->subMinutes(1))
                     ->where('otp', $request->otp);
             }),
