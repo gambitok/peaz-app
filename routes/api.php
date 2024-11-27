@@ -49,6 +49,9 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
             Route::post('comment-like', 'PostController@commentLike');
             Route::post('post-like-list', 'PostController@postLikeList');
             Route::post('delete-post', 'PostController@destory');
+            Route::post( 'update-post',  'PostController@updatePost');
+            Route::post('update-ingredient', 'PostController@updateIngredient');
+            Route::post('update-instruction', 'PostController@updateInstruction');
             Route::post('delete-comment', 'PostController@deleteComment');
             Route::post('update-comment', 'PostController@updateComment');
             Route::post('not-interested', 'PostController@notInterested');

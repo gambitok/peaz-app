@@ -113,7 +113,7 @@ class PostListController extends WebController
         $data = Post::where('id', $id)->first();
         if ($data) {
             $data->delete();
-            success_session('Post deleted successfully');
+            success_session('Post removed!');
         } else {
             error_session('Post not found');
         }

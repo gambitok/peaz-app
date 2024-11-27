@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Postlike;
 use App\ReportStatus;
 use App\User;
+use App\UserInterested;
 use App\UserTag;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
@@ -32,6 +33,12 @@ class PostController extends ResponseController
         $this->ingredient_obj = new Ingredient();
         $this->instruction_obj = new Instruction();
     }
+
+    /**
+     * Create a new post
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
     public function createPost(Request $request)
     {
         $user = $request->user();
@@ -80,11 +87,41 @@ class PostController extends ResponseController
                 ]);
             }
         }
+        $dietaryItems = json_decode($request->dietary, true);
+
+        if ($request->has('dietary') && is_array($dietaryItems)) {
+            $dietary = UserInterested::whereIn('title', $tagItems)->exists();
+            if ($dietary == false) {
+                foreach ($dietaryItems as $value) {
+                    UserInterested::create([
+                        'user_id' => $user->id,
+                        'type' => 3,
+                        'title' => $value,
+                    ]);
+                }
+            }
+        }
+
+        $cuisineItems = json_decode($request->cuisines, true);
+        if ($request->has('cuisines') && is_array($cuisineItems)) {
+            $cuisine = UserInterested::whereIn('title', $cuisineItems)->exists();
+            if ($cuisine == false) {
+                foreach ($cuisineItems as $value) {
+                    UserInterested::create([
+                        'user_id' => $user->id,
+                        'type' => 1,
+                        'title' => $value,
+                    ]);
+                }
+            }
+        }
         $request_data = $request->all();
         $request_data['thumbnail'] = $thumbnail ?? "";
         $request_data['file'] = $up ?? "";
         $request_data['user_id'] = $user->id; 
         $request_data['tags'] = implode(",", $tagItems);
+        $request_data['dietary'] = implode(",", $dietaryItems);
+        $request_data['cuisines'] = implode(",", $cuisineItems);
         $request_data['hours'] = $request->hours ?? 0;
         unset($request_data['method']);
         $post = $this->post_obj->savePost($request_data,0,$data);
@@ -95,6 +132,11 @@ class PostController extends ResponseController
        
     }
 
+    /**
+     * Add a new set of ingredients
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
     public function addIngredient(Request $request)
     {
         $user = $request->user();
@@ -124,9 +166,13 @@ class PostController extends ResponseController
         }else{
             $this->sendError(__('api.err_something_went_wrong'), false);
         }
-    
     }
 
+    /**
+     * Delete a given comment
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
     public function deleteComment(Request $request)
     {
         $rules = [
@@ -145,6 +191,11 @@ class PostController extends ResponseController
         }
     }
 
+    /**
+     * Update comment
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
     public function updateComment(Request $request)
     {
         $rules = [
@@ -163,6 +214,12 @@ class PostController extends ResponseController
             $this->sendError(__('api.err_comment_update'), false);
         }
     }
+
+    /**
+     * Add new recipe instruction
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
     public function addInstruction(Request $request)
     {
         $user = $request->user();
@@ -218,6 +275,113 @@ class PostController extends ResponseController
         $this->sendResponse(200, __('api.suc_tags'), $tags);
     }
 
+    /**
+     * Update an ingredient given an ingredient ID
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
+    public function updateIngredient(Request $request)
+    {
+        $user = $request->user();
+
+        $rules = [
+            'id' => ['required'],
+            'post_id' => ['required', 'exists:posts,id'],
+            'name' => ['required'],
+        ];
+        $this->directValidation($rules);
+
+        $post = Post::find($request->post_id);
+        if(!$post){
+            $this->sendError(__('api.err_post'), false);
+        }
+        try {
+            $ingredient = Ingredient::updateOrCreate(
+                ['post_id' => $request->post_id, 'name' => $request->name],
+                [
+                    'name' => $request->name,
+                    'measurement' => $request->measurement,
+                    'user_id' => $user->id,
+                    'type' => $request->type,
+                ]
+            );
+            if ($ingredient->wasRecentlyCreated) {
+                $this->sendResponse(200, __('api.suc_ingredient_upsert'), false);
+            } else if ($ingredient->wasChanged()) {
+                $this->sendResponse(200, __('api.suc_ingredient_update'), false);
+            } if ($ingredient->wasChanged("name")) {
+                $this->sendResponse(200, __('api.suc_ingredient_update'), false);
+            } else {
+                $this->sendError(__('api.noup_ingredient_update'), false);
+            }
+        } catch (\Throwable $th) {
+            $this->sendError(__('api.err_ingredient_update'), $th->getMessage());
+        }
+    }
+
+    /**
+     * Update an instruction given an instruction ID
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
+    public function updateInstruction(Request $request)
+    {
+        $rules = [
+            'id' => ['required', 'integer'],
+            'title' => ['required', 'string'],
+            'description' => ['required', 'string'],
+            'file' => ['nullable', 'file', 'mimes:jpeg,png,gif,bmp,svg,webp,mp4,avi,wmv,mov,flv'],
+            'thumbnail' => ['nullable', 'file', 'mimes:jpeg,png,gif,bmp,svg,webp'],
+            'type' => ['required', 'in:video,image'],
+        ];
+    
+        $this->directValidation($rules);
+    
+        $instruction = Instruction::find($request->id);
+    
+        if ($instruction) {
+            // Update existing instruction
+            $instruction->title = $request->title;
+            $instruction->description = $request->description;
+            $instruction->type = $request->type;
+    
+            if ($request->hasFile('file')) {
+                $instruction->file = upload_file('file', 'instruction_files');
+            }
+    
+            if ($request->hasFile('thumbnail')) {
+                $instruction->thumbnail = upload_file('thumbnail', 'instruction_thumbnails');
+            }
+    
+            $success = $instruction->save();
+            $message = $success ? __('api.suc_instruction_update') : __('api.err_instruction_update');
+        } else {
+            // Create new instruction
+            $instruction = new Instruction();
+            $instruction->title = $request->title;
+            $instruction->description = $request->description;
+            $instruction->type = $request->type;
+    
+            if ($request->hasFile('file')) {
+                $instruction->file = upload_file('file', 'instruction_files');
+            }
+    
+            if ($request->hasFile('thumbnail')) {
+                $instruction->thumbnail = upload_file('thumbnail', 'instruction_thumbnails');
+            }
+    
+            $success = $instruction->save();
+            $message = $success ? __('api.suc_instruction_create') : __('api.err_instruction_create');
+        }
+    
+        if ($success) {
+            return response()->json(['message' => $message, 'instruction' => $instruction], 200);
+        } else {
+            return response()->json(['message' => $message], 500);
+        }
+    }
+
+
     public function home(Request $request)
     {
         $user = null;
@@ -240,7 +404,9 @@ class PostController extends ResponseController
             'ingredient' => function ($q) {
                 $q->select("id", "post_id", "name", "type","measurement");
             },
-            'instruction',
+            'instruction' => function ($q) {
+                $q->select("id", "post_id", "title", "description", "file", "thumbnail", "type");
+            },
         ])
             ->withCount(["comment", 'postlike'])
             ->AvgRating()
@@ -248,7 +414,7 @@ class PostController extends ResponseController
         if (isset($user) && !empty($user)) {
             $c_instance = clone $p_instance;
             if($c_instance->where('user_id',$user->id)->exists() == true){
-               $p_instance = $p_instance->where('not_interested', 0);
+               $p_instance = $p_instance->where('not_interested', 0); 
             }
         }
         $posts = $p_instance->orderBy('id', 'DESC')
@@ -687,6 +853,83 @@ class PostController extends ResponseController
         $this->directValidation($rules);
         $bank_account = Post::destroy($request->post_id);
         $this->sendResponse(200, __('api.suc_post_delete'), false);
+    }
+
+    public function updatePost(Request $request)
+    {
+        $user = $request->user();
+        $rules = [
+            'post_id' => ['required', 'exists:posts,id'],
+            'title' => ['required'],
+            'caption' => ['required'],
+            'serving_size' => ['required'],
+            'hours' => ['required'],
+            'minutes' => ['required'],
+            'dietary' => ['required'],
+            'tags' => ['required'],
+        ];
+        $this->directValidation($rules);
+        $data = null;
+        if ($request->post_id > 0 ) {
+            $data = $this->post_obj->find($request->post_id);
+            if(empty($data)){
+                $this->sendError(__('api.err_post_update'), false);
+            }
+        }
+
+        $tagItems = json_decode($request->tags, true);
+        $tag = Tag::whereIn('name', $tagItems)->exists();
+        if ($tag == false) {
+            foreach ($tagItems as $value) {
+                Tag::create([
+                    'name' => $value,
+                ]);
+            }
+        }
+
+        $dietaryItems = json_decode($request->dietary, true);
+        if ($request->has('dietary') && is_array($dietaryItems)) {
+            $dietary = UserInterested::whereIn('title', $dietaryItems)->exists();
+            if ($dietary == false) {
+                foreach ($dietaryItems as $value) {
+                    UserInterested::create([
+                        'user_id' => $user->id,
+                        'type' => 3,
+                        'title' => $value,
+                    ]);
+                }
+            }
+        }
+
+        $cuisineItems = json_decode($request->cuisines, true);
+        if ($request->has('cuisines') && is_array($cuisineItems)) {
+            $cuisine = UserInterested::whereIn('title', $cuisineItems)->exists();
+            if ($cuisine == false) {
+                foreach ($cuisineItems as $value) {
+                    UserInterested::create([
+                        'user_id' => $user->id,
+                        'type' => 1,
+                        'title' => $value,
+                    ]);
+                }
+            }
+        }
+
+        $post = Post::where('id', $request->post_id)->update([
+            'title' => $request->title,
+            'caption' => $request->caption,
+            'serving_size' => $request->serving_size,
+            'hours' => $request->hours,
+            'minutes' => $request->minutes,
+            'dietary' => implode(",", $dietaryItems),
+            'tags' => implode(",", $tagItems),
+            'cuisines' => implode(",", $cuisineItems),
+        ]);
+        if ($post) {
+            $this->sendResponse(200, __('api.suc_post_update'), ['id' => $request->post_id]);        
+        } else {
+            $this->sendError(__('api.err_post_update'), false);
+        }
     }
 
     public function notInterested(Request $request)

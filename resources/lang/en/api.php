@@ -68,9 +68,16 @@ return [
     'err_no_liked_posts' => 'No liked post found',
     'suc_usertag'=>'UserTag create successfully',
     'suc_post_update'=>'Post successfully updated',
-    'suc_ingredient_update'=>'Ingredient successfully update',
-    'suc_instruction_update'=>'Instruction successfully update',
+    'suc_ingredient_update'=>'Ingredients updated!',
+    'suc_instruction_update'=>'Instruction updated!',
+    'suc_instruction_upsert'=>'New instruction added!',
+    'suc_ingredient_upsert'=>'New ingredient added!',
     'daily_limit_reached' => "You have reached daily sms limit",
+    'noup_ingredient_update' => 'Record updated!',
+    'noup_instruction_update' => 'Record updated!',
+    'err_ingredient_update' => 'Unable to update ingredient',
+    'err_instruction_update' => 'Unable to update instruction',
+
 
 //    Version
     'err_new_version_is_available' => 'A new version is available, please Update the app.',
