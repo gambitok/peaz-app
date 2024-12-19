@@ -10,9 +10,11 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use HasApiTokens;
     use SoftDeletes;
 
     protected $guarded = [];
@@ -89,7 +91,7 @@ class User extends Authenticatable
         $this->attributes['password'] = bcrypt($password);
     }
 
-    
+
 
     public function getProfileImageAttribute($val)
     {
@@ -112,7 +114,7 @@ class User extends Authenticatable
             ->orWhere('mobile', 'like', "%$search%")
             ->orWhereRaw("concat(country_code,'',mobile) like '%$search%'")
             ->orWhereRaw("concat(country_code,' ',mobile) like '%$search%'");
-           
+
     }
 
     public function scopeUpdatePassword($query, Request $request): bool
@@ -129,6 +131,6 @@ class User extends Authenticatable
     {
         return $this->hasOne(SocialAccounts::class, "user_id", "id");
     }
-   
-   
+
+
 }

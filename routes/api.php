@@ -1,7 +1,23 @@
 <?php
 
+use App\Http\Controllers\Api\V2\UserController;
 use Illuminate\Support\Facades\Route;
 
+Route::group(['namespace' => 'Api\V2', 'prefix' => 'V2'], function () {
+
+    Route::put('register', [UserController::class, 'register']);
+    Route::post('login', [UserController::class, 'login']);
+    Route::get('get_token', [UserController::class, 'getToken']);
+    Route::post('logout', [UserController::class, 'logout']);
+
+    Route::get('user', 'UserController@getUsers');
+    Route::get('user/{id}', 'UserController@getUser');
+    Route::put('user/{id}', 'UserController@updateUser');
+    Route::post('user/create', 'UserController@addUserById');
+
+    Route::get('users/search', [UserController::class, 'search'])->name('users.search');
+
+});
 
 Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
 
@@ -38,12 +54,12 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
             Route::post('createpassword', 'UserController@createpassword');
             Route::get('getProfile', 'UserController@getProfile');
             Route::get('logout', 'UserController@logout');
-          
+
             Route::post('create-post', 'PostController@createPost');
             Route::post('interested-list', 'UserController@interestedList');
             Route::post('add-ingredient', 'PostController@addIngredient');
             Route::post('add-instruction', 'PostController@addInstruction');
-           
+
             Route::post('post-comment-review', 'PostController@postCommentReview');
             Route::post('post-like', 'PostController@postLike');
             Route::post('comment-like', 'PostController@commentLike');
@@ -60,7 +76,7 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
 
             Route::get('report-list','ReportController@reportList');
             Route::post('report-status','ReportController@reportStatus');
-            
+
         });
     });
 });
