@@ -47,27 +47,21 @@ class UsersController extends WebController
                     'id' => $value->id,
                     'url' => [
                         'status' => route('admin.user.status_update', $value->id),
-                        // 'edit' => route('admin.user.edit', $value->id),
+                        'edit' => route('admin.user.edit', $value->id),
                         'delete' => route('admin.user.destroy', $value->id),
                         'view' => route('admin.user.show', $value->id),
                     ],
                     'checked' => ($value->status == 'active') ? 'checked' : ''
                 ];
-                if(!empty($value->mobile))
-                {
-                    $mobile = $value->country_code . ' ' . $value->mobile;
-                }else
-                {
-                    $mobile = " - ";
-                }
-          
+//                $mobile = (!empty($value->mobile)) ? $value->country_code . ' ' . $value->mobile : " - ";
+
                 $return_data['data'][] = array(
                     'id' => $offset + $key + 1,
                     'profile_image' => get_fancy_box_html($value['profile_image']),
                     'username' => $value->username ? $value->username : " - ",
                     'email' => $value->email,
-                    'mobile_number' => $mobile ,
-                    'date_of_birth' =>date('d-m-Y', strtotime($value->date_of_birth)),
+//                    'mobile_number' => $mobile,
+//                    'date_of_birth' =>date('d-m-Y', strtotime($value->date_of_birth)),
                     'status' => $this->generate_switch($param),
                     'action' => $this->generate_actions_buttons($param),
                 );
@@ -75,7 +69,6 @@ class UsersController extends WebController
         }
         return $return_data;
     }
-
 
     public function destroy($id)
     {
@@ -118,7 +111,6 @@ class UsersController extends WebController
         return redirect()->route('admin.user.index');
     }
 
-
     public function edit($id)
     {
         $data = User::find($id);
@@ -141,12 +133,9 @@ class UsersController extends WebController
     {
         $data = User::find($id);
         if ($data) {
-            
+
              $request->validate([
-                // 'first_name' => ['required', 'max:255'],
-                // 'last_name' => ['required', 'max:255'],
-                //'country_code' => ['required'],
-                //'mobile' => ['required', Rule::unique('users', 'mobile')->ignore($id)->where('country_code', $request->country_code)->whereNull('deleted_at')],
+//                'username' => ['required', 'username', Rule::unique('users')->ignore($id)->whereNull('deleted_at')],
                 'email' => ['required', 'email', Rule::unique('users')->ignore($id)->whereNull('deleted_at')],
                 'profile_image' => ['file', 'image'],
             ]);
@@ -154,15 +143,16 @@ class UsersController extends WebController
             if ($request->hasFile('profile_image')) {
                 $up = upload_file('profile_image', 'user_profile_image');
                 if ($up) {
-                    // un_link_file($profile_image);
                     $profile_image = $up;
                 }
             }
            $userdata = [
                  'email' => $request->email,
                  'profile_image' => $profile_image,
-                //  'name' => $request->first_name . ' ' . $request->last_name,
+                 'name' =>  $request->name,
                  'username' =>  $request->username,
+                 'bio' =>  $request->bio,
+                 'website' =>  $request->website,
            ];
             $data->update($userdata);
             success_session('user updated successfully');
@@ -171,6 +161,5 @@ class UsersController extends WebController
         }
         return redirect()->route('admin.user.index');
     }
-
 
 }

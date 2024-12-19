@@ -25,8 +25,6 @@
                             <th>Profile Image</th>
                             <th>Username</th>
                             <th>Email</th>
-                            <th>Number</th>
-                            <th>BirthDate</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -74,19 +72,8 @@
                     searchable: true,
                     sortable: false
                 },
-                // {"data": "username", sortable: false},
                 {
                     "data": "email",
-                    searchable: true,
-                    sortable: false
-                },
-                {
-                    "data": "mobile_number",
-                    searchable: true,
-                    sortable: false
-                },
-                {
-                    "data": "date_of_birth",
                     searchable: true,
                     sortable: false
                 },
