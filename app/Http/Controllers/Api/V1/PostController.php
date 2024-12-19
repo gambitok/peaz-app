@@ -11,7 +11,7 @@ use App\DeviceToken;
 use App\Ingredient;
 use App\Instruction;
 use App\Http\Controllers\Controller;
-use App\Postlike;
+use App\PostLike;
 use App\ReportStatus;
 use App\User;
 use App\UserTag;
@@ -25,7 +25,7 @@ class PostController extends ResponseController
     public $post_obj;
     public $ingredient_obj;
     public $instruction_obj;
-    
+
     public function  __construct()
     {
         $this->post_obj = new Post();
@@ -48,7 +48,7 @@ class PostController extends ResponseController
             'thumbnail'=>['required_if:method,add'],
             'type'=>['required','in:video,image'],
             'post_id'=>['required_if:method,edit'],
-            
+
         ];
         $messages = [
             'file.required' => "The image field is required",
@@ -63,7 +63,7 @@ class PostController extends ResponseController
                 $up = $data->getRawOriginal('file');
             }
             $messages = __('api.suc_post_update');
-            
+
         }
         if ($request->hasfile('file')) {
             $up = upload_file('file', 'user_post_image');
@@ -83,7 +83,7 @@ class PostController extends ResponseController
         $request_data = $request->all();
         $request_data['thumbnail'] = $thumbnail ?? "";
         $request_data['file'] = $up ?? "";
-        $request_data['user_id'] = $user->id; 
+        $request_data['user_id'] = $user->id;
         $request_data['tags'] = implode(",", $tagItems);
         $request_data['hours'] = $request->hours ?? 0;
         unset($request_data['method']);
@@ -92,7 +92,7 @@ class PostController extends ResponseController
             $this->sendResponse(200, $messages , $post);
         }
         $this->sendError(__('api.err_something_went_wrong'), false);
-       
+
     }
 
     public function addIngredient(Request $request)
@@ -103,7 +103,7 @@ class PostController extends ResponseController
             'measurement' => ['required'],
             "post_id" => ['required', 'exists:posts,id'],
             "method"=>['required'],
-            "ingredient_id"=>['required_if:method,edit'],           
+            "ingredient_id"=>['required_if:method,edit'],
         ];
         $this->directValidation($rules);
         $data = null;
@@ -124,7 +124,7 @@ class PostController extends ResponseController
         }else{
             $this->sendError(__('api.err_something_went_wrong'), false);
         }
-    
+
     }
 
     public function deleteComment(Request $request)
@@ -201,7 +201,7 @@ class PostController extends ResponseController
         $request_data = $request->all();
         $request_data['thumbnail'] = $thumbnail ?? "";
         $request_data['file'] = $up ?? "";
-        $request_data['user_id'] = $user->id; 
+        $request_data['user_id'] = $user->id;
         $request_data['order'] = (int) ($order);
         $request_data['type'] = (strpos($request->file->getMimeType(), 'video') !== false) ? 'video' : 'image';
         unset($request_data['method']);
@@ -229,10 +229,10 @@ class PostController extends ResponseController
             $is_login = DeviceToken::where('token', $token)->with('user')->has('user')->first();
             if ($is_login) {
                 $user = $is_login->user;
-                $likes = Postlike::where('user_id', $user->id)->pluck('post_id')->toArray();
+                $likes = PostLike::where('user_id', $user->id)->pluck('post_id')->toArray();
                 $reported_post =  ReportStatus::where('user_id',$user->id)->pluck('post_id')->toArray();
             }
-        }       
+        }
         $p_instance = Post::with([
             'user' => function ($q) {
                 $q->select("id", "username", "profile_image");
@@ -256,7 +256,7 @@ class PostController extends ResponseController
             ->limit($limit)
             ->get();
 
-        $post_data = [];      
+        $post_data = [];
         foreach ($posts as $post) {
 
             $post->is_like = false;
@@ -292,7 +292,7 @@ class PostController extends ResponseController
             $is_login = DeviceToken::where('token', $token)->with('user')->has('user')->first();
             if ($is_login) {
                 $user = $is_login->user;
-                $likes = Postlike::where('user_id', $user->id)->pluck('post_id')->toArray();
+                $likes = PostLike::where('user_id', $user->id)->pluck('post_id')->toArray();
                 $reported_post =  ReportStatus::where('user_id',$user->id)->pluck('post_id')->toArray();
             }
         }
@@ -318,7 +318,7 @@ class PostController extends ResponseController
             if (in_array($posts->id, $likes)) {
                 $posts->is_like = true;
             }
-        } 
+        }
         $posts->is_reported = false;
         if (isset($reported_post) && count($reported_post) > 0) {
             if (in_array($posts->id, $reported_post)) {
@@ -334,7 +334,7 @@ class PostController extends ResponseController
 
     public function getUserPosts(Request $request)
     {
-        
+
         try {
             $token = get_header_auth_token();
             if (!empty($token)) {
@@ -346,7 +346,7 @@ class PostController extends ResponseController
                         ->pluck('comment_id')->toArray();
                 }
             }
-    
+
             $posts = Post::with([
                 'user:id,username,profile_image',
                 'ingredient:id,post_id,name,type,measurement',
@@ -361,7 +361,7 @@ class PostController extends ResponseController
             ->where('user_id', $user->id)
             ->orderBy('id', 'DESC')
             ->get();
-    
+
             if (!empty($posts)) {
                 $this->sendResponse(200, __('api.suc_posts'), $posts);
             } else {
@@ -409,7 +409,7 @@ class PostController extends ResponseController
     public function getUserRecipesAndComments(Request $request)
     {
         $user = $request->user();
-        
+
         // Get user's recipes
         $recipes = Post::with([
             'user' => function ($q) {
@@ -512,7 +512,7 @@ class PostController extends ResponseController
                         $comment->is_commentlike = true;
                     }
                 }
-    
+
                 $comment_data = [];
                 $rep_comments = $comment->reply;
                 foreach ($rep_comments as $replay) {
@@ -542,12 +542,12 @@ class PostController extends ResponseController
             'post_id' => ['required', 'exists:posts,id'],
         ];
         $this->directValidation($rules);
-        $postlike = Postlike::where('user_id', $user->id)->where('post_id', $request->post_id)->exists();
+        $postlike = PostLike::where('user_id', $user->id)->where('post_id', $request->post_id)->exists();
         if ($postlike == true) {
-            Postlike::where('user_id', $user->id)->where('post_id', $request->post_id)->delete();
+            PostLike::where('user_id', $user->id)->where('post_id', $request->post_id)->delete();
             $this->sendResponse(200, __('api.suc_dislike'));
         } else {
-            $like = Postlike::create([
+            $like = PostLike::create([
                 "user_id" => $user->id,
                 "post_id" => $request->post_id,
             ]);
@@ -671,7 +671,7 @@ class PostController extends ResponseController
     {
         $limit = $request->limit ?? 10;
         $offset = $request->offset ?? 0;
-        $post_like =  Postlike::with(['user' => function ($q) {
+        $post_like =  PostLike::with(['user' => function ($q) {
             $q->select("id", "username", "profile_image");
         }])->offset($offset)
             ->limit($limit)

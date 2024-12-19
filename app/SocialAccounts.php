@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SocialAccounts extends Model
 {
-    protected $guarded = [];
+    public $table = 'social_accounts';
+    protected $fillable = ['id','user_id','provider_id','provider'];
 
     public function user(): BelongsTo
     {

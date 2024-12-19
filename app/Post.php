@@ -11,6 +11,16 @@ class Post extends Model
     public $table = "posts";
     protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','dietary','tags','not_interested'];
 
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'post_id');
+    }
+
+    public function postLikes()
+    {
+        return $this->hasMany(PostLike::class, 'post_id');
+    }
+
     public function getFileAttribute($val)
     {
         if(!empty($val)){
@@ -26,7 +36,7 @@ class Post extends Model
         }
         return get_asset($val, false, get_constants('default.user_image'));
     }
-    
+
     public function user()
     {
         return $this->belongsTo(User::class,'user_id');
@@ -47,7 +57,7 @@ class Post extends Model
         return $this->hasMany(Comment::class,'post_id','id');
     }
 
-   
+
     public function reply()
     {
         return $this->hasMany(Comment::class,'comment_id','id');
@@ -55,10 +65,10 @@ class Post extends Model
 
     public function postlike()
     {
-        return $this->hasMany(Postlike::class,'post_id','id');
+        return $this->hasMany(PostLike::class,'post_id','id');
     }
     public function getIsRatingAttribute($val){
-       
+
         if($val == 'true'){
             return true;
         }
@@ -66,7 +76,7 @@ class Post extends Model
     }
     // public function total_postlike()
     // {
-    //     return $this->hasMany(Postlike::class,'post_id','id');
+    //     return $this->hasMany(PostLike::class,'post_id','id');
     // }
     public function getAvgRatingAttribute($val)
     {
@@ -80,10 +90,10 @@ class Post extends Model
     }
     public function scopeAvgRating($query){
         return $query->addSelect(DB::raw('(SELECT AVG(rating)
- FROM   comments WHERE posts.id=post_id AND type=1) as avg_rating')); 
+ FROM   comments WHERE posts.id=post_id AND type=1) as avg_rating'));
     }
     public function scopeIsRating($query,$user_id){
-        
+
         return $query->selectRaw("CASE WHEN EXISTS (SELECT * FROM comments WHERE posts.id = post_id AND type = 1 AND user_id = ?) THEN 'true' ELSE 'false' END as is_rating",[$user_id]);
 
     }
@@ -104,5 +114,4 @@ class Post extends Model
         return $object;
     }
 
-    
 }

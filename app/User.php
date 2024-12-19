@@ -21,6 +21,26 @@ class User extends Authenticatable
     protected $hidden = ['password', 'remember_token'];
     protected $casts = [];
 
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'user_id');
+    }
+
+    public function posts()
+    {
+        return $this->hasMany(Post::class, 'user_id');
+    }
+
+    public function userInterested()
+    {
+        return $this->hasMany(UserInterested::class, 'user_id');
+    }
+
+    public function socialAccounts()
+    {
+        return $this->hasMany(SocialAccounts::class, 'user_id');
+    }
+
     public static function AddTokenToUser()
     {
         $user = Auth::user();
@@ -40,6 +60,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(DeviceToken::class);
     }
+
     public function scopeGenerateResetToken($query, Request $request): string
     {
         $reset_token =  genUniqueStr('', 50, 'users', 'reset_token', true);
@@ -91,8 +112,6 @@ class User extends Authenticatable
         $this->attributes['password'] = bcrypt($password);
     }
 
-
-
     public function getProfileImageAttribute($val)
     {
         if(!empty($val)){
@@ -114,7 +133,6 @@ class User extends Authenticatable
             ->orWhere('mobile', 'like', "%$search%")
             ->orWhereRaw("concat(country_code,'',mobile) like '%$search%'")
             ->orWhereRaw("concat(country_code,' ',mobile) like '%$search%'");
-
     }
 
     public function scopeUpdatePassword($query, Request $request): bool
@@ -131,6 +149,5 @@ class User extends Authenticatable
     {
         return $this->hasOne(SocialAccounts::class, "user_id", "id");
     }
-
 
 }

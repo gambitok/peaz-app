@@ -17,6 +17,7 @@ Route::group(['namespace' => 'Api\V2', 'prefix' => 'V2'], function () {
 
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
 
+    Route::get('profile/{id}', 'UserController@getUserProfile');
 });
 
 Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {

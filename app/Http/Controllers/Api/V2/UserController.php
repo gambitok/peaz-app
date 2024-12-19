@@ -201,4 +201,29 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+    public function getUserProfile($id)
+    {
+        $user = User::with([
+            'comments:id,user_id,comment_text',
+            'posts:id,user_id,title',
+            'posts' => function ($query) {
+                $query->withCount(['comments as comments_count', 'postLikes as likes_count']);
+            },
+            'userInterested:id,user_id,title',
+            'socialAccounts:id,user_id,provider_id,provider'
+        ])->find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User with ID ' . $id . ' not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $user
+        ]);
+    }
+
 }
