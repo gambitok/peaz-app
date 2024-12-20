@@ -74,10 +74,7 @@ class Post extends Model
         }
         return false;
     }
-    // public function total_postlike()
-    // {
-    //     return $this->hasMany(PostLike::class,'post_id','id');
-    // }
+
     public function getAvgRatingAttribute($val)
     {
         if(!empty($val) || $val > 0){
@@ -86,16 +83,14 @@ class Post extends Model
         else{
             return "0";
         }
-
     }
+
     public function scopeAvgRating($query){
-        return $query->addSelect(DB::raw('(SELECT AVG(rating)
- FROM   comments WHERE posts.id=post_id AND type=1) as avg_rating'));
+        return $query->addSelect(DB::raw('(SELECT AVG(rating) FROM   comments WHERE posts.id=post_id AND type=1) as avg_rating'));
     }
+
     public function scopeIsRating($query,$user_id){
-
         return $query->selectRaw("CASE WHEN EXISTS (SELECT * FROM comments WHERE posts.id = post_id AND type = 1 AND user_id = ?) THEN 'true' ELSE 'false' END as is_rating",[$user_id]);
-
     }
 
     public function savePost($data=[],$object_id=0,$object = null){

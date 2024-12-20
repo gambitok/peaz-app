@@ -1,23 +1,47 @@
 <?php
 
 use App\Http\Controllers\Api\V2\UserController;
+use App\Http\Controllers\Api\V2\PostController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['namespace' => 'Api\V2', 'prefix' => 'V2'], function () {
-
+Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::put('register', [UserController::class, 'register']);
     Route::post('login', [UserController::class, 'login']);
     Route::get('get_token', [UserController::class, 'getToken']);
     Route::post('logout', [UserController::class, 'logout']);
 
+    Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::get('user', 'UserController@getUsers');
     Route::get('user/{id}', 'UserController@getUser');
     Route::put('user/{id}', 'UserController@updateUser');
     Route::post('user/create', 'UserController@addUserById');
-
-    Route::get('users/search', [UserController::class, 'search'])->name('users.search');
+    Route::delete('user/{id}', 'UserController@deleteUser');
 
     Route::get('profile/{id}', 'UserController@getUserProfile');
+});
+
+Route::prefix('v2/posts')->group(function () {
+    // Custom search route before other dynamic routes
+    Route::get('/search', [PostController::class, 'search'])->name('posts.search');
+
+    // Get all posts
+    Route::get('/', [PostController::class, 'index'])->name('posts.index');
+
+    // Get a single post by ID
+    Route::get('/{id}', [PostController::class, 'show'])->name('posts.show');
+
+    // Create a new post
+    Route::post('/', [PostController::class, 'store'])->name('posts.store');
+
+    // Update an existing post by ID
+    Route::put('/{id}', [PostController::class, 'update'])->name('posts.update');
+
+    // Delete a post by ID
+    Route::delete('/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
+});
+
+Route::prefix('v2/posts')->group(function () {
+    Route::get('/search', [PostController::class, 'search'])->name('posts.search');
 });
 
 Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
