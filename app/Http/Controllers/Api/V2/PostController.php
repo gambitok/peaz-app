@@ -94,7 +94,6 @@ class PostController extends Controller
             ], 404);
         }
 
-        // Handle empty strings for fields like file and thumbnail
         $validatedData = $request->validate([
             'user_id' => 'sometimes|integer',
             'title' => 'sometimes|string|max:255',
@@ -111,12 +110,10 @@ class PostController extends Controller
             'cuisines' => 'sometimes|string|max:255|nullable',
         ]);
 
-        // If dietary is 'undefined', you can convert it to null or any default value
         if ($validatedData['dietary'] === 'undefined') {
-            $validatedData['dietary'] = null; // Or keep it as 'undefined' depending on your needs
+            $validatedData['dietary'] = null;
         }
 
-        // Update the post with validated data
         $post->update($validatedData);
 
         return response()->json([
@@ -154,7 +151,6 @@ class PostController extends Controller
     {
         $query = Post::query();
 
-        // Фільтрація по полях
         if ($request->filled('title')) {
             $query->where('title', 'LIKE', '%' . $request->input('title') . '%');
         }
@@ -167,13 +163,11 @@ class PostController extends Controller
             $query->where('caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
 
-        // Сортування та пагінація
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
         $posts = $query->orderBy($sortField, $sortOrder)->paginate($perPage);
 
-        // Перевірка на порожні результати
         if ($posts->isEmpty()) {
             return response()->json([
                 'status' => 'error',
@@ -182,7 +176,6 @@ class PostController extends Controller
             ]);
         }
 
-        // Повернення реальних даних
         return response()->json([
             'status' => 'success',
             'data' => $posts
