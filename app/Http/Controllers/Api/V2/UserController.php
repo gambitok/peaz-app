@@ -201,6 +201,27 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+    public function searchProfile(Request $request)
+    {
+        $query = User::with([
+            'comments:id,user_id,comment_text',
+            'posts:id,user_id,title',
+            'posts' => function ($query) {
+                $query->withCount(['comments as comments_count', 'postLikes as likes_count']);
+            },
+            'userInterested:id,user_id,title',
+            'socialAccounts:id,user_id,provider_id,provider'
+        ])->where('username', $request->username);
+
+        $sortBy = $request->input('sort_by', 'name');
+        $sortOrder = $request->input('sort_order', 'asc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        $users = $query->paginate(10);
+
+        return response()->json($users);
+    }
+
     public function getUserProfile($id)
     {
         $user = User::with([

@@ -11,6 +11,8 @@ Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::post('logout', [UserController::class, 'logout']);
 
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
+    Route::get('users/searchProfile', [UserController::class, 'searchProfile'])->name('users.searchProfile');
+
     Route::get('user', 'UserController@getUsers');
     Route::get('user/{id}', 'UserController@getUser');
     Route::put('user/{id}', 'UserController@updateUser');
