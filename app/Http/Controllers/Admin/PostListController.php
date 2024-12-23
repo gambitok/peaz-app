@@ -87,7 +87,7 @@ class PostListController extends WebController
      */
     public function edit($id)
     {
-        
+        //
     }
 
     /**
@@ -141,7 +141,7 @@ class PostListController extends WebController
             })
             ->rawColumns(['caption','action'])
             ->make(true);
-    } 
+    }
 
     public function postDetails(Request $request)
     {
@@ -163,7 +163,7 @@ class PostListController extends WebController
     }
 
     public function postDetailsEdit($id){
-      
+
         $data = $this->ingredient_obj->find($id);
         if (isset($data) && !empty($data)) {
             return view('admin.post.create', [
@@ -222,7 +222,7 @@ class PostListController extends WebController
             ->editColumn('description', function ($row) {
                 return "<span title='$row->description'>".Str::limit($row->description, 50)."</span>";
              })
-             
+
              ->rawColumns(['title','file',"description","thumbnail","type"])
             ->make(true);
     }

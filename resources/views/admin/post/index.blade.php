@@ -1,15 +1,13 @@
 @extends('layouts.master')
 @section('title') @lang('translation.Data_Tables') @endsection
 @section('css')
-
 <!-- DataTables -->
 <link href="{{ URL::asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"/>
 @endsection
+
 @section('content')
-
 @include('components.breadcum')
-
 <div class="row">
     <div class="col-12">
         {!! success_error_view_generator() !!}
@@ -30,12 +28,10 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-
             </div>
         </div>
     </div>
 </div>
-
 @endsection
 
 @section('script')
@@ -72,7 +68,6 @@
                     searchable: true,
                     sortable: false
                 },
-                // {"data": "username", sortable: false},
                 {
                     "data": "serving_size",
                     searchable: true,

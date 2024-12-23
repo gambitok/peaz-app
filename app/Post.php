@@ -57,7 +57,6 @@ class Post extends Model
         return $this->hasMany(Comment::class,'post_id','id');
     }
 
-
     public function reply()
     {
         return $this->hasMany(Comment::class,'comment_id','id');
@@ -67,8 +66,9 @@ class Post extends Model
     {
         return $this->hasMany(PostLike::class,'post_id','id');
     }
-    public function getIsRatingAttribute($val){
 
+    public function getIsRatingAttribute($val)
+    {
         if($val == 'true'){
             return true;
         }
@@ -85,15 +85,18 @@ class Post extends Model
         }
     }
 
-    public function scopeAvgRating($query){
+    public function scopeAvgRating($query)
+    {
         return $query->addSelect(DB::raw('(SELECT AVG(rating) FROM   comments WHERE posts.id=post_id AND type=1) as avg_rating'));
     }
 
-    public function scopeIsRating($query,$user_id){
+    public function scopeIsRating($query,$user_id)
+    {
         return $query->selectRaw("CASE WHEN EXISTS (SELECT * FROM comments WHERE posts.id = post_id AND type = 1 AND user_id = ?) THEN 'true' ELSE 'false' END as is_rating",[$user_id]);
     }
 
-    public function savePost($data=[],$object_id=0,$object = null){
+    public function savePost($data=[],$object_id=0,$object = null)
+    {
         if(!empty($object)){
             //
         }
