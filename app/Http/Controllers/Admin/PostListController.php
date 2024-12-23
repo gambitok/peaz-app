@@ -62,21 +62,37 @@ class PostListController extends WebController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function show($id)
     {
-        $data = Post::with(['instruction'])->find($id);
-        if ($data) {
-            return view('admin.post.view', [
-                'title' => 'View post',
-                'data' => $data,
-                'breadcrumb' => breadcrumb([
-                    'post' => route('admin.post.index'),
-                    'view' => route('admin.post.show', $id)
-                ]),
-            ]);
+        $post = Post::with(['instruction'])->find($id);
+
+        if (!$post) {
+            error_session('post not found');
+            return redirect()->route('admin.post.index');
         }
-        error_session('post not found');
-        return redirect()->route('admin.post.index');
+
+        // Get the ingredients for the post
+        $ingredients = Ingredient::where('post_id', $id)->get();
+
+        // Get the instructions for the post
+        $instructions = Instruction::where('post_id', $id)->orderBy('id', 'ASC')->get();
+
+        return view('admin.post.view', [
+            'title' => 'View post',
+            'data' => $post,
+            'breadcrumb' => breadcrumb([
+                'post' => route('admin.post.index'),
+                'view' => route('admin.post.show', $id)
+            ]),
+            'ingredients' => $ingredients,
+            'instructions' => $instructions,
+        ]);
     }
 
     /**
@@ -87,7 +103,21 @@ class PostListController extends WebController
      */
     public function edit($id)
     {
-        //
+        $post = Post::find($id);
+
+        if (!$post) {
+            error_session('Post not found');
+            return redirect()->route('admin.post.index');
+        }
+
+        return view('admin.post.edit', [
+            'title' => 'Edit post',
+            'data' => $post,
+            'breadcrumb' => breadcrumb([
+                'post' => route('admin.post.index'),
+                'edit' => route('admin.post.edit', $id)
+            ]),
+        ]);
     }
 
     /**
@@ -99,7 +129,45 @@ class PostListController extends WebController
      */
     public function update(Request $request, $id)
     {
-        //
+        $post = Post::find($id);
+
+        if (!$post) {
+            error_session('Post not found');
+            return redirect()->route('admin.post.index');
+        }
+
+        $validatedData = $request->validate([
+            'title' => 'required',
+            'type' => 'required',
+            'file' => 'nullable|file',
+            'thumbnail' => 'nullable|file',
+            'caption' => 'required',
+            'serving_size' => 'required|numeric',
+            'hours' => 'required|numeric',
+            'minutes' => 'required|numeric',
+            'dietary' => 'nullable|string',
+            'tags' => 'nullable|string',
+            'not_interested' => 'nullable|boolean',
+            'cuisines' => 'nullable|string',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $validatedData['file'] = $this->uploadFile($request, 'file');
+        }
+
+        if ($request->hasFile('thumbnail')) {
+            $validatedData['thumbnail'] = $this->uploadFile($request, 'thumbnail');
+        }
+
+        $post->update($validatedData);
+
+        return redirect()->route('admin.post.show', $post->id)
+            ->with('success', 'Post updated successfully');
+    }
+
+    private function uploadFile(Request $request, $fieldName)
+    {
+        return $request->file($fieldName)->store('posts');
     }
 
     /**
@@ -162,36 +230,37 @@ class PostListController extends WebController
             ->make(true);
     }
 
-    public function postDetailsEdit($id){
-
+    public function postDetailsEdit($id)
+    {
         $data = $this->ingredient_obj->find($id);
         if (isset($data) && !empty($data)) {
             return view('admin.post.create', [
                 'title' => 'Ingredients Update',
                 'breadcrumb' => breadcrumb([
-                    'post' => route('admin.post.show',$data->post_id),
+                    'post' => route('admin.post.show', $data->post_id),
                     'edit' => route('admin.post.post_details_edit', $id),
                 ]),
             ])->with(compact('data'));
+        } else {
+            return redirect()->route('admin.post.index')->with('error', 'Ingredient not found');
         }
-        return redirect()->route('admin.post.show',$data->post_id);
     }
 
-    public function postDetailsUpdate(Request $request ,$id){
+    public function postDetailsUpdate(Request $request, $id)
+    {
         $data =$this->ingredient_obj->find($id);
         if(isset($data) && !empty($data)){
             $return_data = $request->all();
             $this->ingredient_obj->saveIngredient($return_data,$id,$data);
             success_session('Ingredients updated successfully');
-        }
-        else{
+        } else {
             error_session('Ingredients not found');
         }
         return redirect()->route('admin.post.show',$data->post_id);
     }
 
-
-    public function postDetailsDestroy($id){
+    public function postDetailsDestroy($id)
+    {
         $data = Ingredient::where('id', $id)->first();
         if ($data) {
             $data->delete();
@@ -205,6 +274,7 @@ class PostListController extends WebController
     public function instruction(Request $request)
     {
         $data = Instruction::where("post_id",$request->id)->orderBy('id','ASC')->get();
+
         return Datatables::of($data)
             ->addIndexColumn()
             ->editColumn('title', function ($row) {

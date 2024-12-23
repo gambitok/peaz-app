@@ -1,80 +1,68 @@
 @extends('layouts.master')
 
-@section('title')
-    @lang('translation.Form_Layouts')
+@section('css')
+    <link href="{{ URL::asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"/>
 @endsection
 
 @section('content')
 @include('components.breadcum')
     <div class="row">
-        <div class="col-12">
-        </div>
-        <div class="card">
-            <div class="card-body">
-                @if(isset($data) && !empty($data))
-                    <form class="" name="main_form" id="main_form" method="post" action="{{route('admin.post.post_details_update',$data->id)}}">
-                        @method('PATCH')
-                        @else
-                            <!-- <form class="" name="main_form" id="main_form" method="post" action="{{route('admin.post.post_details_update.store')}}" > -->
-                        @endif
-                        {!! get_error_html($errors) !!}
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body" style="font-size:14px;">
+                    <div class="justify-content-between">
+                        <span class="card-title">Edit Post</span>
+                    </div>
+                    <form action="{{ route('admin.post.update', $data->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        <div class="mb-3 row">
-                            <label for="example-text-input" class="col-md-2 col-form-label"><span class="text-danger">*</span>Name</label>
-                            <div class="col-md-10">
-                                <input type="text" name="name" id="name" class="form-control" value="{{($data->name) ?? ''}}">
-                            </div>
+                        @method('PUT')
+                        <div class="form-group">
+                            <label for="title">Title</label>
+                            <input type="text" name="title" id="title" class="form-control" value="{{ $data->title }}" required>
                         </div>
-                        <div class="mb-3 row">
-                            <label for="example-text-input" class="col-md-2 col-form-label">{{__('Type')}}</label>
-                            <div class="col-md-10">
-                                <input type="text" name="type" id="type" class="form-control" value="{{($data->type) ?? ''}}">
-                            </div>
+                        <div class="form-group">
+                            <label for="file">File</label>
+                            <input type="file" name="file" id="file" class="form-control">
+                            @if($data->file)
+                                <a href="{{ $data->file }}" target="_blank">Show File</a>
+                            @endif
                         </div>
-                        <div class="mb-3 row">
-                            <label for="example-text-input" class="col-md-2 col-form-label">{{__('Measurement')}}</label>
-                            <div class="col-md-10">
-                                <input type="text" name="measurement" id="measurement" class="form-control" value="{{($data->measurement) ?? ''}}">
-                            </div>
+                        <div class="form-group">
+                            <label for="thumbnail">Thumbnail</label>
+                            <input type="file" name="thumbnail" id="thumbnail" class="form-control">
+                            @if($data->thumbnail)
+                                <a href="{{ $data->thumbnail }}" target="_blank">Show Thumbnail</a>
+                            @endif
                         </div>
-                        <div class="kt-portlet__foot">
-                            <div class=" ">
-                                <div class="row">
-                                    <div class="wd-sl-modalbtn">
-                                        <button type="submit" class="btn btn-success waves-effect waves-light" id="save_changes">Submit</button>
-                                        <a href="{{route('admin.post.show',$data->post_id)}}" id="close"><button type="button" class="btn btn-outline-secondary waves-effect">Cancel</button></a>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="form-group">
+                            <label for="hours">Hours</label>
+                            <input type="number" name="hours" id="hours" class="form-control" value="{{ $data->hours }}">
                         </div>
+                        <div class="form-group">
+                            <label for="minutes">Minutes</label>
+                            <input type="number" name="minutes" id="minutes" class="form-control" value="{{ $data->minutes }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="tags">Tags</label>
+                            <input type="text" name="tags" id="tags" class="form-control" value="{{ $data->tags }}">
+                            <small class="text-muted">Separate tags with commas (e.g., "Tag1, Tag2").</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="dietary">Dietary</label>
+                            <input type="text" name="dietary" id="dietary" class="form-control" value="{{ $data->dietary }}">
+                            <small class="text-muted">Separate dietary types with commas (e.g., "Vegan, Gluten-Free").</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
                     </form>
+                </div>
             </div>
         </div>
     </div>
 @endsection
 
 @section('script')
-    <script>
-        $(function() {
-            $("#main_form").validate({
-                rules: {
-                    name: {
-                        required: true,
-                        maxlength: 30,
-                    },
-
-                },
-                messages: {
-                    name: {
-                        required: "Please Enter Title",
-                        maxlength: 'The title may not be greater than 30 characters.',
-                    },
-                },
-                submitHandler: function(form) {
-                    addOverlay();
-                    form.submit();
-                }
-            });
-        });
-    </script>
+    <script src="{{ asset('/assets/admin/vendors/general/validate/jquery.validate.min.js') }}"></script>
+    <script src="{{ asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js"></script>
 @endsection

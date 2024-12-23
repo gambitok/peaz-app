@@ -1,19 +1,21 @@
 @extends('layouts.master')
-@section('css')
 
+@section('css')
 <!-- DataTables -->
 <link href="{{ URL::asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"/>
 @endsection
+
 @section('content')
 
 @include('components.breadcum')
 <div class="row">
     <div class="col-md-3">
-        <div class="card ">
+        <div class="card">
             <div class="card-body" style="font-size:14px;">
-            <div class="card-title">
-                    Post  Details
+                <div class="justify-content-between">
+                    <span class="card-title">Post Details</span>
+                    <a href="{{ route('admin.post.edit', $data->id) }}">Edit Post</a>
                 </div>
                  <!-- <div class="card-title">
                     <div class="kt-widget__media text-center w-100">
@@ -41,7 +43,7 @@
                     <div>{{$data->title}}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">File or Image:</span>
+                    <span class="font-weight-bold">File:</span>
                     <a href="{{$data->file}}"  target="_blank">Show File</a>
                 </div>
                 <div class="d-flex justify-content-between">
@@ -49,14 +51,12 @@
                     <a href="{{$data->thumbnail}}"  target="_blank">Show File</a>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">hours: mint</span>
+                    <span class="font-weight-bold">Time:</span>
                     <div>{{$data->hours}}h {{$data->minutes}}min</div>
                 </div>
             </div>
-            
         </div>
-      
-        <div class="card ">
+        <div class="card">
             <div class="card-body" style="font-size:14px;">
             <div class="card-title">
                 Tags
@@ -65,27 +65,26 @@
                     <thead>
                         <tr>
                             <th>Id</th>
-                            <th>Name</th>                            
+                            <th>Name</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if($data->tags)
-                        
+
                             @foreach(explode(",",$data->tags) as $key => $value)
                             <tr>
                             <td>{{$key+1}}</td>
                             <td>{{$value}}</td>
                             </tr>
                             @endforeach
-                            
+
                         @endif
                     </tbody>
                 </table>
-                
             </div>
-            
+
         </div>
-        <div class="card ">
+        <div class="card">
             <div class="card-body" style="font-size:14px;">
             <div class="card-title">
                Dietary
@@ -94,65 +93,55 @@
                     <thead>
                         <tr>
                             <th>Id</th>
-                            <th>Name</th>  
+                            <th>Name</th>
                         </tr>
                     </thead>
                     <tbody>
 
-                    @if($data->tags)
-                        
+                    @if($data->dietary)
+
                             @foreach(explode(",",$data->dietary) as $key => $value)
                             <tr>
                             <td>{{$key+1}}</td>
                             <td>{{$value}}</td>
                             </tr>
                             @endforeach
-                            
+
                         @endif
                     </tbody>
                 </table>
-                
             </div>
-            
         </div>
     </div>
     <div class="col-md-9">
-        <div class="card ">
+        <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                   Ingredient 
+                   Ingredient
                 </div>
                 <div>
                 <table id="listResults" class="table dt-responsive mb-4  nowrap w-100 mb-">
                     <thead>
                         <tr>
-                            
+
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
-                <!-- <table id="instruction" class="table dt-responsive mb-4  nowrap w-100 mb-">
-                    <thead>
-                        <tr>
-                            
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table> -->
                 </div>
             </div>
         </div>
-        <div class="card ">
+        <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                Instruction 
+                Instruction
                 </div>
                 <div>
-                
+
                 <table id="instruction" class="table dt-responsive mb-4  nowrap w-100 mb-">
                     <thead>
                         <tr>
-                            
+
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -161,10 +150,6 @@
             </div>
         </div>
     </div>
-
-    
-
-
 </div>
 @endsection
 
@@ -181,13 +166,13 @@
             "order": [
                 [0, "DESC"]
             ],
-            "ajax": 
+            "ajax":
             {
                 'url':"{{route('admin.post.post_details')}}",
                 'data': {
                     id:'{{ $data->id}}',
                 },
-                
+
              },
             "columns": [
                     {
@@ -206,24 +191,24 @@
                     {
                         "data": "type",
                         "title": "Type"
-                    }, 
+                    },
                     {
                         "data": "action",
                         "title": "Action"
-                    }, 
-                                     
+                    },
+
                 ],
         });
 
         Table = $('#instruction').DataTable({
             "processing": true,
             "serverSide": true,
-            "ajax": 
+            "ajax":
             {
                 'url':"{{route('admin.post.instruction')}}",
                 'data': {
                     id:'{{ $data->id}}',
-                },  
+                },
              },
             "columns": [
                     {
@@ -250,7 +235,7 @@
                     {
                         "data": "description",
                         "title": "Description"
-                    },                 
+                    },
                 ],
         });
 
@@ -258,6 +243,6 @@
 
         Table = $('#dietary').DataTable();
     });
-            
+
 </script>
 @endsection

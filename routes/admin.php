@@ -4,7 +4,6 @@ use App\Http\Controllers\Admin\InterestedListController;
 use App\Http\Controllers\Admin\PostListController;
 use Illuminate\Support\Facades\Route;
 
-
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
     Route::get('login', 'GeneralController@Panel_Login')->name('login');
@@ -22,12 +21,12 @@ Route::group(['middleware' => 'Is_Admin'], function () {
     Route::get('/site_settings', 'General\GeneralController@get_site_settings')->name('get_site_settings');
     Route::post('/site_settings', 'General\GeneralController@site_settings')->name('site_settings');
     Route::group(['namespace' => 'Admin'], function () {
-        //        User Module
+        // User Module
         Route::get('user/listing', 'UsersController@listing')->name('user.listing');
         Route::get('user/status_update/{id}', 'UsersController@status_update')->name('user.status_update');
         Route::resource('user', 'UsersController')->except(['create', 'store']);
 
-        //Content Module
+        // Content Module
         Route::resource('content', 'ContentController')->except(['show', 'create', 'store', 'destroy']);
         Route::get('content/listing', 'ContentController@listing')->name('content.listing');
 

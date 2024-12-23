@@ -7,7 +7,77 @@
 @section('content')
 
 @include('components.breadcum')
+<div class="row">@section('content')
+
+@include('components.breadcum')
 <div class="row">
+    <div class="col-12">
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form class="" name="main_form" id="main_form" method="post" action="{{route('admin.user.update',$data->id)}}" enctype="multipart/form-data">
+                 {!! get_error_html($errors) !!}
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="country_code" id="country_code" value="{{empty($data->country_code)?"+1":$data->country_code}}">
+
+                <div class="mb-3 row">
+                    <label for="example-text-input" class="col-md-2 col-form-label">{{__('Profile Image')}}</label>
+                    <div class="col-md-10">
+                        <input type="file" accept="image/*" id="profile_image" class="form-control" name="profile_image">
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label for="example-text-input" class="col-md-2 col-form-label"><span class="text-danger">*</span>Name</label>
+                    <div class="col-md-10">
+                        <input type="text" name="name" id="name" class="form-control" value="{{$data->name}}" maxlength="50">
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label for="example-text-input" class="col-md-2 col-form-label"><span class="text-danger">*</span>Username</label>
+                    <div class="col-md-10">
+                        <input type="text" name="username" id="username" class="form-control" value="{{$data->username}}" maxlength="50">
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label for="example-text-input" class="col-md-2 col-form-label"><span class="text-danger">*</span>Email</label>
+                    <div class="col-md-10">
+                        <input type="email" name="email" id="email" class="form-control" value="{{$data->email}}">
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label for="example-text-input" class="col-md-2 col-form-label">Biography</label>
+                    <div class="col-md-10">
+                        <input type="text" name="bio" id="bio" class="form-control" value="{{$data->bio}}" >
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label for="example-text-input" class="col-md-2 col-form-label">Website</label>
+                    <div class="col-md-10">
+                        <input type="text" name="website" id="website" class="form-control" value="{{$data->website}}" >
+                    </div>
+                </div>
+
+                <div class="kt-portlet__foot">
+                    <div class=" ">
+                        <div class="row">
+                            <div class="wd-sl-modalbtn">
+                                <button  type="submit" class="btn btn-success waves-effect waves-light" id="save_changes">Submit</button>
+                                <a href="{{route('admin.user.index')}}" id="close"><button type="button" class="btn btn-outline-secondary waves-effect">Cancel</button></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
     <div class="col-12">
     </div>
     <div class="card">
