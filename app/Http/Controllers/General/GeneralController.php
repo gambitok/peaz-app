@@ -195,30 +195,38 @@ class GeneralController extends WebController
     {
         $user_data = $request->user();
         $rules = [
-            'profile_image' => ['file', 'image'], 
+            'profile_image' => ['file', 'image'],
             'name' => ['required', 'max:255'],
             'username' => ['required', 'max:255', Rule::unique('users')->ignore($user_data->id)->whereNull('deleted_at')],
             'email' => ['required', 'max:255', Rule::unique('users')->ignore($user_data->id)->whereNull('deleted_at')],
         ];
         $req = $request->validate($rules);
+
+        // Update user data
         $user_data->update([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
         ]);
-        $profile_image = $user_data->getRawOriginal('profile_image');
 
-        
+        // Handle profile image upload
         if ($request->hasFile('profile_image')) {
+            $profile_image = $user_data->getRawOriginal('profile_image');
             $up = upload_file('profile_image', 'user_profile_image');
             if ($up) {
+                // Delete old profile image
                 un_link_file($profile_image);
-                $profile_image = $up;
+                // Update user profile image
                 $user_data->update([
-                    'profile_image' => $profile_image,
+                    'profile_image' => $up,
                 ]);
+            } else {
+                // Handle failed image upload
+                error_session('Failed to upload profile image');
+                return redirect()->back();
             }
         }
+
         success_session('Profile Updated successfully');
         return redirect()->back();
     }

@@ -9,6 +9,7 @@
     "license": "MIT",
     "require": {
         "php": "7.2.34",
+        "aws/aws-sdk-php": "^3.336",
         "doctrine/dbal": "^2.12.1",
         "fideloper/proxy": "^4.2",
         "fruitcake/laravel-cors": "^2.0.2",

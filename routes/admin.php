@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\InterestedListController;
 use App\Http\Controllers\Admin\PostListController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FileUploadController;
 
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
@@ -12,7 +13,13 @@ Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
 });
 
 Route::group(['middleware' => 'Is_Admin'], function () {
+
+
     Route::get('/', 'General\GeneralController@Admin_dashboard')->name('dashboard');
+
+    Route::get('/upload', [FileUploadController::class, 'showForm']);
+    Route::post('/upload', [FileUploadController::class, 'uploadFile'])->name('file.upload');
+
     Route::get('/totalusers', 'General\GeneralController@totalusers')->name('totalusers');
     Route::get('/profile', 'General\GeneralController@get_profile')->name('profile');
     Route::post('/profile', 'General\GeneralController@post_profile')->name('post_profile');

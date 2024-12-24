@@ -1,15 +1,16 @@
 @extends('layouts.master')
 
-@section('content')
 @section('title')
 @lang('translation.Form_Layouts')
-@endsection @section('content')
-@include('components.breadcum')
+@endsection
 
+@section('content')
+@include('components.breadcum')
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
+
                 <form class="" name="main_form" id="main_form" class="main_form" method="post" enctype="multipart/form-data" action="{{route('admin.post_profile')}}">
                     {!! get_error_html($errors) !!}
                     {!! success_error_view_generator() !!}
@@ -22,7 +23,6 @@
                             </div>
                             <div class="col-md-2">
                                 <a target="_blanck" href="{{$user->profile_image}}"><img src="{{$user->profile_image}}" class="rounded-circle" alt="img" height="40" width="40" /></a>
-
                             </div>
                         </div>
                         <div class="mb-3 row">
@@ -71,8 +71,6 @@
 
 <script>
     $(function() {
-
-
         jQuery.validator.addMethod("alphanumeric", function(value, element) {
             return this.optional(element) || /^\w+$/i.test(value);
         }, "Letters, numbers, and underscores only please");

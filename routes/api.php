@@ -3,6 +3,9 @@
 use App\Http\Controllers\Api\V2\UserController;
 use App\Http\Controllers\Api\V2\PostController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\S3Controller;
+
+Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
 
 Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::put('register', [UserController::class, 'register']);
