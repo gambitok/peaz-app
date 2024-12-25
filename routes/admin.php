@@ -14,7 +14,6 @@ Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
 
 Route::group(['middleware' => 'Is_Admin'], function () {
 
-
     Route::get('/', 'General\GeneralController@Admin_dashboard')->name('dashboard');
 
     Route::get('/upload', [FileUploadController::class, 'showForm']);
