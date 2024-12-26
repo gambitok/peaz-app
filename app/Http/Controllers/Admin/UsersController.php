@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\WebController;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class UsersController extends WebController
@@ -126,26 +127,34 @@ class UsersController extends WebController
             ]);
         }
         error_session('user not found');
+
         return redirect()->route('admin.user.index');
     }
 
     public function update(Request $request, $id)
     {
         $data = User::find($id);
-        if ($data) {
 
+        if ($data) {
              $request->validate([
-//                'username' => ['required', 'username', Rule::unique('users')->ignore($id)->whereNull('deleted_at')],
                 'email' => ['required', 'email', Rule::unique('users')->ignore($id)->whereNull('deleted_at')],
                 'profile_image' => ['file', 'image'],
             ]);
+
             $profile_image = $data->getRawOriginal('profile_image');
+
             if ($request->hasFile('profile_image')) {
-                $up = upload_file('profile_image', 'user_profile_image');
-                if ($up) {
-                    $profile_image = $up;
+
+                $path = $request->file('profile_image')->store('uploads/users', 's3');
+
+                if ($path) {
+
+                    Storage::disk('s3')->setVisibility($path, 'public');
+
+                    $profile_image = $path;
                 }
             }
+
            $userdata = [
                  'email' => $request->email,
                  'profile_image' => $profile_image,
@@ -154,11 +163,13 @@ class UsersController extends WebController
                  'bio' =>  $request->bio,
                  'website' =>  $request->website,
            ];
+
             $data->update($userdata);
             success_session('user updated successfully');
         } else {
             error_session('user not found');
         }
+
         return redirect()->route('admin.user.index');
     }
 

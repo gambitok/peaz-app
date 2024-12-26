@@ -23,8 +23,13 @@
 
                 <div class="mb-3 row">
                     <label for="example-text-input" class="col-md-2 col-form-label">{{__('Profile Image')}}</label>
-                    <div class="col-md-10">
+                    <div class="col-md-8">
                         <input type="file" accept="image/*" id="profile_image" class="form-control" name="profile_image">
+                    </div>
+                    <div class="col-md-2">
+                        @if($data->profile_image)
+                            <img src="{{$data->profile_image}}" alt="image" width="40" height="40">
+                        @endif
                     </div>
                 </div>
 

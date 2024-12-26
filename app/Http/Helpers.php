@@ -24,7 +24,7 @@ if (!function_exists('register_user_authy')) {
             $sid = env("TWILIO_ACCOUNT_SID");
             $token = env("TWILIO_AUTH_TOKEN");
             $twilio = new Client($sid, $token);
-               
+
             $verification = $twilio->verify
                 ->v2
                 ->services(env("TWILIO_SERVICE_TOKEN"))
@@ -40,7 +40,7 @@ if (!function_exists('register_user_authy')) {
     }
 }
 
-      
+
 if (!function_exists('verify_token_authy')) {
 
     /**
@@ -56,7 +56,7 @@ if (!function_exists('verify_token_authy')) {
         try {
             $sid = getenv("TWILIO_ACCOUNT_SID");
             $token = getenv("TWILIO_AUTH_TOKEN");
-            $twilio = new Client($sid, $token);  
+            $twilio = new Client($sid, $token);
             $verification_check = $twilio->verify
                 ->v2
                 ->services(env("TWILIO_SERVICE_TOKEN"))
@@ -171,7 +171,7 @@ function get_asset($val = "", $file_exits_check = true, $no_image_available = nu
     } else {
         return asset($no_image_available);
     }
-} 
+}
 
 function print_title($title)
 {
@@ -351,7 +351,7 @@ function breadcrumb($aBradcrumb = array())
 
             $content .=  '<li class="breadcrumb-item"> <a href="'.$link.'">'. ucfirst($key).'</a>';
 
-           
+
             // $content .= "<a href='" . $link . "' class='kt-subheader__breadcrumbs-link'>" . ucfirst($key) . "</a>";
             // if ($total_bread_crumbs != $i) {
             //     $content .= "<span class='kt-subheader__breadcrumbs-separator'></span>";
@@ -422,7 +422,7 @@ function send_push($user_id = 0, $data = [], $notification_entry = false)
     if ($push_data['user_id'] !== $push_data['from_user_id']) {
 //        $to_user_data = User::find($user_id);
 //        if ($to_user_data) {
-        $get_user_tokens = DeviceToken::get_user_tokens($user_id);        
+        $get_user_tokens = DeviceToken::get_user_tokens($user_id);
         $fire_base_header = ["Authorization: key=" . config('constants.firebase_server_key'), "Content-Type: application/json"];
         if (count($get_user_tokens)) {
             foreach ($get_user_tokens as $value) {
@@ -666,7 +666,7 @@ function upload_base_64_img($base64 = "", $path = "uploads/product/")
 }
 function upload_file($file_name = "", $path = null)
 {
-   try {
+    try {
     $file = "";
     $request = \request();
     if ($request->hasFile($file_name) && $path) {
@@ -680,11 +680,12 @@ function upload_file($file_name = "", $path = null)
         die();
     }
     return $file;
-   } catch (\Throwable $th) {
-     echo 'An error occured ' . $th->getMessage();
-     return null;
-   }
+    } catch (\Throwable $th) {
+        echo 'An error occured ' . $th->getMessage();
+        return null;
+    }
 }
+
 function get_fancy_box_html_new($path = "", $class = "img_75"): string
 {
     return '<a class="fancybox" href="' . $path . '"><img class="' . $class . '" src="' . $path . '" alt="image" width=40 height=40></a>';

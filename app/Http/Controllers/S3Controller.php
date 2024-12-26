@@ -31,8 +31,8 @@ class S3Controller extends Controller
         $fileName = $request->file_name; // e.g., 'image.jpg'
 
         // Define allowed extensions
-        $imageExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-        $videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
 
         // Validate folder input
         if ($folder === 'users') {

@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\InterestedListController;
-use App\Http\Controllers\Admin\PostListController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileUploadController;
 

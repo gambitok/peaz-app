@@ -9,15 +9,12 @@ use App\Post;
 use DataTables;
 use App\Ingredient;
 use App\Instruction;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PostListController extends WebController
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public $ingredient_obj;
     public function __construct()
     {
@@ -35,39 +32,16 @@ class PostListController extends WebController
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         //
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
         $post = Post::with(['instruction'])->find($id);
@@ -95,12 +69,6 @@ class PostListController extends WebController
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
         $post = Post::find($id);
@@ -120,49 +88,100 @@ class PostListController extends WebController
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         $post = Post::find($id);
 
-        if (!$post) {
-            error_session('Post not found');
-            return redirect()->route('admin.post.index');
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+
+        $fileSrc = '';
+        $thumbnailSrc = '';
+
+        if ($post) {
+            $request->validate([
+                'title' => 'required',
+                'file' => 'nullable|file',
+                'thumbnail' => 'nullable|file',
+                'hours' => 'required|numeric',
+                'minutes' => 'required|numeric',
+                'tags' => 'nullable|string',
+                'dietary' => 'nullable|string',
+            ]);
+
+            if ($request->hasFile('file')) {
+
+                $extension = strtolower($request->file('file')->getClientOriginalExtension());
+
+                if (in_array($extension, $imageExtensions)) {
+                    $path = $request->file('file')->store('uploads/posts/images', 's3');
+
+                    if ($path) {
+
+                        Storage::disk('s3')->setVisibility($path, 'public');
+
+                        $fileSrc = $path;
+                    }
+                }
+
+                if (in_array($extension, $videoExtensions)) {
+                    $path = $request->file('file')->store('uploads/posts/videos', 's3');
+
+                    if ($path) {
+
+                        Storage::disk('s3')->setVisibility($path, 'public');
+
+                        $fileSrc = $path;
+                    }
+                }
+            }
+
+            if ($request->hasFile('thumbnail')) {
+
+                $extension = strtolower($request->file('thumbnail')->getClientOriginalExtension());
+
+                if (in_array($extension, $imageExtensions)) {
+                    $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/images', 's3');
+
+                    if ($path) {
+
+                        Storage::disk('s3')->setVisibility($path, 'public');
+
+                        $thumbnailSrc = $path;
+                    }
+                }
+
+                if (in_array($extension, $videoExtensions)) {
+                    $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/videos', 's3');
+
+                    if ($path) {
+
+                        Storage::disk('s3')->setVisibility($path, 'public');
+
+                        $thumbnailSrc = $path;
+                    }
+                }
+            }
+
+            $postData = [
+                'title' => $request->title,
+                'file' => $fileSrc ?: $post->file,
+                'thumbnail' => $thumbnailSrc ?: $post->thumbnail,
+                'hours' =>  $request->hours,
+                'minutes' =>  $request->minutes,
+                'tags' =>  $request->dietary,
+                'dietary' =>  $request->dietary,
+            ];
+
+            $post->update($postData);
+
+            return redirect()->route('admin.post.show', $post->id)
+                ->with('success', 'Post updated successfully');
+        } else {
+            return redirect()->route('admin.post.index')
+                ->with('error', 'Post not found');
         }
 
-        $validatedData = $request->validate([
-            'title' => 'required',
-            'type' => 'required',
-            'file' => 'nullable|file',
-            'thumbnail' => 'nullable|file',
-            'caption' => 'required',
-            'serving_size' => 'required|numeric',
-            'hours' => 'required|numeric',
-            'minutes' => 'required|numeric',
-            'dietary' => 'nullable|string',
-            'tags' => 'nullable|string',
-            'not_interested' => 'nullable|boolean',
-            'cuisines' => 'nullable|string',
-        ]);
-
-        if ($request->hasFile('file')) {
-            $validatedData['file'] = $this->uploadFile($request, 'file');
-        }
-
-        if ($request->hasFile('thumbnail')) {
-            $validatedData['thumbnail'] = $this->uploadFile($request, 'thumbnail');
-        }
-
-        $post->update($validatedData);
-
-        return redirect()->route('admin.post.show', $post->id)
-            ->with('success', 'Post updated successfully');
     }
 
     private function uploadFile(Request $request, $fieldName)
@@ -170,12 +189,6 @@ class PostListController extends WebController
         return $request->file($fieldName)->store('posts');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
         $data = Post::where('id', $id)->first();
@@ -201,7 +214,7 @@ class PostListController extends WebController
                     'id' => $row->id,
                     'url' => [
                         'delete' => route('admin.post.destroy', $row->id),
-                        // 'edit' => route('admin.interestedlist.edit', $row->id),
+                         'edit' => route('admin.post.edit', $row->id),
                         'view' => route('admin.post.show', $row->id),
                     ]
                 ];
