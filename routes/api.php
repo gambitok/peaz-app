@@ -8,10 +8,16 @@ use App\Http\Controllers\S3Controller;
 Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
 
 Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
-    Route::put('register', [UserController::class, 'register']);
     Route::post('login', [UserController::class, 'login']);
-    Route::get('get_token', [UserController::class, 'getToken']);
+});
+Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2', 'middleware' => 'auth.api'], function () {
+    Route::get('profile', [UserController::class, 'getProfile']);
     Route::post('logout', [UserController::class, 'logout']);
+});
+
+Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
+    Route::put('register', [UserController::class, 'register']);
+    Route::get('get_token', [UserController::class, 'getToken']);
 
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::get('users/searchProfile', [UserController::class, 'searchProfile'])->name('users.searchProfile');
@@ -22,7 +28,7 @@ Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::post('user/create', 'UserController@addUserById');
     Route::delete('user/{id}', 'UserController@deleteUser');
 
-    Route::get('profile/{id}', 'UserController@getUserProfile');
+    //Route::get('profile/{id}', 'UserController@getUserProfile');
 });
 
 Route::prefix('v2/posts')->group(function () {

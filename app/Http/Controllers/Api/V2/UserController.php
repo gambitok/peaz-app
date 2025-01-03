@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -29,8 +30,18 @@ class UserController extends Controller
         }
 
         $token = $user->createToken('YourAppName')->accessToken;
+//        $token = Str::random(60);
+
+        $user->api_token = $token;
+        $user->save();
 
         return response()->json(['token' => $token]);
+    }
+
+    public function getProfile()
+    {
+        $user = auth()->user();
+        return response()->json(['user' => $user]);
     }
 
     public function getToken(Request $request)

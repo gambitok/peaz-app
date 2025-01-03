@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\General\SendOTPmail; 
+use App\Mail\General\SendOTPmail;
 use App\Mail\General\User_Rest_Password;
 use App\OtpRequestLog;
 use App\SocialAccounts;
@@ -28,15 +28,17 @@ class GuestController extends ResponseController
             'password' => ['required'],
             'push_token' => ['nullable'],
             'device_type' => ['required', 'in:android,ios'],
-            'device_id' => ['required','max:255'], 
+            'device_id' => ['required','max:255'],
         ];
         $messages = [
             'email.exists' => __('api.err_email_not_register'),
             'country_code.required_if'=> __('api.err_country_code'),
         ];
+
         $this->directValidation($rules, $messages);
         $find_field = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? "email" : "username";
-        $attempt = [$find_field => $request->email, 'password' => $request->password,'type' => 'user', 'status' => 'active'];
+        $attempt = [$find_field => $request->email, 'password' => $request->password, 'type' => 'user', 'status' => 'active'];
+
         if (Auth::attempt($attempt)) {
             $token = User::AddTokenToUser();
             $this->sendResponse(200, __('api.suc_user_login'), $this->get_user_data($token));
@@ -44,7 +46,6 @@ class GuestController extends ResponseController
             $this->sendError(__('api.err_fail_to_auth'), false);
         }
     }
-
 
     public function signup(Request $request)
     {
@@ -86,10 +87,10 @@ class GuestController extends ResponseController
             Auth::user()->social_logins()->updateOrCreate(
                 ['provider' => $provider, 'user_id' => $user->id],
                 ['provider' => $provider, 'provider_id' => $social_id]
-            ); 
+            );
         }
          $this->sendResponse(200, __('api.suc_user_register'), $this->get_user_data($token));
-        
+
         } else {
             $this->sendError(__('api.err_something_went_wrong'), false);
         }
@@ -109,9 +110,9 @@ class GuestController extends ResponseController
         $user = Otpverify::updateOrCreate(
             ['email' => $request->email],
             ['otp' => $otp]
-        );  
+        );
          $data = user::where('email',$request->email)->update(['otp' => $otp]);
-        $user = user::where('email',$request->email)->first(); 
+        $user = user::where('email',$request->email)->first();
         Mail::to($request->email)->send(new User_Rest_Password($user));
         return ['status' => 200, 'message' => 'Email send successfully','reset_token'=>$user->reset_token];
     }
@@ -147,7 +148,6 @@ class GuestController extends ResponseController
         $this->sendResponse(200, __('api.succ'));
     }
 
-
     public function version_checker(Request $request)
     {
         $type = $request->type;
@@ -172,10 +172,11 @@ class GuestController extends ResponseController
             $this->sendResponse(412, __('api.err_new_version_is_available'), $data);
         }
     }
-        public function sendOTPMobile(Request $request)
+
+    public function sendOTPMobile(Request $request)
     {
         print("Inside sendOTPMobile OhOh \n");
-        $this->directValidation([ 
+        $this->directValidation([
             'country_code' => ['required', 'max:4'],
             'mobile' => ['required','numeric'],
         ]);
@@ -195,10 +196,8 @@ class GuestController extends ResponseController
         $this->sendError(__("api.err_something_went_wrong"));
     }
 
-       
-
     public function verifyOTPmobile(Request $request)
-    { 
+    {
         $this->directValidation([
             'otp' => ['required', 'numeric'],
             'country_code' => ['required', 'max:5'],
@@ -222,18 +221,16 @@ class GuestController extends ResponseController
       //  $this->sendError(__("api.err_invalid_api"));
     }
 
-    
-
     public function sendOTPEmail(Request $request)
     {
-        $this->directValidation([ 
+        $this->directValidation([
             'email' => ['required'],
         ]);
         $otp = rand(111111, 999999);
         $user = Otpverify::updateOrCreate(
         ['email' => $request->email],
         ['otp' => $otp]
-    );  
+    );
         if($user){
             $mail = Mail::to($request->email)->send(new SendOTPmail($user));
             if (Mail::failures()) {
@@ -241,7 +238,7 @@ class GuestController extends ResponseController
 
                 $this->sendError(__("api.err_something_went_wrong"));
             } else {
-                $this->sendResponse(200, __('api.succ_sent_mail'), false);  
+                $this->sendResponse(200, __('api.succ_sent_mail'), false);
                 print("Mail sent \n " . $mail . "\n");
 
             }
@@ -253,7 +250,7 @@ class GuestController extends ResponseController
     }
 
     public function verifyOTPemail(Request $request)
-    { 
+    {
         \Log::info('OTP value: ' . $request->otp);
         \Log::info('Current time: ' . Carbon::now());
         \Log::info('Subtracting 1 minute: ' . Carbon::now()->subMinutes(1));
@@ -289,9 +286,9 @@ class GuestController extends ResponseController
                 $this->sendResponse(201, __('api.otp_verfiy_succ'));
             }
           $this->sendError(__('api.err_fail_to_auth'), false);
-        
+
         // $reset_token = User::GenerateResetToken($request);
-        // $this->sendResponse(200, __('Email Successfully Verfiy'), ["token" => $reset_token]);    
+        // $this->sendResponse(200, __('Email Successfully Verfiy'), ["token" => $reset_token]);
     }
 
     public function resetPassword(Request $request)
@@ -303,6 +300,7 @@ class GuestController extends ResponseController
         User::UpdatePassword($request);
         $this->sendResponse(200, __('Successfully password rest'));
     }
+
     public function verifyOTP(Request $request)
     {
         $this->directValidation([
@@ -321,8 +319,6 @@ class GuestController extends ResponseController
         $this->sendResponse(200, __('Email successfully verfiy'), ["reset_token" => $reset_token]);
     }
 
-
-
     public function check_social_ability(Request $request)
     {
         $this->directValidation([
@@ -332,12 +328,12 @@ class GuestController extends ResponseController
             'push_token' => ['nullable'],
             'provider' => ['required', 'in:apple,google,facebook'],
         ]);
-       
+
         $provider = $request->provider;
         $user_id = 0;
         $email = $request->email;
         $social_id = $request->social_id;
-     
+
         if (!$user_id) {
             $is_user_exits = SocialAccounts::where(['provider' => $provider, 'provider_id' => $social_id])
                 ->has('user')->with('user')->first();
@@ -354,7 +350,7 @@ class GuestController extends ResponseController
                 'email' => $email,
                 // 'name' => ($request->name) ?? "",
             ]);
-            $user_id = $user->id;   
+            $user_id = $user->id;
         }
         if ($user_id) {
             Auth::loginUsingId($user_id);
@@ -369,6 +365,4 @@ class GuestController extends ResponseController
         }
     }
 
-
-  
 }
