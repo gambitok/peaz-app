@@ -4,31 +4,25 @@ use App\Http\Controllers\Api\V2\UserController;
 use App\Http\Controllers\Api\V2\PostController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\S3Controller;
+use App\Http\Controllers\PostLikeController;
 
 Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
 
 Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::post('login', [UserController::class, 'login']);
-});
-Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2', 'middleware' => 'auth.api'], function () {
-    Route::get('profile', [UserController::class, 'getProfile']);
-    Route::post('logout', [UserController::class, 'logout']);
-});
-
-Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::put('register', [UserController::class, 'register']);
     Route::get('get_token', [UserController::class, 'getToken']);
-
+    Route::get('getProfile', [UserController::class, 'getProfile'])->middleware('auth.api');
+    Route::post('logout', [UserController::class, 'logout'])->middleware('auth.api');
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::get('users/searchProfile', [UserController::class, 'searchProfile'])->name('users.searchProfile');
-
     Route::get('user', 'UserController@getUsers');
     Route::get('user/{id}', 'UserController@getUser');
     Route::put('user/{id}', 'UserController@updateUser');
     Route::post('user/create', 'UserController@addUserById');
     Route::delete('user/{id}', 'UserController@deleteUser');
-
-    //Route::get('profile/{id}', 'UserController@getUserProfile');
+    Route::get('profile/{id}', 'UserController@getUserProfile');
+    Route::get('likes-grouped-by-cuisines', [PostLikeController::class, 'getLikesGroupedByCuisines']);
 });
 
 Route::prefix('v2/posts')->group(function () {
@@ -49,10 +43,6 @@ Route::prefix('v2/posts')->group(function () {
 
     // Delete a post by ID
     Route::delete('/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
-});
-
-Route::prefix('v2/posts')->group(function () {
-    Route::get('/search', [PostController::class, 'search'])->name('posts.search');
 });
 
 Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
