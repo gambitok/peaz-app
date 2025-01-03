@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\Api\V2\UserController;
-use App\Http\Controllers\Api\V2\PostController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\S3Controller;
+use App\Http\Controllers\Api\V2\UserController;
+use App\Http\Controllers\Api\V2\PostController;
 use App\Http\Controllers\PostLikeController;
 
 Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
@@ -14,8 +14,10 @@ Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::get('get_token', [UserController::class, 'getToken']);
     Route::get('getProfile', [UserController::class, 'getProfile'])->middleware('auth.api');
     Route::post('logout', [UserController::class, 'logout'])->middleware('auth.api');
+
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::get('users/searchProfile', [UserController::class, 'searchProfile'])->name('users.searchProfile');
+
     Route::get('user', 'UserController@getUsers');
     Route::get('user/{id}', 'UserController@getUser');
     Route::put('user/{id}', 'UserController@updateUser');

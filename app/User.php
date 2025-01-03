@@ -114,19 +114,19 @@ class User extends Authenticatable
 
     public function getProfileImageAttribute($val)
     {
-        if(!empty($val)){
+        if (!empty($val)) {
+            if (filter_var($val, FILTER_VALIDATE_URL)) {
+                return $val; // Якщо вже повний URL, повертаємо його без змін
+            }
+
             return Storage::disk('s3')->url($val);
         }
+
         return get_asset($val, false, get_constants('default.user_image'));
     }
 
     public function scopeAdminSearch($query, $search)
     {
-        // $query->where('mobile', 'like', "%$search%")
-        //     ->orWhere('country_code', 'like', "%$search%")
-        //     ->orWhere('email', 'like', "%$search%")
-        //     ->orWhere('name', 'like', "%$search%")
-        //     ->orWhere('username', 'like', "%$search%");
         $query->Where('email', 'like', "%$search%")
             ->orWhere('username', 'like', "%$search%")
             ->orWhere('country_code', 'like', "%$search%")
@@ -143,7 +143,6 @@ class User extends Authenticatable
         ]);
         return TRUE;
     }
-
 
     public function social_logins(): HasOne
     {

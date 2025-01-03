@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -30,7 +30,6 @@ class UserController extends Controller
         }
 
         $token = $user->createToken('YourAppName')->accessToken;
-//        $token = Str::random(60);
 
         $user->api_token = $token;
         $user->save();
@@ -126,12 +125,22 @@ class UserController extends Controller
 
     public function updateUser(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $id,
-            'username' => 'nullable|string|max:255',
-            'profile_image' => 'nullable|string|max:255',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email,' . $id,
+                'username' => 'nullable|string|max:255',
+                'profile_image' => 'nullable|string|max:255',
+                'bio' => 'nullable|string',
+                'website' => 'nullable|url|max:255',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
 
         $user = User::find($id);
 
@@ -142,10 +151,12 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->name = $request->input('name');
-        $user->email = $request->input('email');
-        $user->username = $request->input('username');
-        $user->profile_image = $request->input('profile_image');
+        $user->name = $validatedData['name'];
+        $user->email = $validatedData['email'];
+        $user->username = $validatedData['username'] ?? $user->username;
+        $user->profile_image = $validatedData['profile_image'] ?? $user->profile_image;
+        $user->bio = $validatedData['bio'] ?? $user->bio;
+        $user->website = $validatedData['website'] ?? $user->website;
         $user->save();
 
         return response()->json([
