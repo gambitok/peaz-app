@@ -117,4 +117,101 @@ class S3Controller extends Controller
         }
     }
 
+    public function initiateMultipartUpload(Request $request)
+    {
+        $fileName = $request->file_name; // e.g., 'large_video.mp4'
+
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
+        ]);
+
+        try {
+            $result = $s3Client->createMultipartUpload([
+                'Bucket' => env('AWS_BUCKET'),
+                'Key' => 'uploads/multipart/' . $fileName,
+            ]);
+
+            return response()->json(['upload_id' => $result['UploadId']]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function generateMultipartPresignedUrl(Request $request)
+    {
+        $fileName = $request->file_name; // e.g., 'large_video.mp4'
+        $partNumber = $request->part_number; // Part number for the multipart upload
+        $uploadId = $request->upload_id; // Upload ID for the multipart upload
+
+        // Define allowed video extensions
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        if (!in_array($extension, $videoExtensions)) {
+            return response()->json(['error' => 'Invalid file extension. Allowed types are: videos (mp4, mov, etc.).'], 400);
+        }
+
+        $filePath = 'uploads/multipart/' . $fileName;
+
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
+        ]);
+
+        try {
+            $command = $s3Client->getCommand('UploadPart', [
+                'Bucket' => env('AWS_BUCKET'),
+                'Key' => $filePath,
+                'PartNumber' => $partNumber,
+                'UploadId' => $uploadId,
+            ]);
+
+            $presignedRequest = $s3Client->createPresignedRequest($command, '+10 minutes');
+            $presignedUrl = (string)$presignedRequest->getUri();
+
+            return response()->json(['url' => $presignedUrl]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function completeMultipartUpload(Request $request)
+    {
+        $fileName = $request->file_name;
+        $uploadId = $request->upload_id;
+        $parts = $request->parts; // Array of parts with ETag and PartNumber
+
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
+        ]);
+
+        try {
+            $result = $s3Client->completeMultipartUpload([
+                'Bucket' => env('AWS_BUCKET'),
+                'Key' => 'uploads/multipart/' . $fileName,
+                'UploadId' => $uploadId,
+                'MultipartUpload' => [
+                    'Parts' => $parts,
+                ],
+            ]);
+
+            return response()->json(['message' => 'Upload completed successfully', 'result' => $result]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
 }

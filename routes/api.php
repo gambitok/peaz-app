@@ -9,6 +9,10 @@ use App\Http\Controllers\Api\V2\PostCommentController;
 
 Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
 
+Route::post('initiate-multipart-upload', [S3Controller::class, 'initiateMultipartUpload']);
+Route::post('generate-multipart-presigned-url', [S3Controller::class, 'generateMultipartPresignedUrl']);
+Route::post('complete-multipart-upload', [S3Controller::class, 'completeMultipartUpload']);
+
 Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::post('login', [UserController::class, 'login']);
     Route::put('register', [UserController::class, 'register']);
