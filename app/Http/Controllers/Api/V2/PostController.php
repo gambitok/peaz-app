@@ -163,10 +163,26 @@ class PostController extends Controller
             $query->where('caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
 
+        if ($request->filled('dietary')) {
+            $query->where('dietary', 'LIKE', '%' . $request->input('dietary') . '%');
+        }
+
+        if ($request->filled('time')) {
+            $inputTime = (int) $request->input('time');
+            $query->whereRaw('(hours * 3600000000 + minutes * 60000000) <= ?', [$inputTime]);
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->input('user_id'));
+        }
+
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
-        $posts = $query->orderBy($sortField, $sortOrder)->paginate($perPage);
+
+        $posts = $query->orderBy($sortField, $sortOrder)
+            ->paginate($perPage)
+            ->appends($request->except('page'));
 
         if ($posts->isEmpty()) {
             return response()->json([

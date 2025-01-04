@@ -27,7 +27,7 @@ class S3Controller extends Controller
         $operation = strtoupper($request->operation); // e.g., 'PUT', 'GET', 'DELETE'
 
         // Get the file name and folder type from the request
-        $folder = $request->folder; // e.g., 'users', 'posts'
+        $folder = $request->folder; // e.g., 'users', 'posts', 'posts/thumbnails'
         $fileName = $request->file_name; // e.g., 'image.jpg'
 
         // Define allowed extensions

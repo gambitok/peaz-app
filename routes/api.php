@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\S3Controller;
 use App\Http\Controllers\Api\V2\UserController;
 use App\Http\Controllers\Api\V2\PostController;
-use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\Api\V2\PostLikeController;
+use App\Http\Controllers\Api\V2\PostCommentController;
 
 Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
 
@@ -24,6 +25,8 @@ Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::post('user/create', 'UserController@addUserById');
     Route::delete('user/{id}', 'UserController@deleteUser');
     Route::get('profile/{id}', 'UserController@getUserProfile');
+    Route::get('comments', [PostCommentController::class, 'getCommentsByUserId']);
+    Route::get('likes', [PostLikeController::class, 'getLikes']);
     Route::get('likes-grouped-by-cuisines', [PostLikeController::class, 'getLikesGroupedByCuisines']);
 });
 
