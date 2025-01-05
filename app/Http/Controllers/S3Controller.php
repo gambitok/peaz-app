@@ -4,61 +4,13 @@ namespace App\Http\Controllers;
 
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class S3Controller extends Controller
 {
-
-    public function convertVideo(Request $request)
-    {
-        // Перевірка наявності файлу
-        if (!$request->hasFile('video')) {
-            return response()->json(['message' => 'No video file uploaded'], 400);
-        }
-
-        // Отримання файлу
-        $file = $request->file('video');
-        // Генерація унікального ідентифікатора для назви файлу
-        $uniqueFileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        // Зберігання файлу в тимчасовій директорії з унікальною назвою
-        $inputPath = $file->storeAs('tmp', $uniqueFileName, 'local');
-        $inputFullPath = storage_path('app/' . $inputPath); // Використання абсолютного шляху
-        $outputFileName = Str::uuid() . '.mp4';
-        $outputPath = 'public/' . $outputFileName;
-        $outputFullPath = storage_path('app/' . $outputPath); // Використання абсолютного шляху
-
-        try {
-            // Виконання конвертації за допомогою FFMpeg
-            $process = new Process(['ffmpeg', '-i', $inputFullPath, $outputFullPath]);
-            $process->setWorkingDirectory(base_path()); // Встановлення робочої директорії
-            $process->run();
-
-            // Перевірка на помилки під час процесу
-            if (!$process->isSuccessful()) {
-                throw new ProcessFailedException($process);
-            }
-
-            // Видалення тимчасового файлу
-            unlink($inputFullPath);
-
-            return response()->json(['message' => 'Video successfully converted', 'path' => $outputPath]);
-        } catch (ProcessFailedException $e) {
-            // Обробка помилки під час виконання процесу
-            return response()->json([
-                'message' => 'Video conversion failed',
-                'error' => $e->getMessage(),
-                'command' => $e->getProcess()->getCommandLine(),
-                'exitCode' => $e->getProcess()->getExitCode(),
-                'output' => $e->getProcess()->getOutput(),
-                'errorOutput' => $e->getProcess()->getErrorOutput(),
-            ], 500);
-        } catch (\Exception $e) {
-            // Обробка загальних помилок
-            return response()->json(['message' => 'General error: ' . $e->getMessage()], 500);
-        }
-    }
 
     public function generatePresignedUrl(Request $request)
     {
@@ -156,6 +108,96 @@ class S3Controller extends Controller
         }
     }
 
+//    public function convertVideo(Request $request)
+//    {
+//        // Check if the file exists
+//        if (!$request->hasFile('video')) {
+//            return response()->json(['message' => 'No video file uploaded'], 400);
+//        }
+//
+//        // Get the file
+//        $file = $request->file('video');
+//        // Generate a unique identifier for the file name
+//        $uniqueFileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+//        // Store the file in the temporary directory with a unique name
+//        $inputPath = $file->storeAs('tmp', $uniqueFileName, 'local');
+//        $inputFullPath = storage_path('app/' . $inputPath); // Use the absolute path
+//
+//        // Determine the output format based on the uploaded file's extension
+//        $outputExtension = $file->getClientOriginalExtension();
+//        $outputFileName = Str::uuid() . '.' . $outputExtension;
+//        $outputPath = 'public/' . $outputFileName;
+//        $outputFullPath = storage_path('app/' . $outputPath); // Use the absolute path
+//
+//        // Define supported formats
+//        $supportedFormats = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv'];
+//
+//        // Check if the output format is supported
+//        if (!in_array($outputExtension, $supportedFormats)) {
+//            return response()->json(['message' => 'Unsupported file format'], 400);
+//        }
+//
+//        try {
+//            // Perform the conversion using FFMpeg
+//            // Parameters -vcodec and -crf configure the video codec and compression rate factor respectively
+//            $process = new Process(['ffmpeg', '-i', $inputFullPath, '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast', $outputFullPath]);
+//            $process->setWorkingDirectory(base_path()); // Set the working directory
+//            $process->run();
+//
+//            // Check for errors during the process
+//            if (!$process->isSuccessful()) {
+//                throw new ProcessFailedException($process);
+//            }
+//
+//            // Remove the temporary file
+//            unlink($inputFullPath);
+//
+//            return response()->json(['message' => 'Video successfully compressed', 'path' => $outputPath]);
+//        } catch (ProcessFailedException $e) {
+//            // Handle errors during the process execution
+//            return response()->json([
+//                'message' => 'Video conversion failed',
+//                'error' => $e->getMessage(),
+//                'command' => $e->getProcess()->getCommandLine(),
+//                'exitCode' => $e->getProcess()->getExitCode(),
+//                'output' => $e->getProcess()->getOutput(),
+//                'errorOutput' => $e->getProcess()->getErrorOutput(),
+//            ], 500);
+//        } catch (\Exception $e) {
+//            // Handle general errors
+//            return response()->json(['message' => 'General error: ' . $e->getMessage()], 500);
+//        }
+//    }
+
+    private $supportedFormats = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv'];
+
+    public function convertVideo($inputFullPath, $outputExtension)
+    {
+        $outputFileName = Str::uuid() . '.' . $outputExtension;
+        $outputFullPath = storage_path('app/uploads/tmp/' . $outputFileName);
+
+        try {
+            // Perform the conversion using FFMpeg
+            $process = new Process(['ffmpeg', '-i', $inputFullPath, '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast', $outputFullPath]);
+            $process->setWorkingDirectory(base_path());
+            $process->run();
+
+            // Check for errors during the process
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
+            }
+
+            // Remove the temporary input file
+            unlink($inputFullPath);
+
+            return $outputFullPath;
+        } catch (ProcessFailedException $e) {
+            throw new \Exception('Video conversion failed: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            throw new \Exception('General error: ' . $e->getMessage());
+        }
+    }
+
     public function getMimeTypeFromExtension($extension, $mapping) {
         return isset($mapping[$extension]) ? $mapping[$extension] : 'application/octet-stream';
     }
@@ -243,11 +285,42 @@ class S3Controller extends Controller
         }
     }
 
+//    public function completeMultipartUpload(Request $request)
+//    {
+//        $fileName = $request->file_name;
+//        $uploadId = $request->upload_id;
+//        $parts = $request->parts; // Array of parts with ETag and PartNumber
+//
+//        $s3Client = new S3Client([
+//            'version' => 'latest',
+//            'region' => env('AWS_DEFAULT_REGION'),
+//            'credentials' => [
+//                'key' => env('AWS_ACCESS_KEY_ID'),
+//                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+//            ],
+//        ]);
+//
+//        try {
+//            $result = $s3Client->completeMultipartUpload([
+//                'Bucket' => env('AWS_BUCKET'),
+//                'Key' => 'uploads/multipart/' . $fileName,
+//                'UploadId' => $uploadId,
+//                'MultipartUpload' => [
+//                    'Parts' => $parts,
+//                ],
+//            ]);
+//
+//            return response()->json(['message' => 'Upload completed successfully', 'result' => $result]);
+//        } catch (\Exception $e) {
+//            return response()->json(['error' => $e->getMessage()], 500);
+//        }
+//    }
+
     public function completeMultipartUpload(Request $request)
     {
         $fileName = $request->file_name;
         $uploadId = $request->upload_id;
-        $parts = $request->parts; // Array of parts with ETag and PartNumber
+        $parts = $request->parts;
 
         $s3Client = new S3Client([
             'version' => 'latest',
@@ -259,6 +332,7 @@ class S3Controller extends Controller
         ]);
 
         try {
+            // Complete the multipart upload
             $result = $s3Client->completeMultipartUpload([
                 'Bucket' => env('AWS_BUCKET'),
                 'Key' => 'uploads/multipart/' . $fileName,
@@ -268,7 +342,58 @@ class S3Controller extends Controller
                 ],
             ]);
 
-            return response()->json(['message' => 'Upload completed successfully', 'result' => $result]);
+            // Get the uploaded file from S3
+            $s3Client->getObject([
+                'Bucket' => env('AWS_BUCKET'),
+                'Key' => 'uploads/multipart/' . $fileName,
+                'SaveAs' => storage_path('app/uploads/tmp/' . $fileName),
+            ]);
+
+            // Determine the input file path and output extension
+            $inputFullPath = storage_path('app/uploads/tmp/' . $fileName);
+            $outputExtension = pathinfo($fileName, PATHINFO_EXTENSION);
+
+            // Check if the format is supported
+            if (in_array($outputExtension, $this->supportedFormats)) {
+                // Convert the video
+                $convertedFilePath = $this->convertVideo($inputFullPath, $outputExtension);
+
+                // Upload the converted video back to S3
+                $result = $s3Client->putObject([
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Key' => 'uploads/converted/' . basename($convertedFilePath),
+                    'SourceFile' => $convertedFilePath,
+                    'ContentType' => 'video/' . $outputExtension,
+                ]);
+
+                // Remove the temporary converted file
+                unlink($convertedFilePath);
+
+                return response()->json([
+                    'message' => 'Upload and conversion completed successfully',
+                    'result' => [
+                        'Location' => $result['ObjectURL'],
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Key' => 'uploads/converted/' . basename($convertedFilePath),
+                        'ETag' => $result['ETag'],
+                        'new_file_name' => basename($convertedFilePath),
+                        'stored_in' => 'uploads/converted'
+                    ],
+                ]);
+            } else {
+                // If the format is not supported, just return the original file's information
+                return response()->json([
+                    'message' => 'Upload completed, but conversion was not performed because the format is not supported',
+                    'result' => [
+                        'Location' => $s3Client->getObjectUrl(env('AWS_BUCKET'), 'uploads/multipart/' . $fileName),
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Key' => 'uploads/multipart/' . $fileName,
+                        'ETag' => $result['ETag'],
+                        'new_file_name' => $fileName,
+                        'stored_in' => 'uploads/multipart'
+                    ],
+                ]);
+            }
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

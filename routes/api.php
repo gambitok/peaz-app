@@ -25,12 +25,13 @@ Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::get('users/searchProfile', [UserController::class, 'searchProfile'])->name('users.searchProfile');
 
-    Route::get('user', 'UserController@getUsers');
-    Route::get('user/{id}', 'UserController@getUser');
-    Route::put('user/{id}', 'UserController@updateUser');
-    Route::post('user/create', 'UserController@addUserById');
-    Route::delete('user/{id}', 'UserController@deleteUser');
-    Route::get('profile/{id}', 'UserController@getUserProfile');
+    Route::get('user', [UserController::class, 'getUsers']);
+    Route::get('user/{id}', [UserController::class, 'getUser']);
+    Route::put('user/{id}', [UserController::class, 'updateUser']);
+    Route::post('user/create', [UserController::class, 'addUserById']);
+    Route::delete('user/{id}', [UserController::class, 'deleteUser']);
+
+    Route::get('profile/{id}', [UserController::class, 'getUserProfile']);
     Route::get('comments', [PostCommentController::class, 'getCommentsByUserId']);
     Route::get('likes', [PostLikeController::class, 'getLikes']);
     Route::get('likes-grouped-by-cuisines', [PostLikeController::class, 'getLikesGroupedByCuisines']);
