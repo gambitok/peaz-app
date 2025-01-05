@@ -49,7 +49,7 @@ return [
 //        ],
         'local' => [
             'driver' => 'local',
-            'root' => public_path(),
+            'root' => storage_path('app'),
         ],
 
         'public' => [
@@ -84,5 +84,13 @@ return [
     'links' => [
         public_path('storage') => storage_path('app/public'),
     ],
+
+//    'ffmpeg' => [
+//        'binaries' => env('FFMPEG_BINARIES', '/usr/bin/ffmpeg'),
+//        'threads'  => 12,
+//    ],
+//    'ffprobe' => [
+//        'binaries' => env('FFPROBE_BINARIES', '/usr/bin/ffprobe'),
+//    ],
 
 ];

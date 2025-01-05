@@ -21,6 +21,16 @@ class Post extends Model
         return $this->hasMany(PostLike::class, 'post_id');
     }
 
+    public function instructions()
+    {
+        return $this->hasMany(Instruction::class, 'post_id');
+    }
+
+    public function ingredients()
+    {
+        return $this->hasMany(Ingredient::class, 'post_id');
+    }
+
     public function getFileAttribute($val)
     {
         if(!empty($val)){

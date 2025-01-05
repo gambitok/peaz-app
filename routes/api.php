@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\V2\PostController;
 use App\Http\Controllers\Api\V2\PostLikeController;
 use App\Http\Controllers\Api\V2\PostCommentController;
 
+Route::post('/convert-video', [S3Controller::class, 'convertVideo']);
+
 Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
 
 Route::post('initiate-multipart-upload', [S3Controller::class, 'initiateMultipartUpload']);
@@ -32,6 +34,8 @@ Route::group(['namespace' => 'Api\V2', 'prefix' => 'v2'], function () {
     Route::get('comments', [PostCommentController::class, 'getCommentsByUserId']);
     Route::get('likes', [PostLikeController::class, 'getLikes']);
     Route::get('likes-grouped-by-cuisines', [PostLikeController::class, 'getLikesGroupedByCuisines']);
+
+    Route::get('post-details/{id}', [PostController::class, 'details'])->name('posts.details');
 });
 
 Route::prefix('v2/posts')->group(function () {

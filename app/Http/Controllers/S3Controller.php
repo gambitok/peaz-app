@@ -4,23 +4,62 @@ namespace App\Http\Controllers;
 
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class S3Controller extends Controller
 {
 
-    /**
-     * Generate a presigned URL for an S3 operation.
-     *
-     * This function creates a presigned URL for performing operations such as PUT, GET, or DELETE
-     * on files stored in AWS S3. It takes into account the folder type (e.g., 'users', 'posts'),
-     * validates file extensions based on the folder type, and constructs the appropriate S3 command.
-     *
-     * @param Request $request The HTTP request containing the operation type, folder, and file name.
-     *                         - 'operation': The S3 operation to perform ('PUT', 'GET', 'DELETE').
-     *                         - 'folder': The folder type ('users', 'posts', or 'posts/thumbnails').
-     *                         - 'file_name': The name of the file to operate on.
-     * @return \Illuminate\Http\JsonResponse A JSON response containing the presigned URL or an error message.
-     */
+    public function convertVideo(Request $request)
+    {
+        // Перевірка наявності файлу
+        if (!$request->hasFile('video')) {
+            return response()->json(['message' => 'No video file uploaded'], 400);
+        }
+
+        // Отримання файлу
+        $file = $request->file('video');
+        // Генерація унікального ідентифікатора для назви файлу
+        $uniqueFileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        // Зберігання файлу в тимчасовій директорії з унікальною назвою
+        $inputPath = $file->storeAs('tmp', $uniqueFileName, 'local');
+        $inputFullPath = storage_path('app/' . $inputPath); // Використання абсолютного шляху
+        $outputFileName = Str::uuid() . '.mp4';
+        $outputPath = 'public/' . $outputFileName;
+        $outputFullPath = storage_path('app/' . $outputPath); // Використання абсолютного шляху
+
+        try {
+            // Виконання конвертації за допомогою FFMpeg
+            $process = new Process(['ffmpeg', '-i', $inputFullPath, $outputFullPath]);
+            $process->setWorkingDirectory(base_path()); // Встановлення робочої директорії
+            $process->run();
+
+            // Перевірка на помилки під час процесу
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
+            }
+
+            // Видалення тимчасового файлу
+            unlink($inputFullPath);
+
+            return response()->json(['message' => 'Video successfully converted', 'path' => $outputPath]);
+        } catch (ProcessFailedException $e) {
+            // Обробка помилки під час виконання процесу
+            return response()->json([
+                'message' => 'Video conversion failed',
+                'error' => $e->getMessage(),
+                'command' => $e->getProcess()->getCommandLine(),
+                'exitCode' => $e->getProcess()->getExitCode(),
+                'output' => $e->getProcess()->getOutput(),
+                'errorOutput' => $e->getProcess()->getErrorOutput(),
+            ], 500);
+        } catch (\Exception $e) {
+            // Обробка загальних помилок
+            return response()->json(['message' => 'General error: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function generatePresignedUrl(Request $request)
     {
         // Get the operation (PUT, GET, DELETE, etc.)
@@ -117,9 +156,29 @@ class S3Controller extends Controller
         }
     }
 
+    public function getMimeTypeFromExtension($extension, $mapping) {
+        return isset($mapping[$extension]) ? $mapping[$extension] : 'application/octet-stream';
+    }
+
     public function initiateMultipartUpload(Request $request)
     {
         $fileName = $request->file_name; // e.g., 'large_video.mp4'
+
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+        $videoExtensionsToMimeTypes = [
+            'mp4' => 'video/mp4',
+            'avi' => 'video/x-msvideo',
+            'mov' => 'video/quicktime',
+            'mkv' => 'video/x-matroska',
+            'wmv' => 'video/x-ms-wmv',
+            'flv' => 'video/x-flv',
+        ];
+        $mimeType = $this->getMimeTypeFromExtension($extension, $videoExtensionsToMimeTypes);
+
+        if (!in_array($extension, $videoExtensions)) {
+            return response()->json(['error' => 'Invalid file extension for users. Only image types are allowed (mp4, mov, etc.).'], 400);
+        }
 
         $s3Client = new S3Client([
             'version' => 'latest',
@@ -134,6 +193,7 @@ class S3Controller extends Controller
             $result = $s3Client->createMultipartUpload([
                 'Bucket' => env('AWS_BUCKET'),
                 'Key' => 'uploads/multipart/' . $fileName,
+                'ContentType' => $mimeType,
             ]);
 
             return response()->json(['upload_id' => $result['UploadId']]);

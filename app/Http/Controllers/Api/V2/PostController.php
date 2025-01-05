@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api\V2;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Post;
+use App\Instruction;
+use App\Ingredient;
 
 class PostController extends Controller
 {
+
     /**
      * Display a listing of the posts.
      *
@@ -62,6 +65,23 @@ class PostController extends Controller
     public function show($id)
     {
         $post = Post::find($id);
+
+        if (!$post) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Post not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $post
+        ]);
+    }
+
+    public function details($id)
+    {
+        $post = Post::with(['instructions', 'ingredients'])->find($id);
 
         if (!$post) {
             return response()->json([
