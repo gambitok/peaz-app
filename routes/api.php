@@ -5,7 +5,9 @@ use App\Http\Controllers\Api\V1\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\S3Controller;
 use App\Http\Controllers\Api\V2\UserController;
+use App\Http\Controllers\Api\V1\UserController as UserV1Controller;
 use App\Http\Controllers\Api\V2\PostController;
+use App\Http\Controllers\Api\V1\PostController as PostV1Controller;
 use App\Http\Controllers\Api\V2\PostLikeController;
 use App\Http\Controllers\Api\V2\PostCommentController;
 
@@ -78,42 +80,42 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
     Route::post('forgot_password', [GuestController::class, 'forgot_password']);
     Route::post('check_ability', [GuestController::class, 'check_ability']);
     Route::post('version_checker', [GuestController::class, 'version_checker']);
-    Route::post('home', [PostController::class, 'home']);
-    Route::post('post-details', [PostController::class, 'postDetails']);
-    Route::post('comment-list', [PostController::class, 'commentList']);
+    Route::post('home', [PostV1Controller::class, 'home']);
+    Route::post('post-details', [PostV1Controller::class, 'postDetails']);
+    Route::post('comment-list', [PostV1Controller::class, 'commentList']);
 
-    Route::get('get-tag', [PostController::class, 'getTag']);
+    Route::get('get-tag', [PostV1Controller::class, 'getTag']);
 
     //Country Selection apis here
     Route::group(['middleware' => 'ApiTokenChecker'], function () {
         Route::group(['prefix' => 'user'], function () {
-            Route::post('add-user-name', [UserController::class, 'addUsername']);
-            Route::post('add-user-fullname', [UserController::class, 'addFullname']);
-            Route::post('serch-user-name', [UserController::class, 'serchUsername']);
-            Route::post('save-user-Interested', [UserController::class, 'saveUserInterested']);
-            Route::post('userDiet', [UserController::class, 'userDiet']);
-            Route::post('createpassword', [UserController::class, 'createpassword']);
-            Route::get('getProfile', [UserController::class, 'getProfile']);
-            Route::get('logout', [UserController::class, 'logout']);
+            Route::post('add-user-name', [UserV1Controller::class, 'addUsername']);
+            Route::post('add-user-fullname', [UserV1Controller::class, 'addFullname']);
+            Route::post('serch-user-name', [UserV1Controller::class, 'serchUsername']);
+            Route::post('save-user-Interested', [UserV1Controller::class, 'saveUserInterested']);
+            Route::post('userDiet', [UserV1Controller::class, 'userDiet']);
+            Route::post('createpassword', [UserV1Controller::class, 'createpassword']);
+            Route::get('getProfile', [UserV1Controller::class, 'getProfile']);
+            Route::get('logout', [UserV1Controller::class, 'logout']);
 
-            Route::post('create-post', [PostController::class, 'createPost']);
-            Route::post('interested-list', [UserController::class, 'interestedList']);
-            Route::post('add-ingredient', [PostController::class, 'addIngredient']);
-            Route::post('add-instruction', [PostController::class, 'addInstruction']);
+            Route::post('create-post', [PostV1Controller::class, 'createPost']);
+            Route::post('interested-list', [UserV1Controller::class, 'interestedList']);
+            Route::post('add-ingredient', [PostV1Controller::class, 'addIngredient']);
+            Route::post('add-instruction', [PostV1Controller::class, 'addInstruction']);
 
-            Route::post('post-comment-review', [PostController::class, 'postCommentReview']);
-            Route::post('post-like', [PostController::class, 'postLike']);
-            Route::post('comment-like', [PostController::class, 'commentLike']);
-            Route::post('post-like-list', [PostController::class, 'postLikeList']);
-            Route::post('delete-post', [PostController::class, 'destory']);
-            Route::post('delete-comment', [PostController::class, 'deleteComment']);
-            Route::post('update-comment', [PostController::class, 'updateComment']);
-            Route::post('not-interested', [PostController::class, 'notInterested']);
-            Route::post('search-username', [PostController::class, 'searchUsername']);
-            Route::post('user-tag', [PostController::class, 'userTag']);
-            Route::get('get-user-posts', [PostController::class, 'getUserPosts']);
-            Route::get('get-user-liked-posts', [PostController::class, 'getUserLikedPosts']);
-            Route::get('get-user-recipes-and-comments', [PostController::class, 'getUserRecipesAndComments']);
+            Route::post('post-comment-review', [PostV1Controller::class, 'postCommentReview']);
+            Route::post('post-like', [PostV1Controller::class, 'postLike']);
+            Route::post('comment-like', [PostV1Controller::class, 'commentLike']);
+            Route::post('post-like-list', [PostV1Controller::class, 'postLikeList']);
+            Route::post('delete-post', [PostV1Controller::class, 'destory']);
+            Route::post('delete-comment', [PostV1Controller::class, 'deleteComment']);
+            Route::post('update-comment', [PostV1Controller::class, 'updateComment']);
+            Route::post('not-interested', [PostV1Controller::class, 'notInterested']);
+            Route::post('search-username', [PostV1Controller::class, 'searchUsername']);
+            Route::post('user-tag', [PostV1Controller::class, 'userTag']);
+            Route::get('get-user-posts', [PostV1Controller::class, 'getUserPosts']);
+            Route::get('get-user-liked-posts', [PostV1Controller::class, 'getUserLikedPosts']);
+            Route::get('get-user-recipes-and-comments', [PostV1Controller::class, 'getUserRecipesAndComments']);
 
             Route::get('report-list', [ReportController::class, 'reportList']);
             Route::post('report-status', [ReportController::class, 'reportStatus']);

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use App\Jobs\ConvertVideo;
 
 class S3Controller extends Controller
 {
@@ -360,6 +361,7 @@ class S3Controller extends Controller
 
             // Check if the format is supported
             if (in_array($outputExtension, $this->supportedFormats)) {
+
                 // Convert the video
                 $convertedFilePath = $this->convertVideo($inputFullPath, $outputExtension);
 
