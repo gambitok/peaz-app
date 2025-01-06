@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -109,7 +110,6 @@ class UserController extends Controller
     public function getUser($id)
     {
         $user = User::find($id);
-
         if (!$user) {
             return response()->json([
                 'status' => 'error',

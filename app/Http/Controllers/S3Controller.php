@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
@@ -192,8 +192,10 @@ class S3Controller extends Controller
 
             return $outputFullPath;
         } catch (ProcessFailedException $e) {
+            Log::error('Video conversion failed: ' . $e->getMessage());
             throw new \Exception('Video conversion failed: ' . $e->getMessage());
         } catch (\Exception $e) {
+            Log::error('General error: ' . $e->getMessage());
             throw new \Exception('General error: ' . $e->getMessage());
         }
     }
@@ -353,6 +355,9 @@ class S3Controller extends Controller
             $inputFullPath = storage_path('app/uploads/tmp/' . $fileName);
             $outputExtension = pathinfo($fileName, PATHINFO_EXTENSION);
 
+            // Log the detected file extension for debugging
+            Log::info('Detected file extension: ' . $outputExtension);
+
             // Check if the format is supported
             if (in_array($outputExtension, $this->supportedFormats)) {
                 // Convert the video
@@ -381,6 +386,9 @@ class S3Controller extends Controller
                     ],
                 ]);
             } else {
+                // Log that the format is not supported
+                Log::info('Format not supported: ' . $outputExtension);
+
                 // If the format is not supported, just return the original file's information
                 return response()->json([
                     'message' => 'Upload completed, but conversion was not performed because the format is not supported',
@@ -395,6 +403,7 @@ class S3Controller extends Controller
                 ]);
             }
         } catch (\Exception $e) {
+            Log::error('Error in completeMultipartUpload: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

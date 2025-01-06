@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'Is_Admin' => \App\Http\Middleware\IsAdmin::class,
         "Message_Limit" => \App\Http\Middleware\CheckMessageLimits::class,
         'auth.api' => \App\Http\Middleware\ApiAuthMiddleware::class,
+        'log.passport.keys' => \App\Http\Middleware\LogPassportKeys::class,
     ];
 }
