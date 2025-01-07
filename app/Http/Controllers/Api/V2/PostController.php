@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V2;
 
+use App\Comment;
 use App\Http\Controllers\Controller;
+use App\PostLike;
 use Illuminate\Http\Request;
 use App\Post;
 use App\Instruction;
@@ -64,7 +66,7 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = Post::find($id);
+        $post = Post::with(['user', 'comment', 'postlike', 'report_statuses'])->find($id);
 
         if (!$post) {
             return response()->json([
@@ -73,10 +75,30 @@ class PostController extends Controller
             ], 404);
         }
 
+        // Додаємо додаткові поля
+        $post = $this->addExtraFields($post);
+
         return response()->json([
             'status' => 'success',
-            'data' => $post
+            'data' => $post,
         ]);
+    }
+
+    protected function addExtraFields($post, $user = null)
+    {
+        $post->comment_count = $post->comment->count();
+        $post->postlike_count = $post->postlike->count();
+        $post->avg_rating = $post->comment->avg('rating') ?? '0';
+        $post->is_rating = false;
+        $post->is_like = false;
+        $post->is_reported = false;
+
+        if ($user) {
+            $post->is_like = $post->postlike->where('user_id', $user->id)->exists();
+            $post->is_reported = $post->report_statuses->where('user_id', $user->id)->exists();
+        }
+
+        return $post;
     }
 
     public function details($id)
@@ -169,8 +191,10 @@ class PostController extends Controller
 
     public function search(Request $request)
     {
-        $query = Post::query();
+        // Initialize the query with eager loading of the user relationship
+        $query = Post::with('user');
 
+        // Apply filters based on request input
         if ($request->filled('title')) {
             $query->where('title', 'LIKE', '%' . $request->input('title') . '%');
         }
@@ -196,14 +220,17 @@ class PostController extends Controller
             $query->where('user_id', $request->input('user_id'));
         }
 
+        // Sorting and pagination
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
 
+        // Execute the query and paginate the results
         $posts = $query->orderBy($sortField, $sortOrder)
             ->paginate($perPage)
             ->appends($request->except('page'));
 
+        // Check if the result is empty
         if ($posts->isEmpty()) {
             return response()->json([
                 'status' => 'error',
@@ -212,10 +239,165 @@ class PostController extends Controller
             ]);
         }
 
+        // Return the response with user information included
         return response()->json([
             'status' => 'success',
             'data' => $posts
         ]);
+    }
+
+    public function getUserPosts(Request $request)
+    {
+        $user = $request->user();
+
+        $posts = $user->posts;
+
+        return response()->json([
+            'posts' => $posts
+        ], 200);
+    }
+
+    public function getUserLikedPosts(Request $request)
+    {
+        $user = $request->user();
+
+        $likedPosts = Post::with([
+            'user' => function ($q) {
+                $q->select("id", "username", "profile_image");
+            },
+            'ingredient' => function ($q) {
+                $q->select("id", "post_id", "name", "type", "measurement");
+            },
+            'instruction',
+            'comment' => function ($q) {
+                $q->withCount(["commentlike"]);
+                $q->with(["user" => function ($q) {
+                    $q->select("id", "username", "profile_image");
+                }]);
+            },
+            'postlike'
+        ])
+            ->whereHas('postlike', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->orderBy('id', 'DESC')
+            ->get();
+
+        return response()->json([
+            'liked_posts' => $likedPosts
+        ], 200);
+    }
+
+    public function getUserRecipesAndComments(Request $request)
+    {
+        $user = $request->user();
+
+        $recipes = Post::with([
+            'user' => function ($q) {
+                $q->select("id", "username", "profile_image");
+            },
+            'ingredient' => function ($q) {
+                $q->select("id", "post_id", "name", "type", "measurement");
+            },
+            'instruction',
+            'comment' => function ($q) {
+                $q->withCount(["commentlike"]);
+                $q->with(["user" => function ($q) {
+                    $q->select("id", "username", "profile_image");
+                }]);
+            },
+            'postlike'
+        ])
+            ->AvgRating()
+            ->IsRating($user->id ?? 0)
+            ->where('user_id', $user->id)
+            ->orderBy('id', 'DESC')
+            ->get();
+
+        $comments = Comment::with([
+            'reply' => function ($query) use ($request) {
+                $query->withCount(["replylike"]);
+                $query->with(["user" => function ($q) {
+                    $q->select("id", "username", "profile_image");
+                }]);
+            },
+            'user' => function ($q) {
+                $q->select("id", "username", "profile_image");
+            }
+        ])
+            ->whereHas('post', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->whereNull("comment_id")
+            ->get();
+
+        return response()->json([
+            'recipes' => $recipes,
+            'comments' => $comments
+        ], 200);
+    }
+
+    public function postLike(Request $request)
+    {
+        $user = $request->user();
+
+        $rules = [
+            'post_id' => ['required', 'exists:posts,id'],
+        ];
+
+        $request->validate($rules);
+
+        $postLike = PostLike::where('user_id', $user->id)->where('post_id', $request->post_id)->first();
+
+        if ($postLike) {
+            $postLike->delete();
+            return response()->json(['message' => __('api.suc_dislike')], 200);
+        } else {
+            $like = PostLike::create([
+                'user_id' => $user->id,
+                'post_id' => $request->post_id,
+            ]);
+
+            if ($like) {
+                return response()->json(['message' => __('api.suc_like'), 'data' => $like], 200);
+            } else {
+                return response()->json(['message' => __('api.err_like')], 500);
+            }
+        }
+    }
+
+    public function commentLike(Request $request)
+    {
+        $user = $request->user();
+
+        $rules = [
+            'post_id' => ['required', 'exists:posts,id'],
+            'comment_id' => ['required', 'exists:comments,id'],
+        ];
+
+        $request->validate($rules);
+
+        $commentLike = CommentLike::where('user_id', $user->id)
+            ->where('post_id', $request->post_id)
+            ->where('comment_id', $request->comment_id)
+            ->first();
+
+        if ($commentLike) {
+            $commentLike->delete();
+            return response()->json(['message' => __('api.suc_comment_dislike')], 200);
+        } else {
+            $like = CommentLike::create([
+                'user_id' => $user->id,
+                'post_id' => $request->post_id,
+                'comment_id' => $request->comment_id,
+            ]);
+
+            if ($like) {
+                return response()->json(['message' => __('api.suc_comment_like'), 'data' => $like], 200);
+            } else {
+                return response()->json(['message' => __('api.err_comment_like')], 500);
+            }
+        }
     }
 
 }

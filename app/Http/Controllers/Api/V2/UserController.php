@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\V2;
 
 use App\Http\Controllers\Controller;
+use App\InterestedList;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use DateTime;
 
 class UserController extends Controller
 {
@@ -34,27 +36,19 @@ class UserController extends Controller
         $user->api_token = $token;
         $user->save();
 
-        return response()->json(['token' => $token]);
-    }
-
-    public function getProfile()
-    {
-        $user = auth()->user();
-        return response()->json(['user' => $user]);
-    }
-
-    public function getToken(Request $request)
-    {
-        $user = User::where('email', $request->email)->first();
-
-        $bearerToken = $request->bearerToken();
-
-        $token = $user->tokens()->latest()->first();
-
         return response()->json([
-            'bearerToken' => $bearerToken,
-            'databaseToken' => $token->token ?? 'No token found'
+            'token' => $token,
+            'user_id' => $user->id,
         ]);
+    }
+
+    public function getProfile(Request $request)
+    {
+        // Retrieve the currently authenticated user
+        $user = $request->user();
+
+        // Return the user's profile data as a JSON response
+        return response()->json($user);
     }
 
     public function register(Request $request)
@@ -80,8 +74,11 @@ class UserController extends Controller
 
     public function logout(Request $request)
     {
-        if ($request->user()) {
-            $request->user()->token()->revoke();
+        $user = $request->user();
+
+        if ($user) {
+            // Revoke the token that was used to authenticate the current request
+            $user->token()->revoke();
 
             return response()->json(['message' => 'Successfully logged out'], 200);
         }
@@ -243,28 +240,40 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    public function getUserProfile($id)
+    /**
+     * @throws \DateMalformedStringException
+     */
+    public function interestedList(Request $request)
     {
-        $user = User::with([
-            'comments:id,user_id,comment_text',
-            'posts:id,user_id,title',
-            'posts' => function ($query) {
-                $query->withCount(['comments as comments_count', 'postLikes as likes_count']);
-            },
-            'userInterested:id,user_id,title',
-            'socialAccounts:id,user_id,provider_id,provider'
-        ])->find($id);
+        $user = $request->user();
 
-        if (!$user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User with ID ' . $id . ' not found'
-            ], 404);
+        $dobObject = new DateTime($user->date_of_birth);
+        $nowObject = new DateTime();
+
+        $diff = $dobObject->diff($nowObject);
+
+        $cuisines = InterestedList::where('type', 1)->get();
+
+        if ($diff->y > 18) {
+            $food_and_drink = InterestedList::where('type', 2)
+                ->whereIn('category_id', [1, 3])
+                ->get();
+        } else {
+            $food_and_drink = InterestedList::where('type', 2)
+                ->whereIn('category_id', [2, 3])
+                ->get();
         }
 
+        $diet = InterestedList::where('type', 3)->get();
+
         return response()->json([
-            'status' => 'success',
-            'data' => $user
+            'status' => 200,
+            'message' => __('api.suc_interestedlist'),
+            'data' => [
+                'cuisines' => $cuisines,
+                'food_and_drink' => $food_and_drink,
+                'diet' => $diet
+            ]
         ]);
     }
 

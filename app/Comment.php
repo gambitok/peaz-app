@@ -9,6 +9,10 @@ class Comment extends Model
     public $table = "comments";
     protected $fillable = ['id','user_id','post_id','comment_id','comment_text','type','rating'];
 
+    public function post()
+    {
+        return $this->belongsTo(Post::class);
+    }
     public function reply()
     {
         return $this->hasMany(Comment::class,'comment_id','id');

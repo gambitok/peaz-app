@@ -10,15 +10,11 @@ use App\CommentLike;
 use App\DeviceToken;
 use App\Ingredient;
 use App\Instruction;
-use App\Http\Controllers\Controller;
 use App\PostLike;
 use App\ReportStatus;
 use App\User;
 use App\UserTag;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class PostController extends ResponseController
 {
@@ -32,6 +28,7 @@ class PostController extends ResponseController
         $this->ingredient_obj = new Ingredient();
         $this->instruction_obj = new Instruction();
     }
+
     public function createPost(Request $request)
     {
         $user = $request->user();
@@ -92,39 +89,48 @@ class PostController extends ResponseController
             $this->sendResponse(200, $messages , $post);
         }
         $this->sendError(__('api.err_something_went_wrong'), false);
-
     }
 
     public function addIngredient(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => __('api.err_user_not_found')], 404);
+        }
+
         $rules = [
             'name' => ['required'],
             'measurement' => ['required'],
-            "post_id" => ['required', 'exists:posts,id'],
-            "method"=>['required'],
-            "ingredient_id"=>['required_if:method,edit'],
+            'post_id' => ['required', 'exists:posts,id'],
+            'method' => ['required'],
+            'ingredient_id' => ['required_if:method,edit'],
         ];
         $this->directValidation($rules);
+
         $data = null;
         $messages = __('api.suc_ingredient_create', ['order' => $request->order]);
-        if($request->ingredient_id > 0){
+
+        if ($request->ingredient_id > 0) {
             $data = $this->ingredient_obj->find($request->ingredient_id);
+            if (!$data) {
+                return response()->json(['error' => __('api.err_ingredient_not_found')], 404);
+            }
             $messages = __('api.suc_ingredient_update');
         }
+
         $request_data = $request->all();
         $request_data['user_id'] = $user->id;
         $request_data['type'] = $request->type ?? '';
         $request_data['measurement'] = $request->measurement ?? '';
         $request_data['order'] = (int) ($request->order ?? 0);
         unset($request_data['method']);
-        $post = $this->ingredient_obj->saveIngredient($request_data,0,$data);
-        if($post){
-            $this->sendResponse(200, $messages , $post);
-        }else{
-            $this->sendError(__('api.err_something_went_wrong'), false);
+
+        $post = $this->ingredient_obj->saveIngredient($request_data, 0, $data);
+        if (!$post) {
+            return response()->json(['error' => __('api.err_something_went_wrong')], 500);
         }
 
+        return response()->json(['message' => $messages, 'data' => $post], 200);
     }
 
     public function deleteComment(Request $request)
@@ -163,6 +169,7 @@ class PostController extends ResponseController
             $this->sendError(__('api.err_comment_update'), false);
         }
     }
+
     public function addInstruction(Request $request)
     {
         $user = $request->user();
@@ -256,7 +263,6 @@ class PostController extends ResponseController
             ->limit($limit)
             ->get();
 
-        $post_data = [];
         foreach ($posts as $post) {
 
             $post->is_like = false;
@@ -271,7 +277,6 @@ class PostController extends ResponseController
                     $post->is_reported = true;
                 }
             }
-            $post_data[] = $post;
         }
 
         if (!empty($posts)) {
@@ -301,10 +306,10 @@ class PostController extends ResponseController
                 $q->select("id", "username", "profile_image");
             },
             'ingredient' => function ($q) {
-                $q->select("id", "post_id", "name", "type", "measurement")->orderBy('order', 'ASC');
+                $q->select("id", "post_id", "name", "type", "measurement")->orderBy('name', 'ASC');
             },
             'instruction' => function ($q) {
-                $q->select("id", "post_id", "title", "description", "file", "thumbnail", "type")->orderBy('order', 'ASC');
+                $q->select("id", "post_id", "title", "description", "file", "thumbnail", "type")->orderBy('title', 'ASC');
             },
         ])
             ->withCount(["comment", 'postlike'])
@@ -372,7 +377,6 @@ class PostController extends ResponseController
         }
     }
 
-
     public function getUserLikedPosts(Request $request)
     {
         $user = $request->user();
@@ -404,7 +408,6 @@ class PostController extends ResponseController
             $this->sendError(__('api.err_no_liked_posts'), false);
         }
     }
-
 
     public function getUserRecipesAndComments(Request $request)
     {
@@ -458,6 +461,7 @@ class PostController extends ResponseController
 
         $this->sendResponse(200, __('api.suc_my_recipes_and_comments'), $data);
     }
+
     public function postCommentReview(Request $request)
     {
         try {
@@ -558,6 +562,7 @@ class PostController extends ResponseController
             }
         }
     }
+
     public function commentLike(Request $request)
     {
         $user = $request->user();
@@ -593,6 +598,7 @@ class PostController extends ResponseController
             }
         }
     }
+
     public function commentList(Request $request)
     {
         $rules = [
@@ -739,4 +745,5 @@ class PostController extends ResponseController
             $this->sendError(__('api.err_usertag'), false);
         }
     }
+
 }

@@ -9,7 +9,7 @@ use App\Post;
 class Ingredient extends Model
 {
     public $table = "ingredients";
-    protected $fillable = ['id','user_id','post_id','name','type','measurement', 'order'];
+    protected $fillable = ['id','user_id','post_id','name','type','measurement'];
 
     public function post()
     {

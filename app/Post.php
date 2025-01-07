@@ -16,6 +16,11 @@ class Post extends Model
         return $this->hasMany(Comment::class, 'post_id');
     }
 
+    public function report_statuses()
+    {
+        return $this->hasMany(ReportStatus::class);
+    }
+
     public function postLikes()
     {
         return $this->hasMany(PostLike::class, 'post_id');

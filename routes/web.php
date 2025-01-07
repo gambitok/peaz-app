@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V2\UserController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,9 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get("clear-cache","General\GeneralController@ClearCache");
 Route::get("php_info","General\GeneralController@PhpInfo");
+
+//Route::get('/login', [UserController::class, 'showLoginForm'])->name('login');
+//Route::post('/login', [UserController::class, 'login']);
 
 Route::group(['as' => 'front.'], function () {
     Route::redirect('/', 'admin/login')->name('dashboard');

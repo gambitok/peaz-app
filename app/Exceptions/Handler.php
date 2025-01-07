@@ -10,6 +10,13 @@ use Throwable;
 
 class Handler extends ExceptionHandler
 {
+
+    protected function unauthenticated($request, \Illuminate\Auth\AuthenticationException $exception)
+    {
+        return $request->expectsJson()
+            ? response()->json(['message' => 'Unauthenticated.'], 401)
+            : response()->json(['message' => 'Please login to continue.'], 401);
+    }
     /**
      * A list of the exception types that are not reported.
      *

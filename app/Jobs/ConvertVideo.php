@@ -45,11 +45,29 @@ class ConvertVideo implements ShouldQueue
 
     private function convertVideo($inputFullPath, $outputFullPath)
     {
-        $process = new Process(['ffmpeg', '-i', $inputFullPath, '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast', $outputFullPath]);
+        // 5 minutes timeout
+        $timeout = 300;
+
+        $process = new Process([
+            'ffmpeg',
+            '-i', $inputFullPath,
+            '-vcodec', 'libx264',
+            '-crf', '30',
+            '-preset', 'ultrafast',
+            $outputFullPath
+        ]);
+
         $process->setWorkingDirectory(base_path());
+        $process->setTimeout($timeout);
+
         $process->run();
 
         if (!$process->isSuccessful()) {
+            Log::error('Video conversion failed', [
+                'input' => $inputFullPath,
+                'output' => $outputFullPath,
+                'error' => $process->getErrorOutput(),
+            ]);
             throw new ProcessFailedException($process);
         }
 
