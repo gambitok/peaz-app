@@ -6,8 +6,6 @@ use Aws\S3\S3Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 use App\Jobs\ConvertVideo;
 
 class S3Controller extends Controller
@@ -187,7 +185,7 @@ class S3Controller extends Controller
 
     public function completeMultipartUpload(Request $request)
     {
-        $fileName = $request->input('file_name');
+        $originalFileName = $request->input('file_name');
         $uploadId = $request->input('upload_id');
         $parts = $request->input('parts');
 
@@ -203,44 +201,51 @@ class S3Controller extends Controller
         try {
             $result = $s3Client->completeMultipartUpload([
                 'Bucket' => env('AWS_BUCKET'),
-                'Key' => 'uploads/multipart/' . $fileName,
+                'Key' => 'uploads/multipart/' . $originalFileName,
                 'UploadId' => $uploadId,
                 'MultipartUpload' => [
                     'Parts' => $parts,
                 ],
             ]);
 
-            $inputFullPath = storage_path('app/uploads/tmp/' . $fileName);
+            $inputFullPath = public_path('uploads/tmp/' . $originalFileName);
             $s3Client->getObject([
                 'Bucket' => env('AWS_BUCKET'),
-                'Key' => 'uploads/multipart/' . $fileName,
+                'Key' => 'uploads/multipart/' . $originalFileName,
                 'SaveAs' => $inputFullPath,
             ]);
 
-            $outputExtension = pathinfo($fileName, PATHINFO_EXTENSION);
-            Log::info('Detected file extension: ' . $outputExtension);
+            $outputExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+            $newFileName = Str::uuid() . '.' . $outputExtension;
 
             if (in_array($outputExtension, $this->supportedFormats)) {
-                $outputFileName = Str::uuid() . '.' . $outputExtension;
-                ConvertVideo::dispatch($inputFullPath, $outputExtension, $outputFileName);
-
-                return response()->json(['message' => 'Upload completed and video conversion started in the background.']);
+                Log::info('Dispatching ConvertVideo job', [
+                    'inputFullPath' => $inputFullPath,
+                    'outputExtension' => $outputExtension,
+                    'outputFileName' => $newFileName,
+                ]);
+                ConvertVideo::dispatch($inputFullPath, $outputExtension, $newFileName);
+                $compressionStatus = 'Compression started';
             } else {
                 Log::info('Format not supported: ' . $outputExtension);
-
-                return response()->json([
-                    'message' => 'Upload completed, but conversion was not performed because the format is not supported',
-                    'result' => [
-                        'Location' => $s3Client->getObjectUrl(env('AWS_BUCKET'), 'uploads/multipart/' . $fileName),
-                        'Bucket' => env('AWS_BUCKET'),
-                        'Key' => 'uploads/multipart/' . $fileName,
-                        'ETag' => $result['ETag'],
-                        'new_file_name' => $fileName,
-                        'stored_in' => 'uploads/multipart'
-                    ],
-                ]);
+                $compressionStatus = 'Compression not supported';
             }
+
+            return response()->json([
+                'message' => 'Upload completed successfully',
+                'compression_status' => $compressionStatus,
+                'result' => [
+                    'Location' => $s3Client->getObjectUrl(env('AWS_BUCKET'), 'uploads/multipart/' . $newFileName),
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Key' => 'uploads/multipart/' . $originalFileName,
+                    'ETag' => $result['ETag'],
+                    'new_file_name' => $newFileName,
+                    'original_file_name' => $originalFileName,
+                    'stored_in' => 'uploads/multipart'
+                ],
+            ]);
         } catch (\Exception $e) {
+            // General error handling
             Log::error('Error in completeMultipartUpload: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }

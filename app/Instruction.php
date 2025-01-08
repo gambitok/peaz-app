@@ -9,7 +9,7 @@ use App\Post;
 class Instruction extends Model
 {
     public $table = "instruction";
-    protected $fillable = ['id','user_id','post_id','title','file','description','thumbnail','type', 'order'];
+    protected $fillable = ['id','user_id','post_id','title','file','description','thumbnail','type'];
 
     public function post()
     {

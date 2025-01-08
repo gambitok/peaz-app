@@ -35,9 +35,12 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::post('user/post-like', [PostController::class, 'postLike']);
     Route::post('user/comment-like', [PostController::class, 'commentLike']);
     Route::post('user/interested-list', [UserController::class, 'interestedList']);
+    Route::post('user/add-ingredient', [PostController::class, 'addIngredient']);
+    Route::post('user/add-instruction', [PostController::class, 'addInstruction']);
 
     Route::get('user/report-list', [ReportController::class, 'reportList']);
     Route::post('user/report-status', [ReportController::class, 'reportStatus']);
+    Route::post('user/post-comment-review', [PostController::class, 'postCommentReview']);
 
     Route::get('comments', [PostCommentController::class, 'getCommentsByUserId']);
     Route::get('likes', [PostLikeController::class, 'getLikes']);
@@ -79,14 +82,10 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
     Route::post('comment-list', [PostV1Controller::class, 'commentList']);
     Route::get('get-tag', [PostV1Controller::class, 'getTag']);
 
-    Route::post('user/post-comment-review', [PostV1Controller::class, 'postCommentReview']);
     Route::post('user/delete-comment', [PostV1Controller::class, 'deleteComment']);
     Route::post('user/update-comment', [PostV1Controller::class, 'updateComment']);
 
     Route::post('user/post-like-list', [PostV1Controller::class, 'postLikeList']);
-
-    Route::post('user/add-ingredient', [PostV1Controller::class, 'addIngredient']);
-    Route::post('user/add-instruction', [PostV1Controller::class, 'addInstruction']);
 
     Route::post('user/add-user-name', [UserV1Controller::class, 'addUsername']);
     Route::post('user/add-user-fullname', [UserV1Controller::class, 'addFullname']);

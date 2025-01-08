@@ -29,23 +29,35 @@ class ConvertVideo implements ShouldQueue
 
     public function handle()
     {
-        $outputFullPath = storage_path('app/uploads/tmp/' . $this->outputFileName);
+        $outputFullPath = public_path('uploads/tmp/' . $this->outputFileName);
 
         try {
+            Log::info('Starting video conversion', [
+                'inputFullPath' => $this->inputFullPath,
+                'outputExtension' => $this->outputExtension,
+                'outputFileName' => $this->outputFileName,
+                'output' => $outputFullPath,
+            ]);
             $this->convertVideo($this->inputFullPath, $outputFullPath);
             $this->uploadConvertedFile($outputFullPath);
         } catch (ProcessFailedException $e) {
             Log::error('Video conversion failed: ' . $e->getMessage());
+            $this->cleanupFiles($outputFullPath);
             throw new \Exception('Video conversion failed: ' . $e->getMessage());
         } catch (\Exception $e) {
             Log::error('General error: ' . $e->getMessage());
+            $this->cleanupFiles($outputFullPath);
             throw new \Exception('General error: ' . $e->getMessage());
         }
     }
 
     private function convertVideo($inputFullPath, $outputFullPath)
     {
-        // 5 minutes timeout
+        Log::info('Running video conversion', [
+            'input' => $inputFullPath,
+            'output' => $outputFullPath,
+        ]);
+
         $timeout = 300;
 
         $process = new Process([
@@ -74,13 +86,17 @@ class ConvertVideo implements ShouldQueue
         unlink($inputFullPath);
 
         Log::info('Video conversion completed successfully', [
-            'input' => $inputFullPath,
+            'deleted' => $inputFullPath,
             'output' => $outputFullPath,
         ]);
     }
 
     private function uploadConvertedFile($outputFullPath)
     {
+        Log::info('Uploading converted video', [
+            'input' => $outputFullPath,
+        ]);
+
         $s3Client = new S3Client([
             'version' => 'latest',
             'region' => env('AWS_DEFAULT_REGION'),
@@ -106,6 +122,24 @@ class ConvertVideo implements ShouldQueue
             'ETag' => $result['ETag'],
             'new_file_name' => basename($outputFullPath),
             'stored_in' => 'uploads/converted',
+            'deleted' => $outputFullPath,
         ]);
+    }
+
+    private function cleanupFiles($outputFullPath)
+    {
+        if (file_exists($this->inputFullPath)) {
+            unlink($this->inputFullPath);
+            Log::info('Deleted input file after error', [
+                'input' => $this->inputFullPath,
+            ]);
+        }
+
+        if (file_exists($outputFullPath)) {
+            unlink($outputFullPath);
+            Log::info('Deleted output file after error', [
+                'output' => $outputFullPath,
+            ]);
+        }
     }
 }

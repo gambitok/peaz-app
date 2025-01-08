@@ -3,15 +3,25 @@
 namespace App\Http\Controllers\Api\V2;
 
 use App\Comment;
+use App\CommentLike;
 use App\Http\Controllers\Controller;
+use App\Ingredient;
+use App\Instruction;
 use App\PostLike;
 use Illuminate\Http\Request;
 use App\Post;
-use App\Instruction;
-use App\Ingredient;
+use App\Http\Controllers\Api\ResponseController;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
+    public function  __construct()
+    {
+        $this->post_obj = new Post();
+        $this->ingredient_obj = new Ingredient();
+        $this->instruction_obj = new Instruction();
+    }
 
     /**
      * Display a listing of the posts.
@@ -75,7 +85,6 @@ class PostController extends Controller
             ], 404);
         }
 
-        // Додаємо додаткові поля
         $post = $this->addExtraFields($post);
 
         return response()->json([
@@ -84,7 +93,7 @@ class PostController extends Controller
         ]);
     }
 
-    protected function addExtraFields($post, $user = null)
+    protected function addExtraFields($post, $user_id = null)
     {
         $post->comment_count = $post->comment->count();
         $post->postlike_count = $post->postlike->count();
@@ -93,9 +102,9 @@ class PostController extends Controller
         $post->is_like = false;
         $post->is_reported = false;
 
-        if ($user) {
-            $post->is_like = $post->postlike->where('user_id', $user->id)->exists();
-            $post->is_reported = $post->report_statuses->where('user_id', $user->id)->exists();
+        if ($user_id) {
+            $post->is_like = $post->postlike()->where('user_id', $user_id)->exists();
+            $post->is_reported = $post->report_statuses()->where('user_id', $user_id)->exists();
         }
 
         return $post;
@@ -191,10 +200,10 @@ class PostController extends Controller
 
     public function search(Request $request)
     {
-        // Initialize the query with eager loading of the user relationship
-        $query = Post::with('user');
+        $user = $request->user();
 
-        // Apply filters based on request input
+        $query = Post::with(['user', 'comment', 'postlike', 'report_statuses']);
+
         if ($request->filled('title')) {
             $query->where('title', 'LIKE', '%' . $request->input('title') . '%');
         }
@@ -216,21 +225,20 @@ class PostController extends Controller
             $query->whereRaw('(hours * 3600000000 + minutes * 60000000) <= ?', [$inputTime]);
         }
 
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->input('user_id'));
+        $user_id = null;
+        if ($user) {
+            $user_id = $user->id;
+            //$query->where('user_id', $user->id);
         }
 
-        // Sorting and pagination
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
 
-        // Execute the query and paginate the results
         $posts = $query->orderBy($sortField, $sortOrder)
             ->paginate($perPage)
             ->appends($request->except('page'));
 
-        // Check if the result is empty
         if ($posts->isEmpty()) {
             return response()->json([
                 'status' => 'error',
@@ -239,7 +247,10 @@ class PostController extends Controller
             ]);
         }
 
-        // Return the response with user information included
+        $posts->getCollection()->transform(function ($post) use ($user_id) {
+            return $this->addExtraFields($post, $user_id);
+        });
+
         return response()->json([
             'status' => 'success',
             'data' => $posts
@@ -397,6 +408,244 @@ class PostController extends Controller
             } else {
                 return response()->json(['message' => __('api.err_comment_like')], 500);
             }
+        }
+    }
+
+    public function addIngredient(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => __('api.err_user_not_found')], 404);
+        }
+
+        $rules = [
+            'name' => ['required'],
+            'measurement' => ['required'],
+            'post_id' => ['required', 'exists:posts,id'],
+            'method' => ['required'],
+            'ingredient_id' => ['required_if:method,edit'],
+        ];
+
+        (new \App\Http\Controllers\Api\ResponseController)->directValidation($rules);
+
+        $data = null;
+        $messages = __('api.suc_ingredient_create', ['order' => $request->order]);
+
+        if ($request->ingredient_id > 0) {
+            $data = $this->ingredient_obj->find($request->ingredient_id);
+            if (!$data) {
+                return response()->json(['error' => __('api.err_ingredient_not_found')], 404);
+            }
+            $messages = __('api.suc_ingredient_update');
+        }
+
+        $request_data = $request->all();
+        $request_data['user_id'] = $user->id;
+        $request_data['type'] = $request->type ?? '';
+        $request_data['measurement'] = $request->measurement ?? '';
+        $request_data['order'] = (int) ($request->order ?? 0);
+        unset($request_data['method']);
+
+        $post = $this->ingredient_obj->saveIngredient($request_data, 0, $data);
+        if (!$post) {
+            return response()->json(['error' => __('api.err_something_went_wrong')], 500);
+        }
+
+        return response()->json(['message' => $messages, 'data' => $post], 200);
+    }
+
+    public function addInstruction(Request $request)
+    {
+        $user = $request->user();
+
+        $s3BaseUrl = Storage::disk('s3')->url('/');
+
+        $file = $request->input('file');
+        $thumbnail = $request->input('thumbnail');
+
+        $fileUrl = $file && !filter_var($file, FILTER_VALIDATE_URL) ? $s3BaseUrl . ltrim($file, '/') : $file;
+        $thumbnailUrl = $thumbnail && !filter_var($thumbnail, FILTER_VALIDATE_URL) ? $s3BaseUrl . ltrim($thumbnail, '/') : $thumbnail;
+
+        $isFileUrl = filter_var($fileUrl, FILTER_VALIDATE_URL);
+        $isThumbnailUrl = filter_var($thumbnailUrl, FILTER_VALIDATE_URL);
+
+        $rules = [
+            'title' => 'required',
+            'file' => ['required_if:method,add', 'nullable', $isFileUrl ? 'string' : 'file', $isFileUrl ? '' : 'mimes:jpg,jpeg,png,gif,bmp,svg,webp,mp4,avi,wmv,mov,flv'],
+            'description' => 'required',
+            'post_id' => ['required', 'exists:posts,id'],
+            'thumbnail' => ['required_if:method,add', 'nullable', $isThumbnailUrl ? 'string' : 'file'],
+            'type' => ['required', 'in:video,image'],
+            'method' => 'required',
+            'instruction_id' => ['required_if:method,edit'],
+        ];
+
+        $messages = [
+            'file.required_if' => 'The image field is required when adding a new instruction',
+        ];
+
+        $response = new ResponseController();
+        $response->directValidation($rules, $messages);
+
+        $data = null;
+        $order = $request->order ?? '1';
+
+        $messages = __('api.suc_instruction_create', ['order' => $order]);
+        if ($request->instruction_id > 0) {
+            $data = $this->instruction_obj->find($request->instruction_id);
+            if (!empty($data)) {
+                $data->getRawOriginal('thumbnail');
+                $data->getRawOriginal('file');
+            }
+            $messages = __('api.suc_instruction_update');
+        }
+
+        if ($request->hasFile('file')) {
+            $up = upload_file('file', 'user_instruction_image');
+        } elseif ($isFileUrl) {
+            $up = $file;
+        } elseif ($request->input('file') && strpos($request->input('file'), '/uploads/posts/images/') === 0) {
+            $up = $request->input('file');
+        } else {
+            return response()->json([
+                'status' => 412,
+                'message' => 'The file must be a valid file or URL.',
+                'data' => []
+            ]);
+        }
+
+        if ($request->hasFile('thumbnail')) {
+            $thumbnail = upload_file('thumbnail', 'user_instruction_thumbnail');
+        } elseif ($request->input('thumbnail') && strpos($request->input('thumbnail'), '/uploads/posts/images/') === 0) {
+            $thumbnail = $request->input('thumbnail');
+        } else {
+            return response()->json([
+                'status' => 412,
+                'message' => __('api.err_invalid_thumbnail'),
+                'data' => []
+            ]);
+        }
+
+        $request_data = $request->all();
+        $request_data['thumbnail'] = $thumbnail ?? '';
+        $request_data['file'] = $up ?? '';
+        $request_data['user_id'] = $user->id;
+        $request_data['order'] = (int) $order;
+
+        if ($isFileUrl) {
+            $fileExtension = pathinfo($fileUrl, PATHINFO_EXTENSION);
+            $request_data['type'] = in_array($fileExtension, ['mp4', 'avi', 'wmv', 'mov', 'flv']) ? 'video' : 'image';
+        } else {
+            $request_data['type'] = (strpos($request->file('file')->getMimeType(), 'video') !== false) ? 'video' : 'image';
+        }
+
+        unset($request_data['method']);
+
+        $post = $this->instruction_obj->saveInstruction($request_data, 0, $data);
+        if ($post) {
+            return response()->json([
+                'status' => 200,
+                'message' => $messages,
+                'data' => $post
+            ]);
+        }
+        return response()->json([
+            'status' => 500,
+            'message' => __('api.err_something_went_wrong'),
+            'data' => false
+        ]);
+    }
+
+    public function postCommentReview(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $rules = [
+                'post_id' => ['required', 'exists:posts,id'],
+                'comment_id' => ['nullable', 'numeric', 'exists:comments,id'],
+                'comment_text' => ['required_if:type,0'],
+                'type' => ['required'],
+                'rating' => ['required_if:type,1'],
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 412,
+                    'message' => $validator->errors()->first(),
+                    'data' => []
+                ]);
+            }
+
+            $comment_details = Comment::create([
+                "user_id" => $user->id,
+                "post_id" => $request->post_id,
+                "comment_id" => $request->comment_id,
+                "comment_text" => $request->comment_text,
+                "type" => $request->type,
+                "rating" => $request->rating,
+            ]);
+
+            $comments = Comment::with([
+                'reply' => function ($query) use ($request) {
+                    $query->withCount(["replylike"]);
+                    $query->with(["user" => function ($q) {
+                        $q->select("id", "username", "profile_image");
+                    }])
+                        ->when(!is_null($request->type) && $request->type != "", function ($q) use ($request) {
+                            $q->where('type', $request->type);
+                        });
+                },
+                'user' => function ($q) {
+                    $q->select("id", "username", "profile_image");
+                }
+            ])->where(function ($q) use ($request, $comment_details) {
+                $q->where('id', $comment_details->id)->orwhere('id', $request->comment_id);
+            })->whereNull("comment_id")
+                ->get();
+
+            $commentlikes = CommentLike::where('user_id', $user->id)
+                ->where('post_id', $request->post_id)
+                ->pluck('comment_id')->toArray();
+
+            foreach ($comments as $comment) {
+                $comment->is_commentlike = false;
+                $comment->is_replylike = false;
+                $comment->commentlike_count = count($commentlikes);
+                if (in_array($comment->id, $commentlikes)) {
+                    $comment->is_commentlike = true;
+                }
+
+                $rep_comments = $comment->reply;
+                foreach ($rep_comments as $replay) {
+                    $replay->is_replaylike = false;
+                    if (in_array($replay->id, $commentlikes)) {
+                        $replay->is_replaylike = true;
+                    }
+                }
+            }
+
+            if (!empty($comments)) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => __('api.suc_comment_create'),
+                    'data' => $comments
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 500,
+                    'message' => __('api.err_comment'),
+                    'data' => []
+                ]);
+            }
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => __('api.err_comment'),
+                'data' => $th->getMessage()
+            ]);
         }
     }
 
