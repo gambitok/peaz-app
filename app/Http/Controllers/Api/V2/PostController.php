@@ -475,7 +475,7 @@ class PostController extends Controller
             'file' => ['required_if:method,add', 'nullable', $isFileUrl ? 'string' : 'file', $isFileUrl ? '' : 'mimes:jpg,jpeg,png,gif,bmp,svg,webp,mp4,avi,wmv,mov,flv'],
             'description' => 'required',
             'post_id' => ['required', 'exists:posts,id'],
-            'thumbnail' => ['required_if:method,add', 'nullable', $isThumbnailUrl ? 'string' : 'file'],
+            'thumbnail' => ['required_if:method,add', 'nullable', $isThumbnailUrl ? 'string' : 'file', $isThumbnailUrl ? '' : 'mimes:jpg,jpeg,png,gif,bmp,svg,webp,mp4,avi,wmv,mov,flv'],
             'type' => ['required', 'in:video,image'],
             'method' => 'required',
             'instruction_id' => ['required_if:method,edit'],
@@ -516,9 +516,11 @@ class PostController extends Controller
         }
 
         if ($request->hasFile('thumbnail')) {
-            $thumbnail = upload_file('thumbnail', 'user_instruction_thumbnail');
-        } elseif ($request->input('thumbnail') && strpos($request->input('thumbnail'), '/uploads/posts/images/') === 0) {
-            $thumbnail = $request->input('thumbnail');
+            $upThumbnail = upload_file('thumbnail', 'user_instruction_thumbnail');
+        } elseif ($isThumbnailUrl) {
+            $upThumbnail = $thumbnail;
+        } elseif ($request->input('thumbnail') && strpos($request->input('thumbnail'), '/uploads/posts/thumbnails/images/') === 0) {
+            $upThumbnail = $request->input('thumbnail');
         } else {
             return response()->json([
                 'status' => 412,
@@ -528,8 +530,8 @@ class PostController extends Controller
         }
 
         $request_data = $request->all();
-        $request_data['thumbnail'] = $thumbnail ?? '';
         $request_data['file'] = $up ?? '';
+        $request_data['thumbnail'] = $upThumbnail ?? '';
         $request_data['user_id'] = $user->id;
         $request_data['order'] = (int) $order;
 
