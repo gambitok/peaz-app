@@ -128,7 +128,7 @@ class UserController extends Controller
                 'username' => 'nullable|string|max:255',
                 'profile_image' => 'nullable|string|max:255',
                 'bio' => 'nullable|string',
-                'website' => 'nullable|url|max:255',
+                'website' => 'nullable|string|max:255',
             ]);
         } catch (ValidationException $e) {
             return response()->json([

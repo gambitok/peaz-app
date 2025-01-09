@@ -53,6 +53,8 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::post('posts/', [PostController::class, 'store'])->name('posts.store');
     Route::put('posts/{id}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
+
+
 });
 
 //Route::post('convert-video', [S3Controller::class, 'convertVideo']);
