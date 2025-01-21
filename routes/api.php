@@ -48,13 +48,12 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::get('post-details/{id}', [PostController::class, 'details'])->name('posts.details');
 
     Route::get('posts/search', [PostController::class, 'search'])->name('posts.search');
+    Route::get('posts/user-search', [PostController::class, 'userSearch'])->name('posts.search');
     Route::get('posts', [PostController::class, 'index'])->name('posts.index');
     Route::get('posts/{id}', [PostController::class, 'show'])->name('posts.show');
     Route::post('posts/', [PostController::class, 'store'])->name('posts.store');
     Route::put('posts/{id}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
-
-
 });
 
 //Route::post('convert-video', [S3Controller::class, 'convertVideo']);

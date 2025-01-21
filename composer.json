@@ -23,7 +23,8 @@
         "php-ffmpeg/php-ffmpeg": "^0.16",
         "rinvex/laravel-authy": "^1.0",
         "twilio/sdk": "^8.0",
-        "yajra/laravel-datatables-oracle": "^9.21"
+        "yajra/laravel-datatables-oracle": "^9.21",
+        "ext-json": "*"
     },
     "require-dev": {
         "facade/ignition": "^2.0",

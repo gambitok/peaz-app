@@ -51,6 +51,7 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|string',
             'file' => 'nullable|string',
+            'thumbnail' => 'nullable|string',
             'caption' => 'nullable|string',
             'tags' => 'nullable|string',
             'serving_size' => 'nullable|integer',
@@ -220,6 +221,10 @@ class PostController extends Controller
             $query->where('dietary', 'LIKE', '%' . $request->input('dietary') . '%');
         }
 
+        if ($request->filled('tags')) {
+            $query->where('tags', 'LIKE', '%' . $request->input('tags') . '%');
+        }
+
         if ($request->filled('time')) {
             $inputTime = (int) $request->input('time');
             $query->whereRaw('(hours * 3600000000 + minutes * 60000000) <= ?', [$inputTime]);
@@ -228,7 +233,67 @@ class PostController extends Controller
         $user_id = null;
         if ($user) {
             $user_id = $user->id;
-            //$query->where('user_id', $user->id);
+        }
+
+        $sortField = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $perPage = $request->input('per_page', 10);
+
+        $posts = $query->orderBy($sortField, $sortOrder)
+            ->paginate($perPage)
+            ->appends($request->except('page'));
+
+        if ($posts->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No posts found',
+                'data' => []
+            ]);
+        }
+
+        $posts->getCollection()->transform(function ($post) use ($user_id) {
+            return $this->addExtraFields($post, $user_id);
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $posts
+        ]);
+    }
+
+    public function userSearch(Request $request)
+    {
+        $query = Post::with(['user', 'comment', 'postlike', 'report_statuses']);
+
+        if ($request->filled('title')) {
+            $query->where('title', 'LIKE', '%' . $request->input('title') . '%');
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', 'LIKE', '%' . $request->input('type') . '%');
+        }
+
+        if ($request->filled('caption')) {
+            $query->where('caption', 'LIKE', '%' . $request->input('caption') . '%');
+        }
+
+        if ($request->filled('dietary')) {
+            $query->where('dietary', 'LIKE', '%' . $request->input('dietary') . '%');
+        }
+
+        if ($request->filled('tags')) {
+            $query->where('tags', 'LIKE', '%' . $request->input('tags') . '%');
+        }
+
+        if ($request->filled('time')) {
+            $inputTime = (int) $request->input('time');
+            $query->whereRaw('(hours * 3600000000 + minutes * 60000000) <= ?', [$inputTime]);
+        }
+
+        $user_id = null;
+        if ($request->filled('user_id')) {
+            $user_id = $request->input('user_id');
+            $query->where('user_id', '=', $user_id);
         }
 
         $sortField = $request->input('sort_by', 'created_at');

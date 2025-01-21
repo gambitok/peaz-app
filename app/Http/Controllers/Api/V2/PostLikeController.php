@@ -24,6 +24,10 @@ class PostLikeController extends Controller
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
+        $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
+//        $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
+//        $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
+//        $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
 
         $likesGroupedQuery = DB::table('postlikes')
             ->join('posts', 'postlikes.post_id', '=', 'posts.id')
@@ -51,6 +55,11 @@ class PostLikeController extends Controller
                     ->whereIn('id', explode(',', $group->post_ids))
                     ->limit(3)
                     ->get();
+
+                foreach ($posts as $post) {
+                    $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
+                    $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
+                }
 
                 $group->posts = $posts;
             }
@@ -110,10 +119,15 @@ class PostLikeController extends Controller
 
         if ($posts->isNotEmpty()) {
             $likesWithPosts = [];
+            $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
             foreach ($posts as $post) {
                 $post->likes = DB::table('postlikes')
                     ->where('post_id', $post->id)
                     ->get();
+
+                $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
+                $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
+
                 $likesWithPosts[] = $post;
             }
 
@@ -140,5 +154,4 @@ class PostLikeController extends Controller
             ], 404);
         }
     }
-
 }
