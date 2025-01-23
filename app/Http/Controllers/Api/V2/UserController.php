@@ -13,7 +13,6 @@ use DateTime;
 
 class UserController extends Controller
 {
-
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -44,10 +43,8 @@ class UserController extends Controller
 
     public function getProfile(Request $request)
     {
-        // Retrieve the currently authenticated user
         $user = $request->user();
 
-        // Return the user's profile data as a JSON response
         return response()->json($user);
     }
 
@@ -77,7 +74,6 @@ class UserController extends Controller
         $user = $request->user();
 
         if ($user) {
-            // Revoke the token that was used to authenticate the current request
             $user->token()->revoke();
 
             return response()->json(['message' => 'Successfully logged out'], 200);

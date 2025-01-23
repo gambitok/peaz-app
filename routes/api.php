@@ -2,14 +2,21 @@
 
 use App\Http\Controllers\Api\V1\GuestController;
 use App\Http\Controllers\Api\V2\ReportController;
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\S3Controller;
+
 use App\Http\Controllers\Api\V2\UserController;
 use App\Http\Controllers\Api\V1\UserController as UserV1Controller;
+
 use App\Http\Controllers\Api\V2\PostController;
 use App\Http\Controllers\Api\V1\PostController as PostV1Controller;
 use App\Http\Controllers\Api\V2\PostLikeController;
 use App\Http\Controllers\Api\V2\PostCommentController;
+
+use App\Http\Controllers\Api\V2\TagController;
+use App\Http\Controllers\Api\V2\DietaryController;
+use App\Http\Controllers\Api\V2\CuisineController;
 
 Route::post('login', [UserController::class, 'login']);
 Route::put('register', [UserController::class, 'register']);
@@ -23,6 +30,13 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
 });
 
 Route::prefix('v2')->middleware('auth:api')->group(function () {
+    Route::get('tags', [TagController::class, 'index'])->name('tags.index');
+    Route::post('tags/', [TagController::class, 'store'])->name('tags.store');
+    Route::get('dietaries', [DietaryController::class, 'index'])->name('dietaries.index');
+    Route::post('dietaries/', [DietaryController::class, 'store'])->name('dietaries.store');
+    Route::get('cuisines', [CuisineController::class, 'index'])->name('cuisines.index');
+    Route::post('cuisines/', [CuisineController::class, 'store'])->name('cuisines.store');
+
     Route::get('users/search', [UserController::class, 'search'])->name('v2.users.search');
     Route::get('users/searchProfile', [UserController::class, 'searchProfile'])->name('v2.users.searchProfile');
 

@@ -9,7 +9,22 @@ use Illuminate\Support\Facades\Storage;
 class Post extends Model
 {
     public $table = "posts";
-    protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','dietary','tags','cuisines','not_interested'];
+    protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','not_interested'];
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'post_tag', 'post_id', 'tag_id');
+    }
+
+    public function dietaries()
+    {
+        return $this->belongsToMany(Dietary::class, 'post_dietary', 'post_id', 'dietary_id');
+    }
+
+    public function cuisines()
+    {
+        return $this->belongsToMany(Cuisine::class, 'post_cuisine', 'post_id', 'cuisine_id');
+    }
 
     public function comments()
     {

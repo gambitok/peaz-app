@@ -49,8 +49,8 @@
                             <small class="text-muted">Separate tags with commas (e.g., "Tag1, Tag2").</small>
                         </div>
                         <div class="form-group">
-                            <label for="dietary">Dietary</label>
-                            <input type="text" name="dietary" id="dietary" class="form-control" value="{{ $data->dietary }}">
+                            <label for="dietary">Dietaries</label>
+                            <input type="text" name="dietaries" id="dietaries" class="form-control" value="{{ $data->dietaries }}">
                             <small class="text-muted">Separate dietary types with commas (e.g., "Vegan, Gluten-Free").</small>
                         </div>
                         <button type="submit" class="btn btn-primary">Save Changes</button>

@@ -106,7 +106,7 @@ class PostListController extends WebController
                 'hours' => 'required|numeric',
                 'minutes' => 'required|numeric',
                 'tags' => 'nullable|string',
-                'dietary' => 'nullable|string',
+                'dietaries' => 'nullable|string',
             ]);
 
             if ($request->hasFile('file')) {
@@ -169,8 +169,9 @@ class PostListController extends WebController
                 'thumbnail' => $thumbnailSrc ?: $post->thumbnail,
                 'hours' =>  $request->hours,
                 'minutes' =>  $request->minutes,
-                'tags' =>  $request->dietary,
-                'dietary' =>  $request->dietary,
+                'tags' =>  $request->tags,
+                'dietaries' =>  $request->dietaries,
+                'cuisines' =>  $request->cuisines,
             ];
 
             $post->update($postData);

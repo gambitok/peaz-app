@@ -8,9 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Ingredient;
 use App\Instruction;
 use App\PostLike;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use App\Post;
 use App\Http\Controllers\Api\ResponseController;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -30,12 +32,29 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::paginate(10);
+        $posts = Post::with(['tags', 'dietaries', 'cuisines'])->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $posts
-        ]);
+        foreach ($posts as $post) {
+            if ($post->tags && $post->tags instanceof Collection) {
+                $post->tags = $post->tags->mapWithKeys(function ($tag) {
+                    return [$tag->id => $tag->name];
+                });
+            }
+
+            if ($post->dietaries && $post->dietaries instanceof Collection) {
+                $post->dietaries = $post->dietaries->mapWithKeys(function ($dietary) {
+                    return [$dietary->id => $dietary->name];
+                });
+            }
+
+            if ($post->cuisines && $post->cuisines instanceof Collection) {
+                $post->cuisines = $post->cuisines->mapWithKeys(function ($cuisine) {
+                    return [$cuisine->id => $cuisine->name];
+                });
+            }
+        }
+
+        return response()->json($posts);
     }
 
     /**
@@ -47,26 +66,53 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'user_id' => 'required|integer',
             'title' => 'required|string|max:255',
-            'type' => 'required|string',
-            'file' => 'nullable|string',
-            'thumbnail' => 'nullable|string',
             'caption' => 'nullable|string',
-            'tags' => 'nullable|string',
-            'serving_size' => 'nullable|integer',
-            'hours' => 'nullable|integer',
-            'minutes' => 'nullable|integer',
-            'dietary' => 'nullable|string',
-            'cuisines' => 'nullable|string',
+            'serving_size' => 'required|integer',
+            'minutes' => 'required|integer',
+            'hours' => 'required|integer',
+            'method' => 'nullable|string',
+            'type' => 'required|string',
+            'user_id' => 'required|integer',
+            'file' => 'required|string',
+            'thumbnail' => 'required|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'integer|exists:tags,id',
+            'dietaries' => 'nullable|array',
+            'dietaries.*' => 'integer|exists:dietaries,id',
+            'cuisines' => 'nullable|array',
+            'cuisines.*' => 'integer|exists:cuisines,id',
         ]);
 
         $post = Post::create($validatedData);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $post
-        ], 201);
+        if ($request->has('tags')) {
+            $post->tags()->attach($validatedData['tags']);
+        }
+
+        if ($request->has('dietaries')) {
+            $post->dietaries()->attach($validatedData['dietaries']);
+        }
+
+        if ($request->has('cuisines')) {
+            $post->cuisines()->attach($validatedData['cuisines']);
+        }
+
+        $post->load('tags', 'dietaries', 'cuisines');
+
+        if ($post->tags && $post->tags instanceof Collection) {
+            $post->tags = $post->tags->pluck('name');
+        }
+
+        if ($post->dietaries && $post->dietaries instanceof Collection) {
+            $post->dietaries = $post->dietaries->pluck('name');
+        }
+
+        if ($post->cuisines && $post->cuisines instanceof Collection) {
+            $post->cuisines = $post->cuisines->pluck('name');
+        }
+
+        return response()->json($post, 201);
     }
 
     /**
@@ -77,13 +123,25 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = Post::with(['user', 'comment', 'postlike', 'report_statuses'])->find($id);
+        $post = Post::with(['user', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines'])->find($id);
 
         if (!$post) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Post not found'
             ], 404);
+        }
+
+        if ($post->tags && $post->tags instanceof Collection) {
+            $post->tags = $post->tags->pluck('name');
+        }
+
+        if ($post->dietaries && $post->dietaries instanceof Collection) {
+            $post->dietaries = $post->dietaries->pluck('name');
+        }
+
+        if ($post->cuisines && $post->cuisines instanceof Collection) {
+            $post->cuisines = $post->cuisines->pluck('name');
         }
 
         $post = $this->addExtraFields($post);
@@ -113,13 +171,25 @@ class PostController extends Controller
 
     public function details($id)
     {
-        $post = Post::with(['instructions', 'ingredients'])->find($id);
+        $post = Post::with(['instructions', 'ingredients', 'tags', 'dietaries', 'cuisines'])->find($id);
 
         if (!$post) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Post not found'
             ], 404);
+        }
+
+        if ($post->tags && $post->tags instanceof Collection) {
+            $post->tags = $post->tags->pluck('name');
+        }
+
+        if ($post->dietaries && $post->dietaries instanceof Collection) {
+            $post->dietaries = $post->dietaries->pluck('name');
+        }
+
+        if ($post->cuisines && $post->cuisines instanceof Collection) {
+            $post->cuisines = $post->cuisines->pluck('name');
         }
 
         return response()->json([
@@ -147,31 +217,59 @@ class PostController extends Controller
         }
 
         $validatedData = $request->validate([
-            'user_id' => 'sometimes|integer',
-            'title' => 'sometimes|string|max:255',
-            'type' => 'sometimes|string|max:50',
-            'file' => 'sometimes|string|max:255|nullable',
-            'thumbnail' => 'sometimes|string|max:255|nullable',
-            'caption' => 'sometimes|string',
-            'serving_size' => 'sometimes|integer',
-            'hours' => 'sometimes|integer',
-            'minutes' => 'sometimes|integer',
-            'dietary' => 'sometimes|string|max:255|nullable',
-            'tags' => 'sometimes|string|max:255',
-            'not_interested' => 'sometimes|boolean',
-            'cuisines' => 'sometimes|string|max:255|nullable',
+            'title' => 'nullable|string|max:255',
+            'caption' => 'nullable|string',
+            'serving_size' => 'nullable|integer',
+            'minutes' => 'nullable|integer',
+            'hours' => 'nullable|integer',
+            'method' => 'nullable|string',
+            'type' => 'nullable|string',
+            'user_id' => 'nullable|integer',
+            'file' => 'nullable|string',
+            'thumbnail' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'integer|exists:tags,id',
+            'dietaries' => 'nullable|array',
+            'dietaries.*' => 'integer|exists:dietaries,id',
+            'cuisines' => 'nullable|array',
+            'cuisines.*' => 'integer|exists:cuisines,id',
         ]);
-
-        if ($validatedData['dietary'] === 'undefined') {
-            $validatedData['dietary'] = null;
-        }
 
         $post->update($validatedData);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $post
-        ]);
+        if ($request->has('tags')) {
+            $post->tags()->sync($validatedData['tags']);
+        } else {
+            $post->tags()->detach();
+        }
+
+        if ($request->has('dietaries')) {
+            $post->dietaries()->sync($validatedData['dietaries']);
+        } else {
+            $post->dietaries()->detach();
+        }
+
+        if ($request->has('cuisines')) {
+            $post->cuisines()->sync($validatedData['cuisines']);
+        } else {
+            $post->cuisines()->detach();
+        }
+
+        $post->load('tags', 'dietaries', 'cuisines');
+
+        if ($post->tags && $post->tags instanceof Collection) {
+            $post->tags = $post->tags->pluck('name');
+        }
+
+        if ($post->dietaries && $post->dietaries instanceof Collection) {
+            $post->dietaries = $post->dietaries->pluck('name');
+        }
+
+        if ($post->cuisines && $post->cuisines instanceof Collection) {
+            $post->cuisines = $post->cuisines->pluck('name');
+        }
+
+        return response()->json($post, 200);
     }
 
     /**
@@ -190,6 +288,10 @@ class PostController extends Controller
                 'message' => 'Post not found'
             ], 404);
         }
+
+        $post->tags()->detach();
+        $post->dietaries()->detach();
+        $post->cuisines()->detach();
 
         $post->delete();
 
@@ -217,8 +319,8 @@ class PostController extends Controller
             $query->where('caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
 
-        if ($request->filled('dietary')) {
-            $query->where('dietary', 'LIKE', '%' . $request->input('dietary') . '%');
+        if ($request->filled('dietaries')) {
+            $query->where('dietaries', 'LIKE', '%' . $request->input('dietaries') . '%');
         }
 
         if ($request->filled('tags')) {
@@ -277,8 +379,8 @@ class PostController extends Controller
             $query->where('caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
 
-        if ($request->filled('dietary')) {
-            $query->where('dietary', 'LIKE', '%' . $request->input('dietary') . '%');
+        if ($request->filled('dietaries')) {
+            $query->where('dietaries', 'LIKE', '%' . $request->input('dietaries') . '%');
         }
 
         if ($request->filled('tags')) {

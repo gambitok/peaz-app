@@ -87,7 +87,7 @@
         <div class="card">
             <div class="card-body" style="font-size:14px;">
             <div class="card-title">
-               Dietary
+                Dietaries
                 </div>
                 <table  class="table dt-responsive mb-4  nowrap w-100 mb-">
                     <thead>
@@ -98,9 +98,9 @@
                     </thead>
                     <tbody>
 
-                    @if($data->dietary)
+                    @if($data->dietaries)
 
-                            @foreach(explode(",",$data->dietary) as $key => $value)
+                            @foreach(explode(",",$data->dietaries) as $key => $value)
                             <tr>
                             <td>{{$key+1}}</td>
                             <td>{{$value}}</td>
@@ -241,7 +241,7 @@
 
         Table = $('#taglist').DataTable();
 
-        Table = $('#dietary').DataTable();
+        Table = $('#dietaries').DataTable();
     });
 
 </script>
