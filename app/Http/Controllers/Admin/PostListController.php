@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Cuisine;
+use App\Dietary;
 use App\Http\Controllers\Controller;
+use App\Tag;
 use Illuminate\Http\Request;
 use App\Http\Controllers\WebController;
 use App\Post;
@@ -11,11 +14,12 @@ use App\Ingredient;
 use App\Instruction;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Collection;
 
 class PostListController extends WebController
 {
-
     public $ingredient_obj;
+
     public function __construct()
     {
         $this->ingredient_obj = new Ingredient();
@@ -44,18 +48,20 @@ class PostListController extends WebController
 
     public function show($id)
     {
-        $post = Post::with(['instruction'])->find($id);
+        $post = Post::with(['instruction', 'tags', 'dietaries', 'cuisines'])->find($id);
 
         if (!$post) {
             error_session('post not found');
             return redirect()->route('admin.post.index');
         }
 
-        // Get the ingredients for the post
         $ingredients = Ingredient::where('post_id', $id)->get();
 
-        // Get the instructions for the post
         $instructions = Instruction::where('post_id', $id)->orderBy('id', 'ASC')->get();
+
+        $post->tags = $post->tags()->pluck('name')->toArray();
+        $post->dietaries = $post->dietaries()->pluck('name')->toArray();
+        $post->cuisines = $post->cuisines()->pluck('name')->toArray();
 
         return view('admin.post.view', [
             'title' => 'View post',
@@ -71,16 +77,26 @@ class PostListController extends WebController
 
     public function edit($id)
     {
-        $post = Post::find($id);
+        $post = Post::with(['tags', 'dietaries', 'cuisines'])->find($id);
 
         if (!$post) {
             error_session('Post not found');
             return redirect()->route('admin.post.index');
         }
 
+        $tags = Tag::all();
+        $dietaries = Dietary::all();
+        $cuisines = Cuisine::all();
+        $post->tags = $post->tags()->pluck('tags.id')->toArray();
+        $post->dietaries = $post->dietaries()->pluck('dietaries.id')->toArray();
+        $post->cuisines = $post->cuisines()->pluck('cuisines.id')->toArray();
+
         return view('admin.post.edit', [
             'title' => 'Edit post',
             'data' => $post,
+            'tags' => $tags,
+            'dietaries' => $dietaries,
+            'cuisines' => $cuisines,
             'breadcrumb' => breadcrumb([
                 'post' => route('admin.post.index'),
                 'edit' => route('admin.post.edit', $id)
@@ -105,8 +121,9 @@ class PostListController extends WebController
                 'thumbnail' => 'nullable|file',
                 'hours' => 'required|numeric',
                 'minutes' => 'required|numeric',
-                'tags' => 'nullable|string',
-                'dietaries' => 'nullable|string',
+                'tags' => 'nullable|array',
+                'dietaries' => 'nullable|array',
+                'cuisines' => 'nullable|array',
             ]);
 
             if ($request->hasFile('file')) {
@@ -169,12 +186,27 @@ class PostListController extends WebController
                 'thumbnail' => $thumbnailSrc ?: $post->thumbnail,
                 'hours' =>  $request->hours,
                 'minutes' =>  $request->minutes,
-                'tags' =>  $request->tags,
-                'dietaries' =>  $request->dietaries,
-                'cuisines' =>  $request->cuisines,
             ];
 
             $post->update($postData);
+
+            if ($request->has('tags')) {
+                $post->tags()->sync($request->tags);
+            } else {
+                $post->tags()->detach();
+            }
+
+            if ($request->has('dietaries')) {
+                $post->dietaries()->sync($request->dietaries);
+            } else {
+                $post->dietaries()->detach();
+            }
+
+            if ($request->has('cuisines')) {
+                $post->cuisines()->sync($request->cuisines);
+            } else {
+                $post->cuisines()->detach();
+            }
 
             return redirect()->route('admin.post.show', $post->id)
                 ->with('success', 'Post updated successfully');
@@ -182,7 +214,6 @@ class PostListController extends WebController
             return redirect()->route('admin.post.index')
                 ->with('error', 'Post not found');
         }
-
     }
 
     private function uploadFile(Request $request, $fieldName)
@@ -263,7 +294,7 @@ class PostListController extends WebController
     public function postDetailsUpdate(Request $request, $id)
     {
         $data =$this->ingredient_obj->find($id);
-        if(isset($data) && !empty($data)){
+        if (isset($data) && !empty($data)) {
             $return_data = $request->all();
             $this->ingredient_obj->saveIngredient($return_data,$id,$data);
             success_session('Ingredients updated successfully');
@@ -306,7 +337,6 @@ class PostListController extends WebController
             ->editColumn('description', function ($row) {
                 return "<span title='$row->description'>".Str::limit($row->description, 50)."</span>";
              })
-
              ->rawColumns(['title','file',"description","thumbnail","type"])
             ->make(true);
     }

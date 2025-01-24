@@ -17,10 +17,14 @@ use App\Http\Controllers\Api\V2\PostCommentController;
 use App\Http\Controllers\Api\V2\TagController;
 use App\Http\Controllers\Api\V2\DietaryController;
 use App\Http\Controllers\Api\V2\CuisineController;
+use App\Http\Controllers\Api\V2\CommentController;
+use App\Http\Controllers\Api\V2\CommentRatingController;
 
 Route::post('login', [UserController::class, 'login']);
 Route::put('register', [UserController::class, 'register']);
 Route::post('logout', [UserController::class, 'logout'])->middleware('auth:api');
+
+Route::post('comments/{comment}/rate', [CommentRatingController::class, 'rate'])->middleware('auth:api');
 
 Route::prefix('profile')->middleware('auth:api')->group(function () {
     Route::get('/', [UserController::class, 'getProfile']);

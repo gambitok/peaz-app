@@ -3,6 +3,7 @@
 @section('css')
     <link href="{{ URL::asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"/>
+    <link href="{{ URL::asset('/assets/libs/select2/css/select2.min.css') }}" rel="stylesheet" type="text/css" />
 @endsection
 
 @section('content')
@@ -43,16 +44,37 @@
                             <label for="minutes">Minutes</label>
                             <input type="number" name="minutes" id="minutes" class="form-control" value="{{ $data->minutes }}">
                         </div>
+
                         <div class="form-group">
                             <label for="tags">Tags</label>
-                            <input type="text" name="tags" id="tags" class="form-control" value="{{ $data->tags }}">
-                            <small class="text-muted">Separate tags with commas (e.g., "Tag1, Tag2").</small>
+                            <select name="tags[]" id="tags" class="form-control select2" multiple>
+                                @foreach($tags as $tag)
+                                    <option value="{{ $tag->id }}" {{ in_array($tag->id, $data->tags) ? 'selected' : '' }}>{{ $tag->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Select multiple tags.</small>
                         </div>
+
                         <div class="form-group">
-                            <label for="dietary">Dietaries</label>
-                            <input type="text" name="dietaries" id="dietaries" class="form-control" value="{{ $data->dietaries }}">
-                            <small class="text-muted">Separate dietary types with commas (e.g., "Vegan, Gluten-Free").</small>
+                            <label for="dietaries">Dietaries</label>
+                            <select name="dietaries[]" id="dietaries" class="form-control select2" multiple>
+                                @foreach($dietaries as $dietary)
+                                    <option value="{{ $dietary->id }}" {{ in_array($dietary->id, $data->dietaries) ? 'selected' : '' }}>{{ $dietary->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Select multiple dietaries.</small>
                         </div>
+
+                        <div class="form-group">
+                            <label for="cuisines">Cuisines</label>
+                            <select name="cuisines[]" id="cuisines" class="form-control select2" multiple>
+                                @foreach($cuisines as $cuisine)
+                                    <option value="{{ $cuisine->id }}" {{ in_array($cuisine->id, $data->cuisines) ? 'selected' : '' }}>{{ $cuisine->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Select multiple cuisines.</small>
+                        </div>
+
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                     </form>
                 </div>
@@ -65,4 +87,10 @@
     <script src="{{ asset('/assets/admin/vendors/general/validate/jquery.validate.min.js') }}"></script>
     <script src="{{ asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js"></script>
+    <script src="{{ asset('/assets/libs/select2/js/select2.full.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2();
+        });
+    </script>
 @endsection

@@ -9,6 +9,16 @@ class Comment extends Model
     public $table = "comments";
     protected $fillable = ['id','user_id','post_id','comment_id','comment_text','type','rating'];
 
+    public function ratings()
+    {
+        return $this->hasMany(CommentRating::class);
+    }
+
+    public function averageRating()
+    {
+        return $this->ratings()->avg('rating');
+    }
+
     public function post()
     {
         return $this->belongsTo(Post::class);

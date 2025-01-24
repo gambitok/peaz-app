@@ -56,6 +56,7 @@
                 </div>
             </div>
         </div>
+
         <div class="card">
             <div class="card-body" style="font-size:14px;">
             <div class="card-title">
@@ -69,21 +70,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if($data->tags)
-
-                            @foreach(explode(",",$data->tags) as $key => $value)
+                    @if(count($data->tags) > 0)
+                        @foreach($data->tags as $key => $value)
                             <tr>
-                            <td>{{$key+1}}</td>
-                            <td>{{$value}}</td>
+                                <td>{{$key+1}}</td>
+                                <td>{{$value}}</td>
                             </tr>
-                            @endforeach
-
-                        @endif
+                        @endforeach
+                    @endif
                     </tbody>
                 </table>
             </div>
-
         </div>
+
         <div class="card">
             <div class="card-body" style="font-size:14px;">
             <div class="card-title">
@@ -97,22 +96,46 @@
                         </tr>
                     </thead>
                     <tbody>
-
-                    @if($data->dietaries)
-
-                            @foreach(explode(",",$data->dietaries) as $key => $value)
+                    @if(count($data->dietaries) > 0)
+                        @foreach($data->dietaries as $key => $value)
                             <tr>
-                            <td>{{$key+1}}</td>
-                            <td>{{$value}}</td>
+                                <td>{{$key+1}}</td>
+                                <td>{{$value}}</td>
                             </tr>
-                            @endforeach
+                        @endforeach
+                    @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                        @endif
+        <div class="card">
+            <div class="card-body" style="font-size:14px;">
+                <div class="card-title">
+                    Cuisines
+                </div>
+                <table  class="table dt-responsive mb-4  nowrap w-100 mb-">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @if(count($data->cuisines) > 0)
+                        @foreach($data->cuisines as $key => $value)
+                            <tr>
+                                <td>{{$key+1}}</td>
+                                <td>{{$value}}</td>
+                            </tr>
+                        @endforeach
+                    @endif
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
     <div class="col-md-9">
         <div class="card">
             <div class="card-body">
@@ -242,6 +265,8 @@
         Table = $('#taglist').DataTable();
 
         Table = $('#dietaries').DataTable();
+
+        Table = $('#cuisines').DataTable();
     });
 
 </script>
