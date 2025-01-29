@@ -25,22 +25,22 @@ class PostLikeController extends Controller
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
         $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
-//        $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
-//        $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
-//        $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
 
         $likesGroupedQuery = DB::table('postlikes')
             ->join('posts', 'postlikes.post_id', '=', 'posts.id')
+            ->join('post_cuisine', 'posts.id', '=', 'post_cuisine.post_id')
+            ->join('cuisines', 'post_cuisine.cuisine_id', '=', 'cuisines.id')
             ->select(
-                'posts.cuisines',
+                'cuisines.id as cuisine_id',
+                'cuisines.name as cuisine_name',
                 DB::raw('GROUP_CONCAT(postlikes.post_id) AS post_ids'),
                 DB::raw('COUNT(posts.id) AS totalCount')
             )
             ->where('postlikes.user_id', $userId)
-            ->groupBy('posts.cuisines');
+            ->groupBy('cuisines.id', 'cuisines.name');
 
         if ($cuisines) {
-            $likesGroupedQuery->where('posts.cuisines', $cuisines);
+            $likesGroupedQuery->where('cuisines.name', 'LIKE', '%' . $cuisines . '%');
         }
 
         $sortField = !empty($sortField) ? 'postlikes.' . $sortField : $sortField;
@@ -53,6 +53,7 @@ class PostLikeController extends Controller
             foreach ($likesGrouped as $group) {
                 $posts = DB::table('posts')
                     ->whereIn('id', explode(',', $group->post_ids))
+                    ->select('id', 'title', 'type', 'hours', 'minutes', 'file', 'thumbnail')
                     ->limit(3)
                     ->get();
 
@@ -64,7 +65,7 @@ class PostLikeController extends Controller
                 $group->posts = $posts;
             }
 
-            return response()->json([
+            $response = [
                 'status' => 'success',
                 'message' => 'Liked posts grouped by cuisines with first 3 posts fetched successfully',
                 'data' => $likesGrouped->items(),
@@ -79,7 +80,41 @@ class PostLikeController extends Controller
                     'last_page_url' => $likesGrouped->url($likesGrouped->lastPage()),
                     'next_page_url' => $likesGrouped->nextPageUrl()
                 ]
-            ], 200);
+            ];
+
+            if (!$cuisines) {
+                $uncategorizedPosts = DB::table('postlikes')
+                    ->join('posts', 'postlikes.post_id', '=', 'posts.id')
+                    ->leftJoin('post_cuisine', 'posts.id', '=', 'post_cuisine.post_id')
+                    ->whereNull('post_cuisine.cuisine_id')
+                    ->where('postlikes.user_id', $userId)
+                    ->select(
+                        DB::raw('GROUP_CONCAT(postlikes.post_id) AS post_ids'),
+                        DB::raw('COUNT(posts.id) AS totalCount')
+                    )
+                    ->first();
+
+                if ($uncategorizedPosts && $uncategorizedPosts->totalCount > 0) {
+                    $posts = DB::table('posts')
+                        ->whereIn('id', explode(',', $uncategorizedPosts->post_ids))
+                        ->select('id', 'title', 'type', 'hours', 'minutes', 'file', 'thumbnail')
+                        ->get();
+
+                    foreach ($posts as $post) {
+                        $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
+                        $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
+                    }
+
+                    $response['data'][] = [
+                        'cuisine_id' => null,
+                        'post_ids' => $uncategorizedPosts->post_ids,
+                        'totalCount' => $uncategorizedPosts->totalCount,
+                        'posts' => $posts
+                    ];
+                }
+            }
+
+            return response()->json($response, 200);
         } else {
             return response()->json([
                 'status' => 'error',
@@ -99,18 +134,48 @@ class PostLikeController extends Controller
             ], 400);
         }
 
-        $cuisines = $request->input('cuisines');
-        $sortField = $request->input('sort_by', 'created_at');
+        $cuisineName = $request->input('cuisines');
+        $dietaryName = $request->input('dietaries');
+        $tagName = $request->input('tags');
+        $sortField = 'posts.' . $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
 
         $likesQuery = DB::table('postlikes')
             ->join('posts', 'postlikes.post_id', '=', 'posts.id')
-            ->select('posts.*')
+            ->select(
+                'posts.id',
+                'posts.title',
+                'posts.caption',
+                'posts.serving_size',
+                'posts.minutes',
+                'posts.hours',
+                'posts.type',
+                'posts.file',
+                'posts.thumbnail',
+                'posts.user_id',
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT tags.name SEPARATOR ", ") FROM post_tag LEFT JOIN tags ON post_tag.tag_id = tags.id WHERE post_tag.post_id = posts.id) as tags'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT dietaries.name SEPARATOR ", ") FROM post_dietary LEFT JOIN dietaries ON post_dietary.dietary_id = dietaries.id WHERE post_dietary.post_id = posts.id) as dietaries'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT cuisines.name SEPARATOR ", ") FROM post_cuisine LEFT JOIN cuisines ON post_cuisine.cuisine_id = cuisines.id WHERE post_cuisine.post_id = posts.id) as cuisines')
+            )
             ->where('postlikes.user_id', $userId);
 
-        if ($cuisines) {
-            $likesQuery->where('posts.cuisines', $cuisines);
+        if ($cuisineName) {
+            $likesQuery->join('post_cuisine', 'posts.id', '=', 'post_cuisine.post_id')
+                ->join('cuisines', 'post_cuisine.cuisine_id', '=', 'cuisines.id')
+                ->where('cuisines.name', $cuisineName);
+        }
+
+        if ($dietaryName) {
+            $likesQuery->join('post_dietary', 'posts.id', '=', 'post_dietary.post_id')
+                ->join('dietaries', 'post_dietary.dietary_id', '=', 'dietaries.id')
+                ->where('dietaries.name', $dietaryName);
+        }
+
+        if ($tagName) {
+            $likesQuery->join('post_tag', 'posts.id', '=', 'post_tag.post_id')
+                ->join('tags', 'post_tag.tag_id', '=', 'tags.id')
+                ->where('tags.name', $tagName);
         }
 
         $posts = $likesQuery->orderBy($sortField, $sortOrder)
@@ -154,4 +219,5 @@ class PostLikeController extends Controller
             ], 404);
         }
     }
+
 }

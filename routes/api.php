@@ -17,7 +17,6 @@ use App\Http\Controllers\Api\V2\PostCommentController;
 use App\Http\Controllers\Api\V2\TagController;
 use App\Http\Controllers\Api\V2\DietaryController;
 use App\Http\Controllers\Api\V2\CuisineController;
-use App\Http\Controllers\Api\V2\CommentController;
 use App\Http\Controllers\Api\V2\CommentRatingController;
 
 Route::post('login', [UserController::class, 'login']);

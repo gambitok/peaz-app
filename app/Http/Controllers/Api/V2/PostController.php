@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use App\Post;
 use App\Http\Controllers\Api\ResponseController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -123,7 +124,7 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = Post::with(['user', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines'])->find($id);
+        $post = Post::with(['user', 'instructions', 'ingredients', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines'])->find($id);
 
         if (!$post) {
             return response()->json([
@@ -305,39 +306,76 @@ class PostController extends Controller
     {
         $user = $request->user();
 
-        $query = Post::with(['user', 'comment', 'postlike', 'report_statuses']);
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User must be authenticated.'
+            ], 401);
+        }
+
+        $user_id = $user->id;
+
+        $query = Post::with(['user' => function($query) {
+            $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website');
+        }, 'comment', 'postlike', 'report_statuses'])
+            ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
+            ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')
+            ->leftJoin('post_dietary', 'posts.id', '=', 'post_dietary.post_id')
+            ->leftJoin('dietaries', 'post_dietary.dietary_id', '=', 'dietaries.id')
+            ->leftJoin('post_cuisine', 'posts.id', '=', 'post_cuisine.post_id')
+            ->leftJoin('cuisines', 'post_cuisine.cuisine_id', '=', 'cuisines.id')
+            ->select(
+                'posts.id',
+                'posts.title',
+                'posts.caption',
+                'posts.serving_size',
+                'posts.minutes',
+                'posts.hours',
+                'posts.type',
+                'posts.file',
+                'posts.thumbnail',
+                'posts.user_id',
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT tags.name SEPARATOR ", ") FROM post_tag LEFT JOIN tags ON post_tag.tag_id = tags.id WHERE post_tag.post_id = posts.id) as tags'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT dietaries.name SEPARATOR ", ") FROM post_dietary LEFT JOIN dietaries ON post_dietary.dietary_id = dietaries.id WHERE post_dietary.post_id = posts.id) as dietaries'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT cuisines.name SEPARATOR ", ") FROM post_cuisine LEFT JOIN cuisines ON post_cuisine.cuisine_id = cuisines.id WHERE post_cuisine.post_id = posts.id) as cuisines')
+            )
+            ->groupBy('posts.id', 'posts.title', 'posts.caption', 'posts.serving_size', 'posts.minutes', 'posts.hours', 'posts.type', 'posts.file', 'posts.thumbnail', 'posts.user_id')
+            ->where('posts.user_id', '=', $user_id);
 
         if ($request->filled('title')) {
-            $query->where('title', 'LIKE', '%' . $request->input('title') . '%');
+            $query->where('posts.title', 'LIKE', '%' . $request->input('title') . '%');
         }
 
         if ($request->filled('type')) {
-            $query->where('type', 'LIKE', '%' . $request->input('type') . '%');
+            $query->where('posts.type', 'LIKE', '%' . $request->input('type') . '%');
         }
 
         if ($request->filled('caption')) {
-            $query->where('caption', 'LIKE', '%' . $request->input('caption') . '%');
+            $query->where('posts.caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
 
         if ($request->filled('dietaries')) {
-            $query->where('dietaries', 'LIKE', '%' . $request->input('dietaries') . '%');
+            $query->where('dietaries.name', 'LIKE', '%' . $request->input('dietaries') . '%');
         }
 
         if ($request->filled('tags')) {
-            $query->where('tags', 'LIKE', '%' . $request->input('tags') . '%');
+            $query->where('tags.name', 'LIKE', '%' . $request->input('tags') . '%');
+        }
+
+        if ($request->filled('cuisines')) {
+            $query->where('cuisines.name', 'LIKE', '%' . $request->input('cuisines') . '%');
         }
 
         if ($request->filled('time')) {
             $inputTime = (int) $request->input('time');
-            $query->whereRaw('(hours * 3600000000 + minutes * 60000000) <= ?', [$inputTime]);
+            $query->whereRaw('(posts.hours * 3600000000 + posts.minutes * 60000000) <= ?', [$inputTime]);
         }
 
-        $user_id = null;
-        if ($user) {
-            $user_id = $user->id;
+        if ($request->filled('user_id')) {
+            $query->where('posts.user_id', '=', $user_id);
         }
 
-        $sortField = $request->input('sort_by', 'created_at');
+        $sortField = 'posts.' . $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
 
@@ -365,40 +403,75 @@ class PostController extends Controller
 
     public function userSearch(Request $request)
     {
-        $query = Post::with(['user', 'comment', 'postlike', 'report_statuses']);
+        if (!$request->filled('user_id')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The user_id field is required.'
+            ], 400);
+        }
+
+        $user_id = $request->input('user_id');
+
+        $query = Post::with(['user' => function($query) {
+            $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website');
+        }, 'comment', 'postlike', 'report_statuses'])
+            ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
+            ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')
+            ->leftJoin('post_dietary', 'posts.id', '=', 'post_dietary.post_id')
+            ->leftJoin('dietaries', 'post_dietary.dietary_id', '=', 'dietaries.id')
+            ->leftJoin('post_cuisine', 'posts.id', '=', 'post_cuisine.post_id')
+            ->leftJoin('cuisines', 'post_cuisine.cuisine_id', '=', 'cuisines.id')
+            ->select(
+                'posts.id',
+                'posts.title',
+                'posts.caption',
+                'posts.serving_size',
+                'posts.minutes',
+                'posts.hours',
+                'posts.type',
+                'posts.file',
+                'posts.thumbnail',
+                'posts.user_id',
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT tags.name SEPARATOR ", ") FROM post_tag LEFT JOIN tags ON post_tag.tag_id = tags.id WHERE post_tag.post_id = posts.id) as tags'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT dietaries.name SEPARATOR ", ") FROM post_dietary LEFT JOIN dietaries ON post_dietary.dietary_id = dietaries.id WHERE post_dietary.post_id = posts.id) as dietaries'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT cuisines.name SEPARATOR ", ") FROM post_cuisine LEFT JOIN cuisines ON post_cuisine.cuisine_id = cuisines.id WHERE post_cuisine.post_id = posts.id) as cuisines')
+            )
+            ->groupBy('posts.id', 'posts.title', 'posts.caption', 'posts.serving_size', 'posts.minutes', 'posts.hours', 'posts.type', 'posts.file', 'posts.thumbnail', 'posts.user_id');
 
         if ($request->filled('title')) {
-            $query->where('title', 'LIKE', '%' . $request->input('title') . '%');
+            $query->where('posts.title', 'LIKE', '%' . $request->input('title') . '%');
         }
 
         if ($request->filled('type')) {
-            $query->where('type', 'LIKE', '%' . $request->input('type') . '%');
+            $query->where('posts.type', 'LIKE', '%' . $request->input('type') . '%');
         }
 
         if ($request->filled('caption')) {
-            $query->where('caption', 'LIKE', '%' . $request->input('caption') . '%');
+            $query->where('posts.caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
 
         if ($request->filled('dietaries')) {
-            $query->where('dietaries', 'LIKE', '%' . $request->input('dietaries') . '%');
+            $query->where('dietaries.name', 'LIKE', '%' . $request->input('dietaries') . '%');
         }
 
         if ($request->filled('tags')) {
-            $query->where('tags', 'LIKE', '%' . $request->input('tags') . '%');
+            $query->where('tags.name', 'LIKE', '%' . $request->input('tags') . '%');
+        }
+
+        if ($request->filled('cuisines')) {
+            $query->where('cuisines.name', 'LIKE', '%' . $request->input('cuisines') . '%');
         }
 
         if ($request->filled('time')) {
             $inputTime = (int) $request->input('time');
-            $query->whereRaw('(hours * 3600000000 + minutes * 60000000) <= ?', [$inputTime]);
+            $query->whereRaw('(posts.hours * 3600000000 + posts.minutes * 60000000) <= ?', [$inputTime]);
         }
 
-        $user_id = null;
         if ($request->filled('user_id')) {
-            $user_id = $request->input('user_id');
-            $query->where('user_id', '=', $user_id);
+            $query->where('posts.user_id', '=', $user_id);
         }
 
-        $sortField = $request->input('sort_by', 'created_at');
+        $sortField = $request->input('sort_by', 'posts.created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
 
