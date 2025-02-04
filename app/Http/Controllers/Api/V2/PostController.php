@@ -66,9 +66,9 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'caption' => 'nullable|string',
+        $rules = [
+            'title' => 'required|string|max:100',
+            'caption' => 'required|string|max:255',
             'serving_size' => 'required|integer',
             'minutes' => 'required|integer',
             'hours' => 'required|integer',
@@ -83,7 +83,15 @@ class PostController extends Controller
             'dietaries.*' => 'integer|exists:dietaries,id',
             'cuisines' => 'nullable|array',
             'cuisines.*' => 'integer|exists:cuisines,id',
-        ]);
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        $validatedData = $validator->validated();
 
         $post = Post::create($validatedData);
 
@@ -202,7 +210,6 @@ class PostController extends Controller
     /**
      * Update the specified post in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -218,8 +225,8 @@ class PostController extends Controller
         }
 
         $validatedData = $request->validate([
-            'title' => 'nullable|string|max:255',
-            'caption' => 'nullable|string',
+            'title' => 'required|string|max:100',
+            'caption' => 'required|string|max:255',
             'serving_size' => 'nullable|integer',
             'minutes' => 'nullable|integer',
             'hours' => 'nullable|integer',
@@ -785,6 +792,7 @@ class PostController extends Controller
         unset($request_data['method']);
 
         $post = $this->instruction_obj->saveInstruction($request_data, 0, $data);
+
         if ($post) {
             return response()->json([
                 'status' => 200,
@@ -792,6 +800,7 @@ class PostController extends Controller
                 'data' => $post
             ]);
         }
+
         return response()->json([
             'status' => 500,
             'message' => __('api.err_something_went_wrong'),

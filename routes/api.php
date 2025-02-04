@@ -106,11 +106,11 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
     Route::post('user/post-like-list', [PostV1Controller::class, 'postLikeList']);
 
     Route::post('user/add-user-name', [UserV1Controller::class, 'addUsername']);
-    Route::post('user/add-user-fullname', [UserV1Controller::class, 'addFullname']);
-    Route::post('user/serch-user-name', [UserV1Controller::class, 'serchUsername']);
+    Route::post('user/add-user-fullname', [UserV1Controller::class, 'addFullName']);
+    Route::post('user/serch-user-name', [UserV1Controller::class, 'searchUsername']);
     Route::post('user/save-user-Interested', [UserV1Controller::class, 'saveUserInterested']);
     Route::post('user/userDiet', [UserV1Controller::class, 'userDiet']);
-    Route::post('user/createpassword', [UserV1Controller::class, 'createpassword']);
+    Route::post('user/createpassword', [UserV1Controller::class, 'createPassword']);
     Route::post('user/not-interested', [PostV1Controller::class, 'notInterested']);
     Route::post('user/search-username', [PostV1Controller::class, 'searchUsername']);
     Route::post('user/user-tag', [PostV1Controller::class, 'userTag']);

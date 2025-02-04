@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers\General;
 
+use Carbon\Carbon;
 use App\GeneralSettings;
 use App\Http\Controllers\WebController;
 use App\Http\Requests\Admin\General\PasswordUpdateRequest;
 use App\User;
+use App\Post;
+use App\Billboard;
+use App\Feed;
+use App\SponsoredVideo;
 use App\InterestedList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -80,6 +85,13 @@ class GeneralController extends WebController
             'cuisines_count'=> InterestedList::where('type',1)->count(),
             'food_and_drink_count'=> InterestedList::where('type',2)->count(),
             'diet_count'=> InterestedList::where('type',3)->count(),
+
+            'members_count' => User::where(['type' => 'user'])->count(),
+            'members_today_count' => User::where('type', 'user')->whereDate('created_at', Carbon::today())->count(),
+            'recipes_count' => Post::all()->count(),
+            'billboards_count' => Billboard::all()->count(),
+            'feeds_count' => Feed::all()->count(),
+            'sponsored_videos_count' => SponsoredVideo::all()->count(),
         ]);
     }
 

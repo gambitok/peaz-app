@@ -1,6 +1,7 @@
 @extends('layouts.master')
 @section('title') @lang('translation.Data_Tables') @endsection
 @section('css')
+
 <!-- DataTables -->
 <link href="{{ URL::asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"/>
@@ -23,6 +24,7 @@
                             <th>Title</th>
                             <th>Caption</th>
                             <th>Serving Size</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -71,6 +73,11 @@
                 {
                     "data": "serving_size",
                     searchable: true,
+                    sortable: false
+                },
+                {
+                    "data": "status",
+                    searchable: false,
                     sortable: false
                 },
                 {

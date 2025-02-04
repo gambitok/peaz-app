@@ -32,6 +32,7 @@ class UsersController extends WebController
         );
         $main = User::where('type', 'user');
         $return_data['recordsTotal'] = $main->count();
+
         if (!empty($search)) {
             $main->where(function ($query) use ($search) {
                 $query->AdminSearch($search);
@@ -42,6 +43,7 @@ class UsersController extends WebController
             ->offset($offset)
             ->limit($datatable_filter['limit'])
             ->get();
+
         if (!empty($all_data)) {
             foreach ($all_data as $key => $value) {
                 $param = [
@@ -54,15 +56,12 @@ class UsersController extends WebController
                     ],
                     'checked' => ($value->status == 'active') ? 'checked' : ''
                 ];
-//                $mobile = (!empty($value->mobile)) ? $value->country_code . ' ' . $value->mobile : " - ";
 
                 $return_data['data'][] = array(
                     'id' => $offset + $key + 1,
                     'profile_image' => get_fancy_box_html($value['profile_image']),
-                    'username' => $value->username ? $value->username : " - ",
+                    'username' => $value->username ?: " - ",
                     'email' => $value->email,
-//                    'mobile_number' => $mobile,
-//                    'date_of_birth' =>date('d-m-Y', strtotime($value->date_of_birth)),
                     'status' => $this->generate_switch($param),
                     'action' => $this->generate_actions_buttons($param),
                 );
@@ -156,12 +155,12 @@ class UsersController extends WebController
             }
 
            $userdata = [
-                 'email' => $request->email,
-                 'profile_image' => $profile_image,
-                 'name' =>  $request->name,
-                 'username' =>  $request->username,
-                 'bio' =>  $request->bio,
-                 'website' =>  $request->website,
+                'email' => $request->email,
+                'profile_image' => $profile_image,
+                'name' =>  $request->name,
+                'username' =>  $request->username,
+                'bio' =>  $request->bio,
+                'website' =>  $request->website,
            ];
 
             $data->update($userdata);

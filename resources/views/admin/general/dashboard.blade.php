@@ -5,8 +5,51 @@
         height: 40px;
         background-color:#6FCA7F;
     }
+     .item-caption {
+         font-size: 16px;
+         color: black;
+         text-transform: uppercase;
+         font-weight: bold;
+     }
+    .item-digit {
+        font-size: 36px;
+        color: #6FCA7F;
+        font-weight: bold;
+    }
 </style>
 @section('content')
+
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-2 text-center">
+            <div class="item-caption">Total Members</div>
+            <div class="item-digit">{{$members_count}}</div>
+        </div>
+        <div class="col-md-2 text-center">
+            <div class="item-caption">Members Today</div>
+            <div class="item-digit">{{$members_today_count}}</div>
+        </div>
+        <div class="col-md-2 text-center">
+            <div class="item-caption">Total Recipes</div>
+            <div class="item-digit">{{$recipes_count}}</div>
+        </div>
+        <div class="col-md-2 text-center">
+            <div class="item-caption">Billboards Ads</div>
+            <div class="item-digit">{{$billboards_count}}</div>
+        </div>
+        <div class="col-md-2 text-center">
+            <div class="item-caption">Horizontal Feeds</div>
+            <div class="item-digit">{{$feeds_count}}</div>
+        </div>
+        <div class="col-md-2 text-center">
+            <div class="item-caption">Sponsored Videos</div>
+            <div class="item-digit">{{$sponsored_videos_count}}</div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
 <div class="row wd-sl-rowmain">
     <div class="col-xl-4">
         <div class="card overflow-hidden">

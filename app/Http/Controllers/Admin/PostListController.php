@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Cuisine;
 use App\Dietary;
-use App\Http\Controllers\Controller;
 use App\Tag;
 use Illuminate\Http\Request;
 use App\Http\Controllers\WebController;
@@ -14,7 +13,6 @@ use App\Ingredient;
 use App\Instruction;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Collection;
 
 class PostListController extends WebController
 {
@@ -216,11 +214,6 @@ class PostListController extends WebController
         }
     }
 
-    private function uploadFile(Request $request, $fieldName)
-    {
-        return $request->file($fieldName)->store('posts');
-    }
-
     public function destroy($id)
     {
         $data = Post::where('id', $id)->first();
@@ -236,11 +229,16 @@ class PostListController extends WebController
     public function listing()
     {
         $data = Post::orderBy('id', 'DESC')->get();
+
         return Datatables::of($data)
             ->addIndexColumn()
             ->editColumn('caption', function ($row) {
                 return "<span title='$row->caption'>".Str::limit($row->caption, 50)."</span>";
              })
+            ->addColumn('status', function ($row) {
+                $checked = $row->status ? 'checked' : ''; // Assuming 'status' is a boolean attribute
+                return "<input type='checkbox' class='status-switch' data-id='{$row->id}' {$checked} />";
+            })
             ->addColumn('action', function ($row) {
                 $param = [
                     'id' => $row->id,
@@ -252,13 +250,14 @@ class PostListController extends WebController
                 ];
                 return $this->generate_actions_buttons($param);
             })
-            ->rawColumns(['caption','action'])
+            ->rawColumns(['caption','status','action'])
             ->make(true);
     }
 
     public function postDetails(Request $request)
     {
         $data = Ingredient::where('post_id',$request->id)->get();
+
         return Datatables::of($data)
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
@@ -278,6 +277,7 @@ class PostListController extends WebController
     public function postDetailsEdit($id)
     {
         $data = $this->ingredient_obj->find($id);
+
         if (isset($data) && !empty($data)) {
             return view('admin.post.create', [
                 'title' => 'Ingredients Update',
@@ -294,6 +294,7 @@ class PostListController extends WebController
     public function postDetailsUpdate(Request $request, $id)
     {
         $data =$this->ingredient_obj->find($id);
+
         if (isset($data) && !empty($data)) {
             $return_data = $request->all();
             $this->ingredient_obj->saveIngredient($return_data,$id,$data);
@@ -307,6 +308,7 @@ class PostListController extends WebController
     public function postDetailsDestroy($id)
     {
         $data = Ingredient::where('id', $id)->first();
+
         if ($data) {
             $data->delete();
             success_session('Ingredients Deleted successfully');

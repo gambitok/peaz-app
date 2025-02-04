@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Category;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Controllers\WebController;
 use App\InterestedList;
@@ -42,7 +41,7 @@ class InterestedListController extends WebController
                 'Interest' => route('admin.interestedlist.index'),
             ]),
         ]);
-       
+
     }
 
     /**
@@ -56,19 +55,21 @@ class InterestedListController extends WebController
         $request->validate([
             'type' => ['required'],
             'title' => ['required'],
-           
+
             'image'=>['required'],
         ]);
+
         if ($request->hasFile('image')) {
             $up = upload_file('image', 'interest_image');
         }
-       $data = new InterestedList();
-       $data->type = $request->type;
-       $data->title = $request->title;
-       $data->category_id = $request->category;
-       $data->image = $up ?? "";
-       $data->save();
-       success_session('Interest insert successfully');
+        $data = new InterestedList();
+        $data->type = $request->type;
+        $data->title = $request->title;
+        $data->category_id = $request->category;
+        $data->image = $up ?? "";
+        $data->save();
+        success_session('Interest insert successfully');
+
         return redirect()->route('admin.interestedlist.index');
     }
 
@@ -93,8 +94,10 @@ class InterestedListController extends WebController
     {
         $categories = Category::all();
         $data = InterestedList::find($id);
+
         if ($data) {
             $title = "Update Interest";
+
             return view('admin.interested.edit', [
                 'title' => $title,
                 'data' => $data,
@@ -106,6 +109,7 @@ class InterestedListController extends WebController
             ]);
         }
         error_session('Interest  not found');
+
         return redirect()->route('admin.interestedlist.index');
     }
 
@@ -122,28 +126,30 @@ class InterestedListController extends WebController
             'type' => ['required'],
             'title' => ['required'],
         ]);
-       
+
         $data = InterestedList::find($id);
+
         if ($data) {
             $image = $data->getRawOriginal('image');
+
             if ($request->hasFile('image')) {
                 $up = upload_file('image', 'interest_image');
+
                 if ($up) {
-                //    un_link_file($image);
                     $image = $up;
                 }
-            }  
-            
-        $data->type = $request->type;
-        $data->title = $request->title;
-        $data->category_id = $request->category;
-        $data->image =  $image;
-        $data->update();
-        success_session('Interest update successfully');
-        }
-        else{
+            }
+
+            $data->type = $request->type;
+            $data->title = $request->title;
+            $data->category_id = $request->category;
+            $data->image =  $image;
+            $data->update();
+            success_session('Interest update successfully');
+        } else {
             error_session('Interest not found');
         }
+
         return redirect()->route('admin.interestedlist.index');
     }
 
@@ -156,18 +162,21 @@ class InterestedListController extends WebController
     public function destroy($id)
     {
         $data = InterestedList::where('id', $id)->first();
+
         if ($data) {
             $data->delete();
             success_session('Interest deleted successfully');
         } else {
             error_session('Interest not found');
         }
+
         return redirect()->route('admin.interestedlist.index');
     }
 
     public function listing()
     {
         $data = InterestedList::all();
+
         return Datatables::of($data)
             ->addIndexColumn()
             ->addColumn('image', function ($row) {
@@ -181,34 +190,27 @@ class InterestedListController extends WebController
                         'edit' => route('admin.interestedlist.edit', $row->id),
                     ]
                 ];
+
                 return $this->generate_actions_buttons($param);
             })
             ->addColumn('category_id', function ($row) {
-              if($row->category_id == null)
-              {
+              if ($row->category_id == null) {
                 return "-";
+              } else {
+                 return $row->category->name ?: '-';
               }
-              else{
-                 return $row->category->name ? $row->category->name : '-';
-              }
-               
             })
-            
             ->addColumn('type', function ($row) {
-                if($row->type == 1)
-                {
+                if ($row->type == 1) {
                     $name = "Cuisines";
                 }
-                if($row->type == 2)
-                {
+                if ($row->type == 2) {
                     $name = "Food And Drink";
                 }
-                if($row->type == 3)
-                {
+                if ($row->type == 3) {
                     $name = "Diet";
                 }
                 return $name;
-               
             })
             ->rawColumns(['image','category_id','type','action'])
             ->make(true);
