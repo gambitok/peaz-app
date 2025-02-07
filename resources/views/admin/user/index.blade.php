@@ -13,7 +13,6 @@
 <div class="row">
     <div class="col-12">
         {!! success_error_view_generator() !!}
-
     </div>
     <div class="card">
         <div class="card-body">
@@ -22,16 +21,16 @@
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Profile Image</th>
-                            <th>Username</th>
-                            <th>Email</th>
+                            <th>Membership level</th>
+                            <th>Profile name</th>
+                            <th>Verified</th>
+                            <th>Join date</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
-
             </div>
         </div>
     </div>
@@ -50,32 +49,35 @@
         oTable = $('#listResults').DataTable({
             "processing": true,
             "serverSide": true,
-            columnDefs: [
-                { className: 'text-center', targets: [1,2,3,4] },
-            ],
             "order": [
                 [0, "DESC"]
             ],
             "ajax": "{{route('admin.user.listing')}}",
-            "columns": [{
+            "columns": [
+                {
                     "data": "id",
                     searchable: true,
                     sortable: false
                 },
                 {
-                    "data": "profile_image",
-                    searchable: true,
-                    sortable: false
+                    "data": "membership_level",
+                    searchable: false,
+                    sortable: true
                 },
                 {
                     "data": "username",
                     searchable: true,
+                    sortable: true
+                },
+                {
+                    "data": "verified",
+                    searchable: false,
                     sortable: false
                 },
                 {
-                    "data": "email",
+                    "data": "created_at",
                     searchable: true,
-                    sortable: false
+                    sortable: true
                 },
                 {
                     "data": "status",

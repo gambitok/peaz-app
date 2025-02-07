@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Carbon\Carbon;
 use App\Http\Controllers\WebController;
 use App\User;
 use Illuminate\Http\Request;
@@ -25,12 +26,11 @@ class UsersController extends WebController
         $datatable_filter = datatable_filters();
         $offset = $datatable_filter['offset'];
         $search = $datatable_filter['search'];
-        $return_data = array(
-            'data' => [],
-            'recordsTotal' => 0,
-            'recordsFiltered' => 0
-        );
+
+        $return_data['data'] = [];
+
         $main = User::where('type', 'user');
+
         $return_data['recordsTotal'] = $main->count();
 
         if (!empty($search)) {
@@ -38,7 +38,9 @@ class UsersController extends WebController
                 $query->AdminSearch($search);
             });
         }
+
         $return_data['recordsFiltered'] = $main->count();
+
         $all_data = $main->orderBy($datatable_filter['sort'], $datatable_filter['order'])
             ->offset($offset)
             ->limit($datatable_filter['limit'])
@@ -59,14 +61,17 @@ class UsersController extends WebController
 
                 $return_data['data'][] = array(
                     'id' => $offset + $key + 1,
-                    'profile_image' => get_fancy_box_html($value['profile_image']),
+                    'membership_level' => $value->membership_level ?: " - ",
                     'username' => $value->username ?: " - ",
-                    'email' => $value->email,
-                    'status' => $this->generate_switch($param),
+                    'verified' => $value->verified ? 'true' : "false",
+                    'created_at' => $value->created_at ? Carbon::parse($value->created_at)->format('d-m-Y') : ' - ',
+//                    'status' => $this->generate_switch($param),
+                    'status' => $value->status ?: " - ",
                     'action' => $this->generate_actions_buttons($param),
                 );
             }
         }
+
         return $return_data;
     }
 

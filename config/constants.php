@@ -7,7 +7,7 @@ return [
     'upload_type' => 'local',
     'default' => [
         'image' => 'uploads/user/user.png',
-        'user_image' => 'uploads/user/user.png',
+        'user_image' => 'assets/images/users/avatar-1.jpg',
         'no_image_available' => 'assets/general/image/no_image.jpg',
     ],
     'upload_paths' => [
@@ -23,4 +23,3 @@ return [
     'push_log' => true,
     'firebase_server_key' => '',
 ];
- 

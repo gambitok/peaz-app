@@ -21,9 +21,9 @@
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Title</th>
-                            <th>Caption</th>
-                            <th>Serving Size</th>
+                            <th>Name</th>
+                            <th>Profile</th>
+                            <th>Added</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -66,12 +66,12 @@
                     sortable: false
                 },
                 {
-                    "data": "caption",
+                    "data": "user_name",
                     searchable: true,
                     sortable: false
                 },
                 {
-                    "data": "serving_size",
+                    "data": "created_at",
                     searchable: true,
                     sortable: false
                 },

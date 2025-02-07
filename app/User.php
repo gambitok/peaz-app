@@ -117,7 +117,7 @@ class User extends Authenticatable
     {
         if (!empty($val)) {
             if (filter_var($val, FILTER_VALIDATE_URL)) {
-                return $val; // Якщо вже повний URL, повертаємо його без змін
+                return $val;
             }
 
             return Storage::disk('s3')->url($val);

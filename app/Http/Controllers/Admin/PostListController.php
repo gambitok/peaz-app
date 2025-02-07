@@ -228,15 +228,21 @@ class PostListController extends WebController
 
     public function listing()
     {
-        $data = Post::orderBy('id', 'DESC')->get();
+        $data = Post::select('posts.*', 'users.name as user_name')
+            ->join('users', 'posts.user_id', '=', 'users.id')
+            ->orderBy('posts.id', 'DESC')
+            ->get();
 
         return Datatables::of($data)
             ->addIndexColumn()
-            ->editColumn('caption', function ($row) {
-                return "<span title='$row->caption'>".Str::limit($row->caption, 50)."</span>";
+            ->editColumn('user_name', function ($row) {
+                return "<span title='$row->user_name'>{$row->user_name}</span>";
+            })
+            ->editColumn('created_at', function ($row) {
+                return "<span title='$row->created_at'>{$row->created_at}</span>";
              })
             ->addColumn('status', function ($row) {
-                $checked = $row->status ? 'checked' : ''; // Assuming 'status' is a boolean attribute
+                $checked = $row->status ? 'checked' : '';
                 return "<input type='checkbox' class='status-switch' data-id='{$row->id}' {$checked} />";
             })
             ->addColumn('action', function ($row) {
@@ -244,13 +250,13 @@ class PostListController extends WebController
                     'id' => $row->id,
                     'url' => [
                         'delete' => route('admin.post.destroy', $row->id),
-                         'edit' => route('admin.post.edit', $row->id),
+                        'edit' => route('admin.post.edit', $row->id),
                         'view' => route('admin.post.show', $row->id),
                     ]
                 ];
                 return $this->generate_actions_buttons($param);
             })
-            ->rawColumns(['caption','status','action'])
+            ->rawColumns(['user_name','created_at','status','action'])
             ->make(true);
     }
 
