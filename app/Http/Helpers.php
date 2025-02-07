@@ -307,6 +307,17 @@ function admin_modules()
            ]
         ],
         [
+            'route' => route('admin.billboards.index'),
+            'name' => "Billboards",
+            'icon' => 'fas fa-users',
+            'child' => [],
+            'all_routes' => [
+                'admin.billboards.index',
+                'admin.billboards.show',
+                'admin.billboards.add',
+            ]
+        ],
+        [
             'route' => route('front.logout'),
             'name' => __('Logout'),
             'icon' => 'kt-menu__link-icon fas fa-sign-out-alt',

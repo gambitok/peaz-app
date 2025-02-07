@@ -4,16 +4,11 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Billboard extends Model
+class Restaurant extends Model
 {
-
     protected $fillable = [
-        'title',
-        'caption',
         'file',
         'link',
-        'tag_id',
-        'verified',
         'status',
     ];
 }

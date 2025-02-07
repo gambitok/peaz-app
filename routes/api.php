@@ -32,7 +32,11 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
     Route::get('get-user-recipes-and-comments', [PostController::class, 'getUserRecipesAndComments']);
 });
 
+Route::apiResource('billboards', BillboardController::class);
+Route::apiResource('restaurants', RestaurantController::class);
+
 Route::prefix('v2')->middleware('auth:api')->group(function () {
+
     Route::get('tags', [TagController::class, 'index'])->name('tags.index');
     Route::post('tags/', [TagController::class, 'store'])->name('tags.store');
     Route::get('dietaries', [DietaryController::class, 'index'])->name('dietaries.index');

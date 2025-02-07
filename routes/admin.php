@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\Admin\BillboardViewController;
 
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
@@ -47,5 +48,13 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::delete('post_details_destroy/{id}','PostListController@postDetailsDestroy')->name('post.post_details_destroy');
         Route::get('instruction','PostListController@instruction')->name('post.instruction');
         Route::resource('post','PostListController');
+
+        Route::get('/billboards', [BillboardViewController::class, 'index'])->name('billboards.index');
+        Route::get('/billboards/create', [BillboardViewController::class, 'create'])->name('billboards.create');
+        Route::post('/billboards', [BillboardViewController::class, 'store'])->name('billboards.store');
+        Route::get('/billboards/{id}', [BillboardViewController::class, 'show'])->name('billboards.show');
+        Route::get('/billboards/{id}/edit', [BillboardViewController::class, 'edit'])->name('billboards.edit');
+        Route::put('/billboards/{id}', [BillboardViewController::class, 'update'])->name('billboards.update');
+        Route::delete('/billboards/{id}', [BillboardViewController::class, 'destroy'])->name('billboards.destroy');
     });
 });
