@@ -14,6 +14,17 @@ class Billboard extends Model
         'link',
         'tag_id',
         'verified',
+        'user_id',
         'status',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function tag()
+    {
+        return $this->belongsTo(Tag::class);
+    }
 }

@@ -11,7 +11,9 @@ class BillboardController extends Controller
 {
     public function index()
     {
-        return BillboardResource::collection(Billboard::all());
+        $billboards = Billboard::with('user', 'tag')->get();
+
+        return BillboardResource::collection($billboards);
     }
 
     public function store(Request $request)
@@ -22,6 +24,7 @@ class BillboardController extends Controller
             'file' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
             'tag_id' => 'nullable|exists:tags,id',
+            'user_id' => 'nullable|exists:users,id',
             'verified' => 'boolean',
             'status' => 'boolean',
         ]);
@@ -43,6 +46,7 @@ class BillboardController extends Controller
             'file' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
             'tag_id' => 'nullable|exists:tags,id',
+            'user_id' => 'nullable|exists:users,id',
             'verified' => 'boolean',
             'status' => 'boolean',
         ]);

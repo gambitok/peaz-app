@@ -2,7 +2,6 @@
 
 @section('styles')
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/admin/vendors/general/datatable/jquery.dataTables.min.css">
 @endsection
 
 @section('content')
@@ -18,10 +17,28 @@
     <div class="container mt-5">
         <h1 class="mb-4">Billboards</h1>
         <a href="{{ route('admin.billboards.create') }}" class="btn btn-primary mb-3">Create New Billboard</a>
+
+        @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger">
+                {{ $errors->first() }}
+                @if($errors->has('api_error'))
+                    <pre>{{ print_r($errors->get('api_error'), true) }}</pre>
+                @endif
+            </div>
+        @endif
+
         <table id="billboards-table" class="table">
             <thead>
             <tr>
                 <th>Title</th>
+                <th>Profile name</th>
+                <th>Created at</th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -35,6 +52,16 @@
                             </a>
                         </td>
                         <td>
+                            <span>
+                                {{ $billboard['user']['name'] ?? 'N/A' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span>
+                                {{ \Carbon\Carbon::parse($billboard['created_at'])->format('d.m.Y') }}
+                            </span>
+                        </td>
+                        <td>
                             <form action="{{ route('admin.billboards.destroy', $billboard['id']) }}" method="POST" style="display:inline;">
                                 @csrf
                                 @method('DELETE')
@@ -44,7 +71,7 @@
                     </tr>
                 @else
                     <tr>
-                        <td colspan="2">Invalid billboard data</td>
+                        <td colspan="4">Invalid billboard data</td>
                     </tr>
                 @endif
             @endforeach
@@ -56,10 +83,4 @@
 @section('scripts')
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="/assets/admin/vendors/general/datatable/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#billboards-table').DataTable();
-        });
-    </script>
 @endsection

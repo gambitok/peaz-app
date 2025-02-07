@@ -20,9 +20,11 @@ class BillboardResource extends JsonResource
             'caption' => $this->caption,
             'file' => $this->file,
             'link' => $this->link,
-            'tag_id' => $this->tag_id,
+            'tag' => $this->tag ? $this->tag->toArray() : null,
+            'user' => $this->user ? $this->user->only(['id', 'name', 'username', 'email', 'verified', 'membership_level', 'status']) : null,
             'verified' => $this->verified,
             'status' => $this->status,
+            'created_at' => $this->created_at ? $this->created_at->format('d.m.Y') : null,
         ];
     }
 }

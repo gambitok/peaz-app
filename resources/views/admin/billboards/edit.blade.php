@@ -24,7 +24,7 @@
             </div>
             <div class="form-group">
                 <label for="tag_id">Tag ID:</label>
-                <input type="number" class="form-control" id="tag_id" name="tag_id" value="{{ $billboard['tag_id'] }}">
+                <input type="number" class="form-control" id="tag_id" name="tag_id" value="{{ $billboard['tag']['id'] }}">
             </div>
             <div class="form-check mb-3">
                 <input type="checkbox" class="form-check-input" id="verified" name="verified" {{ $billboard['verified'] ? 'checked' : '' }}>

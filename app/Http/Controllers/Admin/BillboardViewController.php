@@ -41,9 +41,14 @@ class BillboardViewController extends WebController
             'status' => 'boolean',
         ]);
 
-        Http::post('https://peaz.app/api/billboards', $validatedData);
+        $response = Http::post('https://peaz.app/api/billboards', $validatedData);
 
-        return redirect()->route('admin.billboards.index');
+        if ($response->successful()) {
+            return redirect()->route('admin.billboards.index')->with('success', 'Billboard created successfully.');
+        } else {
+            $error = $response->json();
+            return redirect()->back()->withInput()->withErrors(['error' => 'Failed to create billboard.', 'api_error' => $error]);
+        }
     }
 
     public function edit($id)

@@ -19,6 +19,7 @@ class RestaurantController extends Controller
         $validatedData = $request->validate([
             'file' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
             'status' => 'boolean',
         ]);
 
@@ -36,6 +37,7 @@ class RestaurantController extends Controller
         $validatedData = $request->validate([
             'file' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
             'status' => 'boolean',
         ]);
 
