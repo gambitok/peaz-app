@@ -34,6 +34,7 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
 
 Route::apiResource('billboards', BillboardController::class);
 Route::apiResource('restaurants', RestaurantController::class);
+Route::apiResource('user-relationships', UserRelationshipController::class);
 
 Route::prefix('v2')->middleware('auth:api')->group(function () {
 
