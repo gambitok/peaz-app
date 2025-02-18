@@ -6,6 +6,7 @@ use App\Billboard;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BillboardResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BillboardController extends Controller
 {
@@ -24,13 +25,14 @@ class BillboardController extends Controller
             'file' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
             'tag_id' => 'nullable|exists:tags,id',
-            'user_id' => 'nullable|exists:users,id',
             'verified' => 'boolean',
             'status' => 'boolean',
         ]);
 
+        $validatedData['user_id'] = $request->user()->id;
+
         $billboard = Billboard::create($validatedData);
-        return new BillboardResource($billboard);
+        return response(new BillboardResource($billboard), 201);
     }
 
     public function show(Billboard $billboard)
@@ -46,7 +48,6 @@ class BillboardController extends Controller
             'file' => 'nullable|string|max:255',
             'link' => 'nullable|string|max:255',
             'tag_id' => 'nullable|exists:tags,id',
-            'user_id' => 'nullable|exists:users,id',
             'verified' => 'boolean',
             'status' => 'boolean',
         ]);

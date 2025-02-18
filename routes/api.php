@@ -34,9 +34,16 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
 
 Route::apiResource('billboards', BillboardController::class);
 Route::apiResource('restaurants', RestaurantController::class);
-Route::apiResource('user-relationships', UserRelationshipController::class);
 
 Route::prefix('v2')->middleware('auth:api')->group(function () {
+
+    Route::resource('user-interests', UserInterestController::class);
+
+    Route::apiResource('user-relationships', UserRelationshipController::class);
+    Route::post('follow', [App\Http\Controllers\Api\UserRelationshipController::class, 'follow'])->name('user-relationship.follow');
+    Route::delete('unfollow/{id}', [App\Http\Controllers\Api\UserRelationshipController::class, 'unfollow'])->name('user-relationship.unfollow');
+    Route::get('followers', [App\Http\Controllers\Api\UserRelationshipController::class, 'getFollowers'])->name('user-relationship.followers');
+    Route::get('following', [App\Http\Controllers\Api\UserRelationshipController::class, 'getFollowing'])->name('user-relationship.following');
 
     Route::get('tags', [TagController::class, 'index'])->name('tags.index');
     Route::post('tags/', [TagController::class, 'store'])->name('tags.store');
@@ -70,7 +77,8 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::get('post-details/{id}', [PostController::class, 'details'])->name('posts.details');
 
     Route::get('posts/search', [PostController::class, 'search'])->name('posts.search');
-    Route::get('posts/user-search', [PostController::class, 'userSearch'])->name('posts.search');
+    Route::get('posts/interests-search', [PostController::class, 'interestsSearch'])->name('posts.interests-search');
+    Route::get('posts/user-search', [PostController::class, 'userSearch'])->name('posts.user-search');
     Route::get('posts', [PostController::class, 'index'])->name('posts.index');
     Route::get('posts/{id}', [PostController::class, 'show'])->name('posts.show');
     Route::post('posts/', [PostController::class, 'store'])->name('posts.store');

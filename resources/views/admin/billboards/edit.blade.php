@@ -23,20 +23,24 @@
                 <input type="text" class="form-control" id="link" name="link" value="{{ $billboard['link'] }}">
             </div>
             <div class="form-group">
-                <label for="tag_id">Tag ID:</label>
-                <input type="number" class="form-control" id="tag_id" name="tag_id" value="{{ $billboard['tag']['id'] }}">
+                <label for="tag_id">Tag:</label>
+                <select class="form-control" id="tag_id" name="tag_id">
+                    <option value="">Select a tag</option>
+                    @foreach($tags as $tag)
+                        <option value="{{ $tag->id }}" @if($billboard['tag_id'] == $tag->id) selected @endif>{{ $tag->name }}</option>
+                    @endforeach
+                </select>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="verified" name="verified" {{ $billboard['verified'] ? 'checked' : '' }}>
-                <label class="form-check-label" for="verified">Verified</label>
+                <input type="checkbox" id="verified" name="verified" @if($billboard['verified']) checked @endif>
+                <label for="verified">Verified</label>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="status" name="status" {{ $billboard['status'] ? 'checked' : '' }}>
-                <label class="form-check-label" for="status">Status</label>
+                <input type="checkbox" id="status" name="status" @if($billboard['status']) checked @endif>
+                <label for="status">Status</label>
             </div>
             <button type="submit" class="btn btn-primary">Update</button>
             <a href="{{ route('admin.billboards.index') }}" class="btn btn-secondary">Back to Billboards</a>
         </form>
     </div>
 @endsection
-

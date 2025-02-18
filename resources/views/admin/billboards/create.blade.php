@@ -22,16 +22,21 @@
                 <input type="text" class="form-control" id="link" name="link">
             </div>
             <div class="form-group">
-                <label for="tag_id">Tag ID:</label>
-                <input type="number" class="form-control" id="tag_id" name="tag_id">
+                <label for="tag_id">Tag:</label>
+                <select class="form-control" id="tag_id" name="tag_id">
+                    <option value="">Select a tag</option>
+                    @foreach($tags as $tag)
+                        <option value="{{ $tag->id }}">{{ $tag->name }}</option>
+                    @endforeach
+                </select>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="verified" name="verified">
-                <label class="form-check-label" for="verified">Verified</label>
+                <input type="checkbox" id="verified" name="verified">
+                <label for="verified">Verified</label>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="status" name="status">
-                <label class="form-check-label" for="status">Status</label>
+                <input type="checkbox" id="status" name="status" style="display: inline;">
+                <label for="status">Status</label>
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
             <a href="{{ route('admin.billboards.index') }}" class="btn btn-secondary">Back to Billboards</a>

@@ -318,6 +318,17 @@ function admin_modules()
             ]
         ],
         [
+            'route' => route('admin.restaurants.index'),
+            'name' => "Restaurants",
+            'icon' => 'fas fa-users',
+            'child' => [],
+            'all_routes' => [
+                'admin.restaurants.index',
+                'admin.restaurants.show',
+                'admin.restaurants.add',
+            ]
+        ],
+        [
             'route' => route('front.logout'),
             'name' => __('Logout'),
             'icon' => 'kt-menu__link-icon fas fa-sign-out-alt',

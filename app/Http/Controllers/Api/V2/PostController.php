@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use App\Post;
 use App\Http\Controllers\Api\ResponseController;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -502,6 +503,148 @@ class PostController extends Controller
             'status' => 'success',
             'data' => $posts
         ]);
+    }
+
+    public function interestsSearch(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User must be authenticated.'
+            ], 401);
+        }
+
+        $user_id = $user->id;
+
+        $query = Post::with(['user' => function($query) {
+            $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website');
+        }, 'comment', 'postlike', 'report_statuses'])
+            ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
+            ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')
+            ->leftJoin('post_dietary', 'posts.id', '=', 'post_dietary.post_id')
+            ->leftJoin('dietaries', 'post_dietary.dietary_id', '=', 'dietaries.id')
+            ->leftJoin('post_cuisine', 'posts.id', '=', 'post_cuisine.post_id')
+            ->leftJoin('cuisines', 'post_cuisine.cuisine_id', '=', 'cuisines.id')
+            ->select(
+                'posts.id',
+                'posts.title',
+                'posts.caption',
+                'posts.serving_size',
+                'posts.minutes',
+                'posts.hours',
+                'posts.type',
+                'posts.file',
+                'posts.thumbnail',
+                'posts.user_id',
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT tags.name SEPARATOR ", ") FROM post_tag LEFT JOIN tags ON post_tag.tag_id = tags.id WHERE post_tag.post_id = posts.id) as tags'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT dietaries.name SEPARATOR ", ") FROM post_dietary LEFT JOIN dietaries ON post_dietary.dietary_id = dietaries.id WHERE post_dietary.post_id = posts.id) as dietaries'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT cuisines.name SEPARATOR ", ") FROM post_cuisine LEFT JOIN cuisines ON post_cuisine.cuisine_id = cuisines.id WHERE post_cuisine.post_id = posts.id) as cuisines')
+            )
+            ->groupBy('posts.id', 'posts.title', 'posts.caption', 'posts.serving_size', 'posts.minutes', 'posts.hours', 'posts.type', 'posts.file', 'posts.thumbnail', 'posts.user_id')
+            ->where('posts.user_id', '=', $user_id);
+
+        // Applying filters based on request parameters
+        if ($request->filled('title')) {
+            $query->where('posts.title', 'LIKE', '%' . $request->input('title') . '%');
+        }
+
+        if ($request->filled('type')) {
+            $query->where('posts.type', 'LIKE', '%' . $request->input('type') . '%');
+        }
+
+        if ($request->filled('caption')) {
+            $query->where('posts.caption', 'LIKE', '%' . $request->input('caption') . '%');
+        }
+
+        if ($request->filled('dietaries')) {
+            $query->where('dietaries.name', 'LIKE', '%' . $request->input('dietaries') . '%');
+        }
+
+        if ($request->filled('tags')) {
+            $query->where('tags.name', 'LIKE', '%' . $request->input('tags') . '%');
+        }
+
+        if ($request->filled('cuisines')) {
+            $query->where('cuisines.name', 'LIKE', '%' . $request->input('cuisines') . '%');
+        }
+
+        if ($request->filled('time')) {
+            $inputTime = (int) $request->input('time');
+            $query->whereRaw('(posts.hours * 3600000000 + posts.minutes * 60000000) <= ?', [$inputTime]);
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('posts.user_id', '=', $user_id);
+        }
+
+        // Sorting logic
+        $sortField = 'posts.' . $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $perPage = $request->input('per_page', 10);
+
+        if ($sortField === 'posts.user_interests') {
+            // Fetch user interests
+            $userInterests = DB::table('user_interests')->where('user_id', $user_id)->first();
+            if ($userInterests) {
+                $userTags = json_decode($userInterests->tags, true) ?? [];
+                $userDietaries = json_decode($userInterests->dietaries, true) ?? [];
+                $userCuisines = json_decode($userInterests->cuisines, true) ?? [];
+
+                $posts = $query->get()->map(function ($post) use ($userTags, $userDietaries, $userCuisines) {
+                    $postTags = explode(', ', $post->tags);
+                    $postDietaries = explode(', ', $post->dietaries);
+                    $postCuisines = explode(', ', $post->cuisines);
+
+                    $tagMatchCount = count(array_intersect($postTags, $userTags));
+                    $dietaryMatchCount = count(array_intersect($postDietaries, $userDietaries));
+                    $cuisineMatchCount = count(array_intersect($postCuisines, $userCuisines));
+
+                    $post->match_score = $tagMatchCount + $dietaryMatchCount + $cuisineMatchCount;
+
+                    return $post;
+                });
+
+                $posts = $posts->sortByDesc('match_score')->values();
+
+                // Paginate manually since we are using a collection
+                $currentPage = LengthAwarePaginator::resolveCurrentPage();
+                $paginatedPosts = new LengthAwarePaginator(
+                    $posts->forPage($currentPage, $perPage),
+                    $posts->count(),
+                    $perPage,
+                    $currentPage,
+                    ['path' => LengthAwarePaginator::resolveCurrentPath()]
+                );
+
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $paginatedPosts
+                ]);
+            }
+        } else {
+            $posts = $query->orderBy($sortField, $sortOrder)
+                ->paginate($perPage)
+                ->appends($request->except('page'));
+
+            if ($posts->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No posts found',
+                    'data' => []
+                ]);
+            }
+
+            $posts->getCollection()->transform(function ($post) use ($user_id) {
+                return $this->addExtraFields($post, $user_id);
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $posts
+            ]);
+        }
     }
 
     public function getUserPosts(Request $request)

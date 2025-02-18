@@ -3,47 +3,51 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\WebController;
+use App\Http\Controllers\Api\BillboardController as ApiBillboardController;
+use App\Billboard;
+use App\Tag;
+use App\Http\Resources\BillboardResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class BillboardViewController extends WebController
 {
+    protected $apiBillboardController;
+
+    public function __construct(ApiBillboardController $apiBillboardController)
+    {
+        $this->apiBillboardController = $apiBillboardController;
+    }
+
     public function index()
     {
-        $response = Http::get('https://peaz.app/api/billboards');
-        $billboards = $response->json()['data'];
+        $billboards = $this->apiBillboardController->index()->toArray(request());
 
         return view('admin.billboards.index', compact('billboards'));
     }
 
     public function show($id)
     {
-        $response = Http::get("https://peaz.app/api/billboards/{$id}");
-        $billboard = $response->json()['data'];
+        $billboard = $this->apiBillboardController->show(Billboard::findOrFail($id))->toArray(request());
 
         return view('admin.billboards.show', compact('billboard'));
     }
 
     public function create()
     {
-        return view('admin.billboards.create');
+        $tags = Tag::all();
+        return view('admin.billboards.create', compact('tags'));
     }
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'caption' => 'nullable|string|max:255',
-            'file' => 'nullable|string|max:255',
-            'link' => 'nullable|string|max:255',
-            'tag_id' => 'nullable|exists:tags,id',
-            'verified' => 'boolean',
-            'status' => 'boolean',
+        $request->merge([
+            'verified' => $request->has('verified'),
+            'status' => $request->has('status'),
         ]);
 
-        $response = Http::post('https://peaz.app/api/billboards', $validatedData);
+        $response = $this->apiBillboardController->store($request);
 
-        if ($response->successful()) {
+        if ($response->getStatusCode() === 201) {
             return redirect()->route('admin.billboards.index')->with('success', 'Billboard created successfully.');
         } else {
             $error = $response->json();
@@ -53,33 +57,39 @@ class BillboardViewController extends WebController
 
     public function edit($id)
     {
-        $response = Http::get("https://peaz.app/api/billboards/{$id}");
-        $billboard = $response->json()['data'];
+        $billboard = $this->apiBillboardController->show(Billboard::findOrFail($id))->toArray(request());
+        $tags = Tag::all();
 
-        return view('admin.billboards.edit', compact('billboard'));
+        return view('admin.billboards.edit', compact('billboard', 'tags'));
     }
 
     public function update(Request $request, $id)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'caption' => 'nullable|string|max:255',
-            'file' => 'nullable|string|max:255',
-            'link' => 'nullable|string|max:255',
-            'tag_id' => 'nullable|exists:tags,id',
-            'verified' => 'boolean',
-            'status' => 'boolean',
+        $billboard = Billboard::findOrFail($id);
+
+        $request->merge([
+            'verified' => $request->has('verified'),
+            'status' => $request->has('status'),
         ]);
 
-        Http::put("https://peaz.app/api/billboards/{$id}", $validatedData);
+        $response = $this->apiBillboardController->update($request, $billboard);
 
-        return redirect()->route('admin.billboards.index');
+        if ($response instanceof BillboardResource) {
+            return redirect()->route('admin.billboards.index')->with('success', 'Billboard updated successfully.');
+        } else {
+            return redirect()->back()->withInput()->withErrors(['error' => 'Failed to update billboard.']);
+        }
     }
 
     public function destroy($id)
     {
-        Http::delete("https://peaz.app/api/billboards/{$id}");
+        $billboard = Billboard::findOrFail($id);
+        $response = $this->apiBillboardController->destroy($billboard);
 
-        return redirect()->route('admin.billboards.index');
+        if ($response->getStatusCode() === 204) {
+            return redirect()->route('admin.billboards.index')->with('success', 'Billboard deleted successfully.');
+        } else {
+            return redirect()->back()->withErrors(['error' => 'Failed to delete billboard.']);
+        }
     }
 }

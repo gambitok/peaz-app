@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\Admin\BillboardViewController;
+use App\Http\Controllers\Admin\RestaurantViewController;
 
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
@@ -56,5 +57,13 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::get('/billboards/{id}/edit', [BillboardViewController::class, 'edit'])->name('billboards.edit');
         Route::put('/billboards/{id}', [BillboardViewController::class, 'update'])->name('billboards.update');
         Route::delete('/billboards/{id}', [BillboardViewController::class, 'destroy'])->name('billboards.destroy');
+
+        Route::get('/restaurants', [RestaurantViewController::class, 'index'])->name('restaurants.index');
+        Route::get('/restaurants/create', [RestaurantViewController::class, 'create'])->name('restaurants.create');
+        Route::post('/restaurants', [RestaurantViewController::class, 'store'])->name('restaurants.store');
+        Route::get('/restaurants/{id}', [RestaurantViewController::class, 'show'])->name('restaurants.show');
+        Route::get('/restaurants/{id}/edit', [RestaurantViewController::class, 'edit'])->name('restaurants.edit');
+        Route::put('/restaurants/{id}', [RestaurantViewController::class, 'update'])->name('restaurants.update');
+        Route::delete('/restaurants/{id}', [RestaurantViewController::class, 'destroy'])->name('restaurants.destroy');
     });
 });
