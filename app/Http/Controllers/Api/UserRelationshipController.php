@@ -108,6 +108,7 @@ class UserRelationshipController extends Controller
     {
         $userId = $request->user()->id;
         $searchTerm = $request->query('search_text');
+        $perPage = $request->query('per_page', 10); // Default to 10 items per page
 
         $followers = UserRelationship::where('following_id', $userId)
             ->pluck('follower_id')
@@ -123,15 +124,16 @@ class UserRelationshipController extends Controller
             });
         }
 
-        $users = $usersQuery->get()
-            ->map(function ($user) use ($userId) {
-                $isFollowing = UserRelationship::where('follower_id', $userId)
-                    ->where('following_id', $user->id)
-                    ->exists();
+        $users = $usersQuery->paginate($perPage);
 
-                $user->is_following = $isFollowing ? 1 : 0;
-                return $user;
-            });
+        $users->getCollection()->transform(function ($user) use ($userId) {
+            $isFollowing = UserRelationship::where('follower_id', $userId)
+                ->where('following_id', $user->id)
+                ->exists();
+
+            $user->is_following = $isFollowing ? 1 : 0;
+            return $user;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -143,6 +145,7 @@ class UserRelationshipController extends Controller
     {
         $userId = $request->user()->id;
         $searchTerm = $request->query('search_text');
+        $perPage = $request->query('per_page', 10); // Default to 10 items per page
 
         $following = UserRelationship::where('follower_id', $userId)
             ->pluck('following_id')
@@ -158,12 +161,11 @@ class UserRelationshipController extends Controller
             });
         }
 
-        $users = $usersQuery->get();
+        $users = $usersQuery->paginate($perPage);
 
         return response()->json([
             'status' => 'success',
             'data' => $users
         ]);
     }
-
 }

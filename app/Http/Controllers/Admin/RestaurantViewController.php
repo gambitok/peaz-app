@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\RestaurantController as ApiRestaurantController;
 use App\Restaurant;
 use App\Http\Resources\RestaurantResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class RestaurantViewController extends WebController
 {
@@ -44,7 +45,9 @@ class RestaurantViewController extends WebController
 
         $response = $this->apiRestaurantController->store($request);
 
-        if ($response->getStatusCode() === 201) {
+        if ($response instanceof Response && $response->getStatusCode() === 201) {
+            return redirect()->route('admin.restaurants.index')->with('success', 'Restaurant created successfully.');
+        } elseif ($response instanceof RestaurantResource) {
             return redirect()->route('admin.restaurants.index')->with('success', 'Restaurant created successfully.');
         } else {
             $error = $response->json();
@@ -71,6 +74,8 @@ class RestaurantViewController extends WebController
 
         if ($response instanceof RestaurantResource) {
             return redirect()->route('admin.restaurants.index')->with('success', 'Restaurant updated successfully.');
+        } elseif ($response instanceof Response && $response->getStatusCode() === 200) {
+            return redirect()->route('admin.restaurants.index')->with('success', 'Restaurant updated successfully.');
         } else {
             return redirect()->back()->withInput()->withErrors(['error' => 'Failed to update restaurant.']);
         }
@@ -81,7 +86,7 @@ class RestaurantViewController extends WebController
         $restaurant = Restaurant::findOrFail($id);
         $response = $this->apiRestaurantController->destroy($restaurant);
 
-        if ($response->getStatusCode() === 204) {
+        if ($response instanceof Response && $response->getStatusCode() === 204) {
             return redirect()->route('admin.restaurants.index')->with('success', 'Restaurant deleted successfully.');
         } else {
             return redirect()->back()->withErrors(['error' => 'Failed to delete restaurant.']);

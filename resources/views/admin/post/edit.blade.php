@@ -23,6 +23,10 @@
                             <input type="text" name="title" id="title" class="form-control" value="{{ $data->title }}" required>
                         </div>
                         <div class="form-group">
+                            <label for="caption">Caption:</label>
+                            <textarea class="form-control" id="caption" name="caption" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
                             <label for="file">File</label>
                             <input type="file" name="file" id="file" class="form-control">
                             @if($data->file)
@@ -35,6 +39,10 @@
                             @if($data->thumbnail)
                                 <a href="{{ $data->thumbnail }}" target="_blank">Show Thumbnail</a>
                             @endif
+                        </div>
+                        <div class="form-group">
+                            <label for="minutes">Serving size</label>
+                            <input type="number" name="serving_size" id="serving_size" class="form-control" value="{{ $data->serving_size }}">
                         </div>
                         <div class="form-group">
                             <label for="hours">Hours</label>
@@ -52,7 +60,6 @@
                                     <option value="{{ $tag->id }}" {{ in_array($tag->id, $data->tags) ? 'selected' : '' }}>{{ $tag->name }}</option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Select multiple tags.</small>
                         </div>
 
                         <div class="form-group">
@@ -62,7 +69,6 @@
                                     <option value="{{ $dietary->id }}" {{ in_array($dietary->id, $data->dietaries) ? 'selected' : '' }}>{{ $dietary->name }}</option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Select multiple dietaries.</small>
                         </div>
 
                         <div class="form-group">
@@ -72,9 +78,7 @@
                                     <option value="{{ $cuisine->id }}" {{ in_array($cuisine->id, $data->cuisines) ? 'selected' : '' }}>{{ $cuisine->name }}</option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Select multiple cuisines.</small>
                         </div>
-
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                     </form>
                 </div>

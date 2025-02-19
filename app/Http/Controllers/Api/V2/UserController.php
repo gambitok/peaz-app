@@ -84,7 +84,7 @@ class UserController extends Controller
 
     public function getUsers()
     {
-        $users = User::all();
+        $users = User::withCount(['followers', 'following'])->get();
 
         if ($users->isEmpty()) {
             return response()->json([
@@ -192,6 +192,8 @@ class UserController extends Controller
 
     public function search(Request $request)
     {
+        $authUserId = auth()->id(); // Get the authenticated user's ID
+
         $query = User::query();
 
         if ($request->has('name')) {
@@ -209,6 +211,15 @@ class UserController extends Controller
         $sortBy = $request->input('sort_by', 'name');
         $sortOrder = $request->input('sort_order', 'asc');
         $query->orderBy($sortBy, $sortOrder);
+
+        // Add a left join to check if the authenticated user is following each user
+        $query->leftJoin('user_relationships', function ($join) use ($authUserId) {
+            $join->on('users.id', '=', 'user_relationships.following_id')
+                ->where('user_relationships.follower_id', '=', $authUserId);
+        });
+
+        // Select the necessary fields and add the is_following field
+        $query->select('users.*', \DB::raw('CASE WHEN user_relationships.follower_id IS NULL THEN false ELSE true END AS is_following'));
 
         $users = $query->paginate(10);
 

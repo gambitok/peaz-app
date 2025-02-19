@@ -2,7 +2,6 @@
 @section('title') @lang('translation.Data_Tables') @endsection
 @section('css')
 
-<!-- DataTables -->
 <link href="{{ URL::asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"/>
 @endsection
@@ -11,12 +10,17 @@
 @include('components.breadcum')
 <div class="row">
     <div class="col-12">
+        <a href="{{ route('admin.post.create') }}" class="btn btn-info">Create Post</a>
+    </div>
+    <br>
+</div>
+<div class="row">
+    <div class="col-12">
         {!! success_error_view_generator() !!}
-
     </div>
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive ">
+            <div class="table-responsive">
                 <table id="listResults" class="table dt-responsive mb-4  nowrap w-100 mb-">
                     <thead>
                         <tr>

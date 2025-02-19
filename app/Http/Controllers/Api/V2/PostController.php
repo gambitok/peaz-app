@@ -324,7 +324,7 @@ class PostController extends Controller
         $user_id = $user->id;
 
         $query = Post::with(['user' => function($query) {
-            $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website');
+            $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified');
         }, 'comment', 'postlike', 'report_statuses'])
             ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
             ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')

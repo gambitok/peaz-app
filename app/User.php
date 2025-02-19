@@ -150,4 +150,14 @@ class User extends Authenticatable
         return $this->hasOne(SocialAccounts::class, "user_id", "id");
     }
 
+    public function followers()
+    {
+        return $this->hasMany(UserRelationship::class, 'following_id');
+    }
+
+    public function following()
+    {
+        return $this->hasMany(UserRelationship::class, 'follower_id');
+    }
+
 }

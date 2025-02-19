@@ -47,9 +47,7 @@
                 @if(isset($billboard['id']))
                     <tr>
                         <td>
-                            <a href="{{ route('admin.billboards.show', $billboard['id']) }}">
-                                {{ $billboard['title'] }}
-                            </a>
+                            {{ $billboard['title'] }}
                         </td>
                         <td>
                             <span>
@@ -63,6 +61,8 @@
                         </td>
                         <td>
                             <form action="{{ route('admin.billboards.destroy', $billboard['id']) }}" method="POST" style="display:inline;">
+                                <a href="{{ route('admin.billboards.show', $billboard['id']) }}" class="btn btn-info">Show</a>
+                                <a href="{{ route('admin.billboards.edit', $billboard['id']) }}" class="btn btn-warning">Edit</a>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger">Delete</button>

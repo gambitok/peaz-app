@@ -47,13 +47,11 @@
                 @if(isset($restaurant['id']))
                     <tr>
                         <td>
-                            <a href="{{ route('admin.restaurants.show', $restaurant['id']) }}">
-                                {{ $restaurant['id'] }}
-                            </a>
+                            {{ $restaurant['id'] }}
                         </td>
                         <td>
                             <span>
-                                {{ $restaurant['user']['link'] ?? 'N/A' }}
+                                {{ $restaurant['user']['name'] ?? 'N/A' }}
                             </span>
                         </td>
                         <td>
@@ -63,6 +61,8 @@
                         </td>
                         <td>
                             <form action="{{ route('admin.restaurants.destroy', $restaurant['id']) }}" method="POST" style="display:inline;">
+                                <a href="{{ route('admin.restaurants.show', $restaurant['id']) }}" class="btn btn-info">Show</a>
+                                <a href="{{ route('admin.restaurants.edit', $restaurant['id']) }}" class="btn btn-warning">Edit</a>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger">Delete</button>

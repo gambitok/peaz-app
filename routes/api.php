@@ -32,10 +32,10 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
     Route::get('get-user-recipes-and-comments', [PostController::class, 'getUserRecipesAndComments']);
 });
 
-Route::apiResource('billboards', BillboardController::class);
-Route::apiResource('restaurants', RestaurantController::class);
-
 Route::prefix('v2')->middleware('auth:api')->group(function () {
+
+    Route::apiResource('billboards', BillboardController::class);
+    Route::apiResource('restaurants', RestaurantController::class);
 
     Route::resource('user-interests', UserInterestController::class);
 

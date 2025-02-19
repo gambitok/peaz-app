@@ -14,8 +14,8 @@
                 <input type="text" class="form-control" id="link" name="link">
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" id="status" name="status">
-                <label for="status">Status</label>
+                <input type="checkbox" class="form-check-input" id="status" name="status">
+                <label class="form-check-label" for="status">Status</label>
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
             <a href="{{ route('admin.restaurants.index') }}" class="btn btn-secondary">Back to Restaurants</a>

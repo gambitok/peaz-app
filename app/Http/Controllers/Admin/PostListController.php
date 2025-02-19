@@ -34,9 +34,23 @@ class PostListController extends WebController
         ]);
     }
 
+
     public function create()
     {
-        //
+        $tags = Tag::all();
+        $dietaries = Dietary::all();
+        $cuisines = Cuisine::all();
+
+        return view('admin.post.create', [
+            'title' => 'Create Post',
+            'tags' => $tags,
+            'dietaries' => $dietaries,
+            'cuisines' => $cuisines,
+            'breadcrumb' => breadcrumb([
+                'post' => route('admin.post.index'),
+                'create' => route('admin.post.create')
+            ]),
+        ]);
     }
 
     public function store(Request $request)

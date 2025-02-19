@@ -31,12 +31,12 @@
                 </select>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" id="verified" name="verified">
-                <label for="verified">Verified</label>
+                <input type="checkbox" class="form-check-input" id="verified" name="verified">
+                <label class="form-check-label" for="verified">Verified</label>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" id="status" name="status" style="display: inline;">
-                <label for="status">Status</label>
+                <input type="checkbox" class="form-check-input" id="status" name="status" style="display: inline;">
+                <label class="form-check-label" for="status">Status</label>
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
             <a href="{{ route('admin.billboards.index') }}" class="btn btn-secondary">Back to Billboards</a>

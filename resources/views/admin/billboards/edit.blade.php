@@ -32,12 +32,12 @@
                 </select>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" id="verified" name="verified" @if($billboard['verified']) checked @endif>
-                <label for="verified">Verified</label>
+                <input type="checkbox" class="form-check-input" id="verified" name="verified" @if($billboard['verified']) checked @endif>
+                <label class="form-check-label" for="verified">Verified</label>
             </div>
             <div class="form-check mb-3">
-                <input type="checkbox" id="status" name="status" @if($billboard['status']) checked @endif>
-                <label for="status">Status</label>
+                <input type="checkbox" class="form-check-input" id="status" name="status" @if($billboard['status']) checked @endif>
+                <label class="form-check-label" for="status">Status</label>
             </div>
             <button type="submit" class="btn btn-primary">Update</button>
             <a href="{{ route('admin.billboards.index') }}" class="btn btn-secondary">Back to Billboards</a>
