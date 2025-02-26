@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\Admin\BillboardViewController;
 use App\Http\Controllers\Admin\RestaurantViewController;
+use App\Http\Controllers\Admin\PostListController;
 
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
@@ -48,7 +49,18 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::patch('post_details_update/{id}','PostListController@postDetailsUpdate')->name('post.post_details_update');
         Route::delete('post_details_destroy/{id}','PostListController@postDetailsDestroy')->name('post.post_details_destroy');
         Route::get('instruction','PostListController@instruction')->name('post.instruction');
+
         Route::resource('post','PostListController');
+
+        Route::delete('/post/{id}/delete-file',
+            [PostListController::class, 'deleteFile'])->name('admin.post.deleteFile');
+        Route::post('/post/{id}/upload-file',
+            [PostListController::class, 'uploadFile'])->name('admin.post.uploadFile');
+
+        Route::post('/post/status',
+            [PostListController::class, 'updateStatus'])->name('post.status');
+        Route::post('/post/verified',
+            [PostListController::class, 'updateVerified'])->name('post.verified');
 
         Route::get('/billboards', [BillboardViewController::class, 'index'])->name('billboards.index');
         Route::get('/billboards/create', [BillboardViewController::class, 'create'])->name('billboards.create');

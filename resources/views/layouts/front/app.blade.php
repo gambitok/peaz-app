@@ -41,7 +41,7 @@
     <!-- ======= Header ======= -->
     @include('layouts.front.header')
 
-   
+
 
     @yield('content')
 
@@ -60,8 +60,8 @@
     <script src="{{ asset('assets/front/vendor/glightbox/js/glightbox.min.js') }} "></script>
     <script src=" {{ asset('assets/front/vendor/php-email-form/validate.js') }} "></script>
     <script src="{{ asset('assets/front/vendor/purecounter/purecounter.js') }} "></script>
-    
-    
+
+    <script src="{{ asset('assets/front/vendor/bootstrap/js/bootstrap.bundle.min.js')}} "></script>
 
     @yield('js_script')
 
@@ -70,7 +70,7 @@
             $('#loader_display_d').hide();
       });
       </script>
-         
+
 </body>
 
 </html>

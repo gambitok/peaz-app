@@ -7,66 +7,103 @@
 
 @section('content')
 @include('components.breadcum')
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1>{{ $title }}</h1>
-                <form action="{{ route('admin.post.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="form-group">
-                        <label for="title">Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="caption">Caption:</label>
-                        <textarea class="form-control" id="caption" name="caption" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="file">File</label>
-                        <input type="file" class="form-control" id="file" name="file">
-                    </div>
-                    <div class="form-group">
-                        <label for="thumbnail">Thumbnail</label>
-                        <input type="file" class="form-control" id="thumbnail" name="thumbnail">
-                    </div>
-                    <div class="form-group">
-                        <label for="minutes">Serving size</label>
-                        <input type="number" name="serving_size" id="serving_size" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="hours">Hours</label>
-                        <input type="number" class="form-control" id="hours" name="hours" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="minutes">Minutes</label>
-                        <input type="number" class="form-control" id="minutes" name="minutes" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="tags">Tags</label>
-                        <select multiple class="form-control select2" id="tags" name="tags[]">
-                            @foreach($tags as $tag)
-                                <option value="{{ $tag->id }}">{{ $tag->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="dietaries">Dietaries</label>
-                        <select multiple class="form-control select2" id="dietaries" name="dietaries[]">
-                            @foreach($dietaries as $dietary)
-                                <option value="{{ $dietary->id }}">{{ $dietary->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="cuisines">Cuisines</label>
-                        <select multiple class="form-control select2" id="cuisines" name="cuisines[]">
-                            @foreach($cuisines as $cuisine)
-                                <option value="{{ $cuisine->id }}">{{ $cuisine->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create Post</button>
-                </form>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body" style="display: block; margin: 0 auto;}">
+                    <form action="{{ route('admin.post.store') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="user_id" class="col-form-label">Profile Name</label>
+                            <div class="w-50">
+                                <select name="user_id" id="user_id" class="select2">
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="title" class="col-form-label">Title</label>
+                            <input type="text" name="title" id="title" class="form-control w-50" value="" required>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="caption" class="col-form-label">Caption</label>
+                            <textarea class="form-control w-50" id="caption" name="caption" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4 align-items-center">
+                            <label class="col-form-label">Total Time</label>
+                            <div class="d-flex gap-2 w-50">
+                                <input type="number" name="hours" id="hours" class="form-control w-25" value="">
+                                <label for="hours">Hours</label>
+                                <input type="number" name="minutes" id="minutes" class="form-control w-25" value="">
+                                <label for="minutes">Minutes</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="serving_size" class="col-form-label">Serving size</label>
+                            <input type="number" name="serving_size" id="serving_size" class="form-control w-50" value="">
+                        </div>
+
+                        <hr>
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="tags" class="col-form-label">Tags</label>
+                            <div class="w-50">
+                                <select name="tags[]" id="tags" class="select2" multiple>
+
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="dietaries" class="col-form-label">Dietaries</label>
+                            <div class="w-50">
+                                <select name="dietaries[]" id="dietaries" class="select2" multiple>
+
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="cuisines" class="col-form-label">Cuisines</label>
+                            <div class="w-50">
+                                <select name="cuisines[]" id="cuisines" class="form-control select2 w-50" multiple>
+
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between">
+                            <label for="file" class="col-form-label">File</label>
+                            <div class="w-50">
+                                <input type="file" name="file" id="file" class="form-control">
+                                <p>No file uploaded</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between">
+                            <label for="thumbnail" class="col-form-label">Thumbnail</label>
+                            <div class="w-50">
+                                <input type="file" name="thumbnail" id="thumbnail" class="form-control">
+                                <p>No thumbnail uploaded</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-2">
+                            <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

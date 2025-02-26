@@ -81,7 +81,7 @@
         </div>
         <div class="card wd-sl-dashcard">
             <div class="card-body">
-                <h5 class="mb-4">Total User </h5>
+                <h5 class="mb-4">Total Members</h5>
                 <h1>{{$user_count}}</h1>
             </div>
         </div>
@@ -176,7 +176,7 @@
                     zoomType: 'x'
                 },
                 title: {
-                    text: 'Registered Users'
+                    text: 'Registered Members'
                 },
                 subtitle: {
                     text: document.ontouchstart === undefined ?
@@ -187,7 +187,7 @@
                 },
                 yAxis: {
                     title: {
-                        text: 'Registered Users'
+                        text: 'Registered Members'
                     }
                 },
                 legend: {

@@ -10,22 +10,22 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- App favicon -->
     <link href="{{Favicon}}" rel="icon" type="image/x-icon">
-    
+
     @include('layouts.head-css')
 </head>
 
 @section('body')
     <body data-sidebar="dark">
     <div class="loading" id="loader_display_d" style="z-index: 9999;">Loading&#8230;</div>
-@show
+    @show
     <!-- Begin page -->
     <div id="layout-wrapper">
         @include('layouts.topbar')
-       
+
         @include('layouts.sidebar')
 
-        
-        
+
+
         <!-- ============================================================== -->
         <!-- Start right Content here -->
         <!-- ============================================================== -->
@@ -44,17 +44,17 @@
     <!-- END layout-wrapper -->
 
     <!-- Right Sidebar -->
-    
+
     <!-- /Right-bar -->
-    
+
     <!-- JAVASCRIPT -->
-    
+
     @include('layouts.vendor-scripts')
 
     <!-- add Modal -->
-    
+
 <div class="modal fade  bs-example-modal-center_cust1 general_modal" id="general_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-    
+
     <div class="modal-dialog modal-dialog-centered  modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -62,7 +62,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body general_modal_content">
-                
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-pill btn-primary waves-effect waves-light  general_modal_submit_btn">Submit</button>
@@ -74,7 +74,7 @@
 
 
 <div class="modal fade  general_modal_second" id="general_modal_second" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-    
+
     <div class="modal-dialog modal-dialog-centered  modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -82,7 +82,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body general_modal_content_second">
-               
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-pill btn-primary waves-effect waves-light  general_modal_submit_btn_second">Submit</button>
@@ -91,7 +91,7 @@
         </div>
     </div>
 </div>
-    
+
 </body>
 
 </html>

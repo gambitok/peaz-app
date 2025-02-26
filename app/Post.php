@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class Post extends Model
 {
     public $table = "posts";
-    protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','not_interested','status'];
+    protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','not_interested','status','created_at','verified'];
 
     public function tags()
     {
@@ -56,7 +56,7 @@ class Post extends Model
         if(!empty($val)){
             return Storage::disk('s3')->url($val);
         }
-        return get_asset($val, false, get_constants('default.user_image'));
+        return '';
     }
 
     public function getThumbnailAttribute($val)
@@ -64,7 +64,7 @@ class Post extends Model
         if(!empty($val)){
             return Storage::disk('s3')->url($val);
         }
-        return get_asset($val, false, get_constants('default.user_image'));
+        return '';
     }
 
     public function user()

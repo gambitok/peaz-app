@@ -229,7 +229,7 @@ function admin_modules()
         ],
         [
             'route' => route('admin.user.index'),
-            'name' => __('Users'),
+            'name' => __('Members'),
             'icon' => 'kt-menu__link-icon fas fa-users',
             'child' => [],
             'all_routes' => [
@@ -239,36 +239,58 @@ function admin_modules()
             ]
         ],
         [
-            'route' => route('admin.interestedlist.index'),
-            'name' => __('Interest'),
-            'icon' => 'kt-menu__link-icon fas fa-list',
-            'child' => [],
-            'all_routes' => [
-                'admin.interestedlist.index',
-                'admin.interestedlist.show',
-                'admin.interestedlist.add',
-            ]
-        ],
-        [
             'route' => route('admin.post.index'),
-            'name' => __('Post'),
+            'name' => __('Recipes'),
             'icon' => 'kt-menu__link-icon fas fa-image',
             'child' => [],
             'all_routes' => [
-                'admin.interestedlist.index',
-                'admin.interestedlist.show',
-                'admin.interestedlist.add',
+                'admin.post.index',
+                'admin.post.show',
+                'admin.post.add',
+            ]
+        ],
+//        [
+//            'route' => route('admin.interestedlist.index'),
+//            'name' => __('Interests'),
+//            'icon' => 'kt-menu__link-icon fas fa-list',
+//            'child' => [],
+//            'all_routes' => [
+//                'admin.interestedlist.index',
+//                'admin.interestedlist.show',
+//                'admin.interestedlist.add',
+//            ]
+//        ],
+//        [
+//            'route' => route('admin.user_report.index'),
+//            'name' => __('User Report'),
+//            'icon' => 'kt-menu__link-icon fas fa-file',
+//            'child' => [],
+//            'all_routes' => [
+//                'admin.user_report.index',
+//                'admin.user_report.show',
+//                'admin.user_report.add',
+//            ]
+//        ],
+        [
+            'route' => route('admin.billboards.index'),
+            'name' => "Billboards",
+            'icon' => 'fas fa-users',
+            'child' => [],
+            'all_routes' => [
+                'admin.billboards.index',
+                'admin.billboards.show',
+                'admin.billboards.add',
             ]
         ],
         [
-            'route' => route('admin.user_report.index'),
-            'name' => __('User Report'),
-            'icon' => 'kt-menu__link-icon fas fa-file',
+            'route' => route('admin.restaurants.index'),
+            'name' => "Restaurants",
+            'icon' => 'fas fa-users',
             'child' => [],
             'all_routes' => [
-                'admin.user_report.index',
-                'admin.user_report.show',
-                'admin.user_report.add',
+                'admin.restaurants.index',
+                'admin.restaurants.show',
+                'admin.restaurants.add',
             ]
         ],
         [
@@ -295,38 +317,14 @@ function admin_modules()
                     'all_routes' => [
                         'admin.get_site_settings',
                     ],
-                ]
+                ],
+                [
+                    'route' => route('admin.content.index'),
+                    'name' => "Content",
+                    'icon' => 'fas fa-users',
+                    'all_routes' => []
+                ],
             ],
-        ],
-        [
-            'route' => route('admin.content.index'),
-            'name' => "Content",
-            'icon' => 'fas fa-users',
-            'child' => [],
-            'all_routes' => [
-           ]
-        ],
-        [
-            'route' => route('admin.billboards.index'),
-            'name' => "Billboards",
-            'icon' => 'fas fa-users',
-            'child' => [],
-            'all_routes' => [
-                'admin.billboards.index',
-                'admin.billboards.show',
-                'admin.billboards.add',
-            ]
-        ],
-        [
-            'route' => route('admin.restaurants.index'),
-            'name' => "Restaurants",
-            'icon' => 'fas fa-users',
-            'child' => [],
-            'all_routes' => [
-                'admin.restaurants.index',
-                'admin.restaurants.show',
-                'admin.restaurants.add',
-            ]
         ],
         [
             'route' => route('front.logout'),

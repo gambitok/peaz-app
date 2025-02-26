@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Cuisine;
 use App\Dietary;
 use App\Tag;
+use App\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\WebController;
 use App\Post;
@@ -25,24 +26,106 @@ class PostListController extends WebController
 
     public function index()
     {
+//        $title = 'Post List';
+//        return view('admin.post.index', [
+//            'title' => $title,
+//            'breadcrumb' => breadcrumb([
+//                'Post' => route('admin.post.index'),
+//            ]),
+//        ]);
         $title = 'Post List';
+        $tags = Tag::all();
+        $dietaries = Dietary::all();
+        $cuisines = Cuisine::all();
+
         return view('admin.post.index', [
             'title' => $title,
+            'tags' => $tags,
+            'dietaries' => $dietaries,
+            'cuisines' => $cuisines,
             'breadcrumb' => breadcrumb([
                 'Post' => route('admin.post.index'),
             ]),
         ]);
     }
 
+    public function listing(Request $request)
+    {
+        $query = Post::select('posts.*', 'users.name as user_name')
+            ->join('users', 'posts.user_id', '=', 'users.id')
+            ->orderBy('posts.id', 'DESC');
+
+        if ($request->has('verified') && $request->verified === '0') {
+            $query->where('posts.verified', 0);
+        }
+
+        if ($request->has('tags')) {
+            $query->whereHas('tags', function ($q) use ($request) {
+                $q->whereIn('tags.id', $request->tags);
+            });
+        }
+
+        if ($request->has('dietaries')) {
+            $query->whereHas('dietaries', function ($q) use ($request) {
+                $q->whereIn('dietaries.id', $request->dietaries);
+            });
+        }
+
+        if ($request->has('cuisines')) {
+            $query->whereHas('cuisines', function ($q) use ($request) {
+                $q->whereIn('cuisines.id', $request->cuisines);
+            });
+        }
+
+        $data = $query->get();
+
+        return Datatables::of($data)
+            ->addIndexColumn()
+            ->editColumn('user_name', function ($row) {
+                return "<span title='$row->user_name'>{$row->user_name}</span>";
+            })
+            ->editColumn('created_at', function ($row) {
+                return "<span title='$row->created_at'>{$row->created_at}</span>";
+            })
+            ->addColumn('verified', function ($row) {
+                $checked = $row->verified ? 'checked' : '';
+                return "<label class='switch'>
+                <input type='checkbox' class='toggle-verified' data-id='{$row->id}' {$checked}>
+                <span class='slider slider-secondary round'></span>
+            </label>";
+            })
+            ->addColumn('status', function ($row) {
+                $checked = $row->status ? 'checked' : '';
+                return "<label class='switch'>
+                <input type='checkbox' class='toggle-status' data-id='{$row->id}' {$checked}>
+                <span class='slider round'></span>
+            </label>";
+            })
+            ->addColumn('action', function ($row) {
+                $param = [
+                    'id' => $row->id,
+                    'url' => [
+                        'delete' => route('admin.post.destroy', $row->id),
+                        'edit' => route('admin.post.edit', $row->id),
+                        'view' => route('admin.post.show', $row->id),
+                    ]
+                ];
+                return $this->generate_actions_buttons($param);
+            })
+            ->rawColumns(['user_name','created_at','status','verified','action'])
+            ->make(true);
+    }
 
     public function create()
     {
         $tags = Tag::all();
         $dietaries = Dietary::all();
         $cuisines = Cuisine::all();
+        $users = User::all();
 
         return view('admin.post.create', [
             'title' => 'Create Post',
+            'users' => $users,
             'tags' => $tags,
             'dietaries' => $dietaries,
             'cuisines' => $cuisines,
@@ -55,7 +138,79 @@ class PostListController extends WebController
 
     public function store(Request $request)
     {
-        //
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+
+        $fileSrc = '';
+        $thumbnailSrc = '';
+
+        $request->validate([
+            'title' => 'required',
+            'file' => 'nullable|file',
+            'thumbnail' => 'nullable|file',
+            'hours' => 'required|numeric',
+            'minutes' => 'required|numeric',
+            'serving_size' => 'nullable|numeric',
+            'caption' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'dietaries' => 'nullable|array',
+            'cuisines' => 'nullable|array',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $extension = strtolower($request->file('file')->getClientOriginalExtension());
+
+            if (in_array($extension, $imageExtensions)) {
+                $path = $request->file('file')->store('uploads/posts/images', 's3');
+            } elseif (in_array($extension, $videoExtensions)) {
+                $path = $request->file('file')->store('uploads/posts/videos', 's3');
+            }
+
+            if (isset($path)) {
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $fileSrc = $path;
+            }
+        }
+
+        if ($request->hasFile('thumbnail')) {
+            $extension = strtolower($request->file('thumbnail')->getClientOriginalExtension());
+
+            if (in_array($extension, $imageExtensions)) {
+                $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/images', 's3');
+            } elseif (in_array($extension, $videoExtensions)) {
+                $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/videos', 's3');
+            }
+
+            if (isset($path)) {
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $thumbnailSrc = $path;
+            }
+        }
+
+        $post = Post::create([
+            'title' => $request->title,
+            'file' => $fileSrc,
+            'thumbnail' => $thumbnailSrc,
+            'hours' => $request->hours,
+            'minutes' => $request->minutes,
+            'serving_size' => $request->serving_size,
+            'caption' => $request->caption,
+        ]);
+
+        if ($request->has('tags')) {
+            $post->tags()->sync($request->tags);
+        }
+
+        if ($request->has('dietaries')) {
+            $post->dietaries()->sync($request->dietaries);
+        }
+
+        if ($request->has('cuisines')) {
+            $post->cuisines()->sync($request->cuisines);
+        }
+
+        return redirect()->route('admin.post.show', $post->id)
+            ->with('success', 'Post created successfully');
     }
 
     public function show($id)
@@ -129,6 +284,8 @@ class PostListController extends WebController
         if ($post) {
             $request->validate([
                 'title' => 'required',
+                'caption' => 'nullable|string',
+                'serving_size' => 'nullable|numeric',
                 'file' => 'nullable|file',
                 'thumbnail' => 'nullable|file',
                 'hours' => 'required|numeric',
@@ -194,11 +351,19 @@ class PostListController extends WebController
 
             $postData = [
                 'title' => $request->title,
-                'file' => $fileSrc ?: $post->file,
-                'thumbnail' => $thumbnailSrc ?: $post->thumbnail,
+                'caption' => $request->caption,
+                'serving_size' => $request->serving_size,
                 'hours' =>  $request->hours,
                 'minutes' =>  $request->minutes,
             ];
+
+            if (!empty($fileSrc)) {
+                $postData['file'] = $fileSrc;
+            }
+
+            if (!empty($thumbnailSrc)) {
+                $postData['thumbnail'] = $thumbnailSrc;
+            }
 
             $post->update($postData);
 
@@ -238,40 +403,6 @@ class PostListController extends WebController
             error_session('Post not found');
         }
         return redirect()->route('admin.post.index');
-    }
-
-    public function listing()
-    {
-        $data = Post::select('posts.*', 'users.name as user_name')
-            ->join('users', 'posts.user_id', '=', 'users.id')
-            ->orderBy('posts.id', 'DESC')
-            ->get();
-
-        return Datatables::of($data)
-            ->addIndexColumn()
-            ->editColumn('user_name', function ($row) {
-                return "<span title='$row->user_name'>{$row->user_name}</span>";
-            })
-            ->editColumn('created_at', function ($row) {
-                return "<span title='$row->created_at'>{$row->created_at}</span>";
-             })
-            ->addColumn('status', function ($row) {
-                $checked = $row->status ? 'checked' : '';
-                return "<input type='checkbox' class='status-switch' data-id='{$row->id}' {$checked} />";
-            })
-            ->addColumn('action', function ($row) {
-                $param = [
-                    'id' => $row->id,
-                    'url' => [
-                        'delete' => route('admin.post.destroy', $row->id),
-                        'edit' => route('admin.post.edit', $row->id),
-                        'view' => route('admin.post.show', $row->id),
-                    ]
-                ];
-                return $this->generate_actions_buttons($param);
-            })
-            ->rawColumns(['user_name','created_at','status','action'])
-            ->make(true);
     }
 
     public function postDetails(Request $request)
@@ -361,6 +492,118 @@ class PostListController extends WebController
              })
              ->rawColumns(['title','file',"description","thumbnail","type"])
             ->make(true);
+    }
+
+    public function uploadFile(Request $request, $id)
+    {
+        $request->validate([
+            'file' => 'required|file|max:2048',
+            'type' => 'required|in:file,thumbnail'
+        ]);
+
+        $post = Post::findOrFail($id);
+
+        $fileUrl = $this->handleFileUpload($request->file('file'), $request->type);
+
+        if ($fileUrl) {
+            if ($request->type === 'file') {
+                $post->file = $fileUrl;
+            } elseif ($request->type === 'thumbnail') {
+                $post->thumbnail = $fileUrl;
+            }
+
+            $post->save();
+
+            return response()->json([
+                'success' => true,
+                'file_url' => Storage::disk('s3')->url($fileUrl), // Correct URL
+                'type' => $request->type
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'File upload failed'
+        ]);
+    }
+
+
+    private function handleFileUpload($file, $type)
+    {
+        $imageExtensions = ['jpeg', 'png', 'jpg', 'gif', 'svg'];
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        // Handle image files
+        if (in_array($extension, $imageExtensions)) {
+            $directory = ($type === 'file') ? 'uploads/posts/images' : 'uploads/posts/thumbnails/images'; // Handle file and thumbnail images
+        }
+        // Handle video files
+        elseif (in_array($extension, $videoExtensions)) {
+            $directory = ($type === 'file') ? 'uploads/posts/videos' : 'uploads/posts/thumbnails/videos'; // Handle file and thumbnail videos
+        } else {
+            return false; // Invalid file extension
+        }
+
+        // Store the file on S3 in the appropriate directory
+        $path = $file->store($directory, 's3');
+
+        if ($path) {
+            // Set the file visibility to public on S3
+            Storage::disk('s3')->setVisibility($path, 'public');
+
+            // Return only the relative path (without full URL)
+            return $path; // E.g., 'uploads/posts/images/thumb-88533FAC-...'
+        }
+
+        return false; // In case file upload fails
+    }
+
+    public function deleteFile(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+        $fileType = $request->query('type');
+
+        if ($fileType === 'file' && $post->file) {
+            Storage::disk('s3')->delete($post->file);
+            $post->file = null;
+        } elseif ($fileType === 'thumbnail' && $post->thumbnail) {
+            Storage::disk('s3')->delete($post->thumbnail);
+            $post->thumbnail = null;
+        } else {
+            return response()->json(['success' => false, 'message' => 'Invalid file type'], 400);
+        }
+
+        $post->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateStatus(Request $request)
+    {
+        $post = Post::find($request->id);
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found!']);
+        }
+
+        $post->status = !$post->status;
+        $post->save();
+
+        return response()->json(['success' => true, 'message' => 'Status updated!', 'status' => $post->status]);
+    }
+
+    public function updateVerified(Request $request)
+    {
+        $post = Post::find($request->id);
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found!']);
+        }
+
+        $post->verified = !$post->verified;
+        $post->save();
+
+        return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $post->verified]);
     }
 
 }

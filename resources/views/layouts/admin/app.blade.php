@@ -8,7 +8,6 @@
     </div>
 @endif
 
-
 <!-- add Modal -->
 <div class="modal fade wd-sl-importmodal" id="general_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered  modal-lg" role="document">
@@ -20,7 +19,7 @@
                 </button>
             </div>
             <div class="modal-body general_modal_content">
-                
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="main-btn general_modal_submit_btn">Submit</button>
@@ -29,7 +28,6 @@
         </div>
     </div>
 </div>
-
 
 @yield('script')
 @include('layouts.admin.footer')
