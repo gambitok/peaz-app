@@ -15,8 +15,8 @@
         }
     </style>
     <div class="container mt-5">
-        <h1 class="mb-4">Billboards</h1>
-        <a href="{{ route('admin.billboards.create') }}" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add Billboard ADS</a>
+        <h1 class="mb-4">Tags</h1>
+        <a href="{{ route('admin.tag.create') }}" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add Tag</a>
 
         @if(session('success'))
             <div class="alert alert-success">
@@ -33,48 +33,28 @@
             </div>
         @endif
 
-        <table id="billboards-table" class="table">
+        <table id="tags-table" class="table">
             <thead>
             <tr>
                 <th>ID</th>
                 <th>Title</th>
-                <th>Membership level</th>
-                <th>Profile name</th>
-                <th>Join Date</th>
-                <th>Status</th>
                 <th>Actions</th>
             </tr>
             </thead>
             <tbody>
-            @foreach($billboards as $billboard)
-                @if(isset($billboard['id']))
+            @foreach($tags as $tag)
+                @if(isset($tag['id']))
                     <tr>
                         <td>
-                            {{ $billboard['id'] }}
+                            {{ $tag['id'] }}
                         </td>
                         <td>
-                            {{ $billboard['title'] }}
+                            {{ $tag['name'] }}
                         </td>
                         <td>
-                            {{ $billboard['user']['membership_level'] }}
-                        </td>
-                        <td>
-                            <span>
-                                {{ $billboard['user']['name'] ?? 'N/A' }}
-                            </span>
-                        </td>
-                        <td>
-                            <span>
-                                {{ \Carbon\Carbon::parse($billboard['created_at'])->format('d.m.Y') }}
-                            </span>
-                        </td>
-                        <td>
-                            {{ $billboard['status'] }}
-                        </td>
-                        <td>
-                            <form action="{{ route('admin.billboards.destroy', $billboard['id']) }}" method="POST" style="display:inline;">
-                                <a href="{{ route('admin.billboards.show', $billboard['id']) }}" class="btn btn-sm btn-info"><i class="fa fa-eye"></i> Show</a>
-                                <a href="{{ route('admin.billboards.edit', $billboard['id']) }}" class="btn btn-sm btn-warning"><i class="fa fa-edit"></i> Edit</a>
+                            <form action="{{ route('admin.tag.destroy', $tag['id']) }}" method="POST" style="display:inline;">
+                                <a href="{{ route('admin.tag.show', $tag['id']) }}" class="btn btn-sm btn-info"><i class="fa fa-eye"></i> Show</a>
+                                <a href="{{ route('admin.tag.edit', $tag['id']) }}" class="btn btn-sm btn-warning"><i class="fa fa-edit"></i> Edit</a>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-stop-circle"></i> Delete</button>
@@ -83,7 +63,7 @@
                     </tr>
                 @else
                     <tr>
-                        <td colspan="4">Invalid billboard data</td>
+                        <td colspan="4">Invalid tag data</td>
                     </tr>
                 @endif
             @endforeach

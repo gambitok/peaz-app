@@ -2,9 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\Admin\PostListController;
 use App\Http\Controllers\Admin\BillboardViewController;
 use App\Http\Controllers\Admin\RestaurantViewController;
-use App\Http\Controllers\Admin\PostListController;
+use App\Http\Controllers\Admin\TagViewController;
+use App\Http\Controllers\Admin\DietaryViewController;
+use App\Http\Controllers\Admin\CuisineViewController;
 
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
@@ -77,5 +80,29 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::get('/restaurants/{id}/edit', [RestaurantViewController::class, 'edit'])->name('restaurants.edit');
         Route::put('/restaurants/{id}', [RestaurantViewController::class, 'update'])->name('restaurants.update');
         Route::delete('/restaurants/{id}', [RestaurantViewController::class, 'destroy'])->name('restaurants.destroy');
+
+        Route::get('/tag', [TagViewController::class, 'index'])->name('tag.index');
+        Route::get('/tag/create', [TagViewController::class, 'create'])->name('tag.create');
+        Route::post('/tag', [TagViewController::class, 'store'])->name('tag.store');
+        Route::get('/tag/{id}', [TagViewController::class, 'show'])->name('tag.show');
+        Route::get('/tag/{id}/edit', [TagViewController::class, 'edit'])->name('tag.edit');
+        Route::put('/tag/{id}', [TagViewController::class, 'update'])->name('tag.update');
+        Route::delete('/tag/{id}', [TagViewController::class, 'destroy'])->name('tag.destroy');
+
+        Route::get('/dietary', [DietaryViewController::class, 'index'])->name('dietary.index');
+        Route::get('/dietary/create', [DietaryViewController::class, 'create'])->name('dietary.create');
+        Route::post('/dietary', [DietaryViewController::class, 'store'])->name('dietary.store');
+        Route::get('/dietary/{id}', [DietaryViewController::class, 'show'])->name('dietary.show');
+        Route::get('/dietary/{id}/edit', [DietaryViewController::class, 'edit'])->name('dietary.edit');
+        Route::put('/dietary/{id}', [DietaryViewController::class, 'update'])->name('dietary.update');
+        Route::delete('/dietary/{id}', [DietaryViewController::class, 'destroy'])->name('dietary.destroy');
+
+        Route::get('/cuisine', [CuisineViewController::class, 'index'])->name('cuisine.index');
+        Route::get('/cuisine/create', [CuisineViewController::class, 'create'])->name('cuisine.create');
+        Route::post('/cuisine', [CuisineViewController::class, 'store'])->name('cuisine.store');
+        Route::get('/cuisine/{id}', [CuisineViewController::class, 'show'])->name('cuisine.show');
+        Route::get('/cuisine/{id}/edit', [CuisineViewController::class, 'edit'])->name('cuisine.edit');
+        Route::put('/cuisine/{id}', [CuisineViewController::class, 'update'])->name('cuisine.update');
+        Route::delete('/cuisine/{id}', [CuisineViewController::class, 'destroy'])->name('cuisine.destroy');
     });
 });

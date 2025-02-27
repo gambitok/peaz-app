@@ -249,6 +249,48 @@ function admin_modules()
                 'admin.post.add',
             ]
         ],
+        [
+            'route' => route('admin.tag.index'),
+            'name' => __('Recipe Tags'),
+            'icon' => 'kt-menu__link-icon fas fa-image',
+            'all_routes' => [
+                'admin.tag.index',
+                'admin.tag.show',
+                'admin.tag.add',
+            ],
+            'child' => [
+                [
+                    'route' => route('admin.tag.index'),
+                    'name' => 'Tags',
+                    'icon' => '',
+                    'all_routes' => [
+                        'admin.tag.index',
+                        'admin.tag.show',
+                        'admin.tag.add',
+                    ],
+                ],
+                [
+                    'route' => route('admin.dietary.index'),
+                    'name' => 'Dietaries',
+                    'icon' => '',
+                    'all_routes' => [
+                        'admin.dietary.index',
+                        'admin.dietary.show',
+                        'admin.dietary.add',
+                    ],
+                ],
+                [
+                    'route' => route('admin.cuisine.index'),
+                    'name' => 'Cuisines',
+                    'icon' => '',
+                    'all_routes' => [
+                        'admin.cuisine.index',
+                        'admin.cuisine.show',
+                        'admin.cuisine.add',
+                    ],
+                ],
+            ],
+        ],
 //        [
 //            'route' => route('admin.interestedlist.index'),
 //            'name' => __('Interests'),
