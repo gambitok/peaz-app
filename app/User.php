@@ -15,12 +15,38 @@ use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
-    use SoftDeletes;
+    use HasApiTokens, Notifiable, SoftDeletes;
 
     protected $guarded = [];
     protected $hidden = ['password', 'remember_token'];
+    protected $fillable = ['id', 'name', 'username', 'profile_image', 'bio', 'website', 'email', 'type', 'membership', 'status', 'membership_level', 'verified', 'created_at'];
     protected $casts = [];
+
+    const STATUS_ACTIVE = 'active';
+    const STATUS_INACTIVE = 'inactive';
+    const STATUS_BANNED = 'banned';
+
+    const MEMBERSHIP_ADMIN = 'admin';
+    const MEMBERSHIP_INDIVIDUAL = 'individual';
+    const MEMBERSHIP_BUSINESS = 'business';
+
+    public static function getStatusOptions()
+    {
+        return [
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_INACTIVE => 'Inactive',
+            self::STATUS_BANNED => 'Banned',
+        ];
+    }
+
+    public static function getMembershipOptions()
+    {
+        return [
+            self::MEMBERSHIP_ADMIN => 'Admin',
+            self::MEMBERSHIP_INDIVIDUAL => 'Individual',
+            self::MEMBERSHIP_BUSINESS => 'Business',
+        ];
+    }
 
     public function comments()
     {

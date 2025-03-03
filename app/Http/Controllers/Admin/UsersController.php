@@ -6,8 +6,10 @@ use Carbon\Carbon;
 use App\Http\Controllers\WebController;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use DataTables;
 
 class UsersController extends WebController
 {
@@ -21,30 +23,36 @@ class UsersController extends WebController
         ]);
     }
 
-    public function listing()
+    public function listing(Request $request)
     {
+        $query = User::select('users.*')
+            ->where('users.type', 'user')
+            ->orderBy('users.id', 'DESC');
+
+        // Apply filters if provided
         $datatable_filter = datatable_filters();
         $offset = $datatable_filter['offset'];
         $search = $datatable_filter['search'];
 
-        $return_data['data'] = [];
-
-        $main = User::where('type', 'user');
-
-        $return_data['recordsTotal'] = $main->count();
-
         if (!empty($search)) {
-            $main->where(function ($query) use ($search) {
+            $query->where(function ($query) use ($search) {
                 $query->AdminSearch($search);
             });
         }
 
-        $return_data['recordsFiltered'] = $main->count();
+        $return_data['recordsTotal'] = $query->count();
 
-        $all_data = $main->orderBy($datatable_filter['sort'], $datatable_filter['order'])
-            ->offset($offset)
+        // Apply more filters if provided
+        if ($request->has('verified') && $request->verified === '0') {
+            $query->where('posts.verified', 0);
+        }
+
+        // Paginate and get the data
+        $all_data = $query->offset($offset)
             ->limit($datatable_filter['limit'])
             ->get();
+
+        $return_data['recordsFiltered'] = $query->count();
 
         if (!empty($all_data)) {
             foreach ($all_data as $key => $value) {
@@ -56,23 +64,71 @@ class UsersController extends WebController
                         'delete' => route('admin.user.destroy', $value->id),
                         'view' => route('admin.user.show', $value->id),
                     ],
-                    'checked' => ($value->status == 'active') ? 'checked' : ''
                 ];
+
+                $statusOptions = User::getStatusOptions();
+                $statusDropdown = "<select class='form-control status-dropdown' data-id='{$value->id}'>";
+                foreach ($statusOptions as $statusValue => $statusLabel) {
+                    $selected = $value->status == $statusValue ? 'selected' : '';
+                    $statusDropdown .= "<option value='{$statusValue}' {$selected}>{$statusLabel}</option>";
+                }
+                $statusDropdown .= "</select>";
+
+                $membershipOptions = User::getMembershipOptions();
+                $membershipDropdown = "<select class='form-control membership-dropdown' data-id='{$value->id}'>";
+                foreach ($membershipOptions as $membershipValue => $membershipLabel) {
+                    $selected = $value->membership_level == $membershipValue ? 'selected' : '';
+                    $membershipDropdown .= "<option value='{$membershipValue}' {$selected}>{$membershipLabel}</option>";
+                }
+                $membershipDropdown .= "</select>";
 
                 $return_data['data'][] = array(
                     'id' => $offset + $key + 1,
-                    'membership_level' => $value->membership_level ?: " - ",
+                    'membership_level' => $membershipDropdown,
                     'username' => $value->username ?: " - ",
                     'verified' => $value->verified ? 'true' : "false",
                     'created_at' => $value->created_at ? Carbon::parse($value->created_at)->format('d-m-Y') : ' - ',
-//                    'status' => $this->generate_switch($param),
-                    'status' => $value->status ?: " - ",
+                    'status' => $statusDropdown,
                     'action' => $this->generate_actions_buttons($param),
                 );
             }
         }
 
-        return $return_data;
+        return Datatables::of($return_data['data'])
+            ->addIndexColumn()
+            ->editColumn('username', function ($row) {
+                return "<span title='$row[username]'>{$row['username']}</span>";
+            })
+            ->editColumn('created_at', function ($row) {
+                return "<span title='$row[created_at]'>{$row['created_at']}</span>";
+            })
+            ->editColumn('status', function ($row) {
+                return $row['status'];
+            })
+            ->editColumn('membership_level', function ($row) {
+                return $row['membership_level'];
+            })
+            ->addColumn('verified', function ($row) {
+                $checked = $row['verified'] ? 'checked' : '';
+                return "<label class='switch'>
+                <input type='checkbox' class='toggle-verified' data-id='{$row['id']}' {$checked}>
+                <span class='slider slider-secondary round'></span>
+            </label>";
+            })
+            ->addColumn('action', function ($row) {
+                $param = [
+                    'id' => $row['id'],
+                    'url' => [
+                        'delete' => route('admin.user.destroy', $row['id']),
+                        'edit' => route('admin.user.edit', $row['id']),
+                        'view' => route('admin.user.show', $row['id']),
+                        'status' => route('admin.user.status_update', $row['id']),
+                    ]
+                ];
+                return $this->generate_actions_buttons($param);
+            })
+            ->rawColumns(['username', 'created_at', 'status', 'membership_level', 'verified', 'action'])
+            ->make(true);
     }
 
     public function destroy($id)
@@ -121,9 +177,13 @@ class UsersController extends WebController
         $data = User::find($id);
         if ($data) {
             $title = "Update user";
+            $statusOptions = User::getStatusOptions();
+            $membershipOptions = User::getMembershipOptions();
             return view('admin.user.edit', [
                 'title' => $title,
                 'data' => $data,
+                'statusOptions' => $statusOptions,
+                'membershipOptions' => $membershipOptions,
                 'breadcrumb' => breadcrumb([
                     'User' => route('admin.user.index'),
                     'edit' => route('admin.user.edit', $data->id)
@@ -140,33 +200,33 @@ class UsersController extends WebController
         $data = User::find($id);
 
         if ($data) {
-             $request->validate([
+            $request->validate([
                 'email' => ['required', 'email', Rule::unique('users')->ignore($id)->whereNull('deleted_at')],
                 'profile_image' => ['file', 'image'],
+                'membership_level' => ['required', Rule::in(array_keys(User::getMembershipOptions()))],
+                'status' => ['required', Rule::in(array_keys(User::getStatusOptions()))],
             ]);
 
             $profile_image = $data->getRawOriginal('profile_image');
-
             if ($request->hasFile('profile_image')) {
-
                 $path = $request->file('profile_image')->store('uploads/users', 's3');
-
                 if ($path) {
-
                     Storage::disk('s3')->setVisibility($path, 'public');
-
                     $profile_image = $path;
                 }
             }
 
-           $userdata = [
+            $userdata = [
                 'email' => $request->email,
                 'profile_image' => $profile_image,
-                'name' =>  $request->name,
-                'username' =>  $request->username,
-                'bio' =>  $request->bio,
-                'website' =>  $request->website,
-           ];
+                'name' => $request->name,
+                'username' => $request->username,
+                'bio' => $request->bio,
+                'website' => $request->website,
+                'verified' => $request->has('verified') ? 1 : 0,
+                'membership_level' => $request->membership_level,
+                'status' => $request->status,
+            ];
 
             $data->update($userdata);
             success_session('user updated successfully');
@@ -175,6 +235,48 @@ class UsersController extends WebController
         }
 
         return redirect()->route('admin.user.index');
+    }
+
+    public function updateUserVerified(Request $request)
+    {
+        Log::info('Request Data:', $request->all());
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found!']);
+        }
+
+        $user->verified = !$user->verified;
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $user->verified]);
+    }
+
+    public function updateUserStatus(Request $request)
+    {
+        Log::info('Request Data:', $request->all());
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found!']);
+        }
+
+        $userdata = ['status' => $request->status];
+        $user->update($userdata);
+
+        return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $user->verified]);
+    }
+
+    public function updateUserMembershipLevel(Request $request)
+    {
+        Log::info('Request Data:', $request->all());
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found!']);
+        }
+
+        $userdata = ['membership_level' => $request->membership_level];
+        $user->update($userdata);
+
+        return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $user->verified]);
     }
 
 }

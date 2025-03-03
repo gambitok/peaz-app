@@ -73,11 +73,11 @@
                         </td>
                         <td>
                             <form action="{{ route('admin.billboards.destroy', $billboard['id']) }}" method="POST" style="display:inline;">
-                                <a href="{{ route('admin.billboards.show', $billboard['id']) }}" class="btn btn-sm btn-info"><i class="fa fa-eye"></i> Show</a>
-                                <a href="{{ route('admin.billboards.edit', $billboard['id']) }}" class="btn btn-sm btn-warning"><i class="fa fa-edit"></i> Edit</a>
+                                <a href="{{ route('admin.billboards.show', $billboard['id']) }}" class="btn btn-sm btn-clean btn-icon btn-icon-md btnView"><i class="fa fa-eye"></i></a>
+                                <a href="{{ route('admin.billboards.edit', $billboard['id']) }}" class="btn btn-sm btn-clean btn-icon btn-icon-md btnEdit"><i class="fa fa-edit"></i></a>
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-stop-circle"></i> Delete</button>
+                                <button type="submit" class="btn btn-sm btn-clean btn-icon btn-icon-md"><i class="fa fa-trash"></i></button>
                             </form>
                         </td>
                     </tr>

@@ -68,12 +68,44 @@
                     </div>
                 </div>
 
+                <div class="mb-3 row">
+                    <label for="verified" class="col-md-2  col-form-label">Verified</label>
+                    <div class="col-md-10">
+                        <label class="switch">
+                            <input type="checkbox" class="toggle" id="verified" name="verified"  @if($data['verified']) checked @endif>
+                            <span class="slider slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label for="membership_level" class="col-md-2 col-form-label">Membership level</label>
+                    <div class="col-md-10">
+                        <select name="membership_level" id="membership_level" class="form-control">
+                            @foreach($membershipOptions as $value => $label)
+                                <option value="{{ $value }}" {{ $data->membership_level === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label for="status" class="col-md-2 col-form-label">Status</label>
+                    <div class="col-md-10">
+                        <select name="status" id="status" class="form-control">
+                            @foreach($statusOptions as $value => $label)
+                                <option value="{{ $value }}" {{ $data->status === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 <div class="kt-portlet__foot">
                     <div class=" ">
                         <div class="row">
-                            <div class="wd-sl-modalbtn">
-                                <button  type="submit" class="btn btn-success waves-effect waves-light" id="save_changes">Submit</button>
-                                <a href="{{route('admin.user.index')}}" id="close"><button type="button" class="btn btn-outline-secondary waves-effect">Cancel</button></a>
+                            <div class="col-12 text-right">
+                                <button type="submit" class="btn btn-primary">Update</button>
+                                <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
                             </div>
                         </div>
                     </div>

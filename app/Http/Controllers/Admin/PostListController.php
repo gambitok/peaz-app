@@ -90,7 +90,7 @@ class PostListController extends WebController
             ->addColumn('verified', function ($row) {
                 $checked = $row->verified ? 'checked' : '';
                 return "<label class='switch'>
-                <input type='checkbox' class='toggle-verified' data-id='{$row->id}' {$checked}>
+                <input type='checkbox' class='toggle-verified' data-id='{$row['id']}' {$checked}>
                 <span class='slider slider-secondary round'></span>
             </label>";
             })

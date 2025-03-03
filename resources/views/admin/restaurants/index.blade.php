@@ -61,11 +61,11 @@
                         </td>
                         <td>
                             <form action="{{ route('admin.restaurants.destroy', $restaurant['id']) }}" method="POST" style="display:inline;">
-                                <a href="{{ route('admin.restaurants.show', $restaurant['id']) }}" class="btn btn-info">Show</a>
-                                <a href="{{ route('admin.restaurants.edit', $restaurant['id']) }}" class="btn btn-warning">Edit</a>
+                                <a href="{{ route('admin.restaurants.show', $restaurant['id']) }}" class="btn btn-sm btn-clean btn-icon btn-icon-md btnView"><i class="fa fa-eye"></i></a>
+                                <a href="{{ route('admin.restaurants.edit', $restaurant['id']) }}" class="btn btn-sm btn-clean btn-icon btn-icon-md btnEdit"><i class="fa fa-edit"></i></a>
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-clean btn-icon btn-icon-md"><i class="fa fa-trash"></i></button>
                             </form>
                         </td>
                     </tr>

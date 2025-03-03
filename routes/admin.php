@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\RestaurantViewController;
 use App\Http\Controllers\Admin\TagViewController;
 use App\Http\Controllers\Admin\DietaryViewController;
 use App\Http\Controllers\Admin\CuisineViewController;
+use App\Http\Controllers\Admin\UsersController;
 
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
@@ -64,6 +65,15 @@ Route::group(['middleware' => 'Is_Admin'], function () {
             [PostListController::class, 'updateStatus'])->name('post.status');
         Route::post('/post/verified',
             [PostListController::class, 'updateVerified'])->name('post.verified');
+
+        Route::post('/user/verified',
+            [UsersController::class, 'updateUserVerified'])->name('user.verified');
+
+        Route::post('/user/membership',
+            [UsersController::class, 'updateUserMembershipLevel'])->name('user.membership');
+
+        Route::post('/user/status',
+            [UsersController::class, 'updateUserStatus'])->name('user.status');
 
         Route::get('/billboards', [BillboardViewController::class, 'index'])->name('billboards.index');
         Route::get('/billboards/create', [BillboardViewController::class, 'create'])->name('billboards.create');

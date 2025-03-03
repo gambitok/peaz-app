@@ -152,9 +152,7 @@
                 oTable.draw();
             });
         });
-    </script>
 
-    <script>
         $(document).on('change', '.toggle-status', function () {
             let postId = $(this).data('id');
 

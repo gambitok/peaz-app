@@ -20,7 +20,7 @@
                 <table id="listResults" class="table dt-responsive mb-4  nowrap w-100 mb-">
                     <thead>
                         <tr>
-                            <th>No</th>
+                            <th>ID</th>
                             <th>Membership level</th>
                             <th>Profile name</th>
                             <th>Verified</th>
@@ -92,5 +92,51 @@
             ]
         });
     });
+</script>
+
+<script>
+    $(document).on('change', '.toggle-verified', function () {
+        let postId = $(this).data('id');
+
+        $.ajax({
+            url: "{{ route('admin.user.verified') }}",
+            type: "POST",
+            data: {
+                id: postId,
+                _token: "{{ csrf_token() }}"
+            }
+        });
+    });
+
+    $(document).on('change', '.toggle-status', function () {
+        let postId = $(this).data('id');
+        let status = $(this).val();
+
+        $.ajax({
+            url: "{{ route('admin.user.status') }}",
+            type: "POST",
+            data: {
+                id: postId,
+                status: status,
+                _token: "{{ csrf_token() }}"
+            }
+        });
+    });
+
+    $(document).on('change', '.toggle-membership', function () {
+        let postId = $(this).data('id');
+        let membership_level = $(this).val();
+
+        $.ajax({
+            url: "{{ route('admin.user.membership') }}",
+            type: "POST",
+            data: {
+                id: postId,
+                membership_level: membership_level,
+                _token: "{{ csrf_token() }}"
+            }
+        });
+    });
+
 </script>
 @endsection
