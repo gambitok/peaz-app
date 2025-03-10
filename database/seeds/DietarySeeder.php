@@ -30,6 +30,6 @@ class DietarySeeder extends Seeder
             ['id' => 15, 'name' => '🍔 Sesame-free']
         ];
 
-        DB::table('dietary')->insert($dietaryData);
+        DB::table('dietaries')->insert($dietaryData);
     }
 }

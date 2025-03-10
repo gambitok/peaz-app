@@ -1,5 +1,6 @@
 <?php
 
+use Database\Seeders\PostsTableSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,5 +18,10 @@ class DatabaseSeeder extends Seeder
         $this->call(InterestedListSeeder::class);
         $this->call(ReportSeeder::class);
         $this->call(CategorySeeder::class);
+        $this->call(TagSeeder::class);
+        $this->call(DietarySeeder::class);
+        $this->call(CuisineSeeder::class);
+        $this->call(ReportSeeder::class);
+        $this->call(PostsTableSeeder::class);
     }
 }

@@ -83,10 +83,11 @@ class UsersController extends WebController
                 $membershipDropdown .= "</select>";
 
                 $return_data['data'][] = array(
+                    'user_id' => $value->id,
                     'id' => $offset + $key + 1,
                     'membership_level' => $membershipDropdown,
                     'username' => $value->username ?: " - ",
-                    'verified' => $value->verified ? 'true' : "false",
+                    'verified' => $value->verified ? 1 : 0,
                     'created_at' => $value->created_at ? Carbon::parse($value->created_at)->format('d-m-Y') : ' - ',
                     'status' => $statusDropdown,
                     'action' => $this->generate_actions_buttons($param),
@@ -108,10 +109,17 @@ class UsersController extends WebController
             ->editColumn('membership_level', function ($row) {
                 return $row['membership_level'];
             })
+//            ->addColumn('verified', function ($row) {
+//                $checked = $row['verified'] ? 'checked' : '';
+//                return "<label class='switch'>
+//                <input type='checkbox' class='toggle-user-verified' data-id='{$row['id']}' {$checked}>
+//                <span class='slider slider-secondary round'></span>
+//            </label>";
+//            })
             ->addColumn('verified', function ($row) {
                 $checked = $row['verified'] ? 'checked' : '';
                 return "<label class='switch'>
-                <input type='checkbox' class='toggle-verified' data-id='{$row['id']}' {$checked}>
+                <input type='checkbox' class='toggle-user-verified' data-id='{$row['user_id']}' {$checked}>
                 <span class='slider slider-secondary round'></span>
             </label>";
             })
@@ -239,13 +247,13 @@ class UsersController extends WebController
 
     public function updateUserVerified(Request $request)
     {
-        Log::info('Request Data:', $request->all());
         $user = User::find($request->id);
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'User not found!']);
         }
 
         $user->verified = !$user->verified;
+
         $user->save();
 
         return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $user->verified]);
@@ -253,7 +261,6 @@ class UsersController extends WebController
 
     public function updateUserStatus(Request $request)
     {
-        Log::info('Request Data:', $request->all());
         $user = User::find($request->id);
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'User not found!']);
@@ -262,12 +269,11 @@ class UsersController extends WebController
         $userdata = ['status' => $request->status];
         $user->update($userdata);
 
-        return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $user->verified]);
+        return response()->json(['success' => true, 'message' => 'Status updated!', 'status' => $user->status]);
     }
 
     public function updateUserMembershipLevel(Request $request)
     {
-        Log::info('Request Data:', $request->all());
         $user = User::find($request->id);
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'User not found!']);
@@ -276,7 +282,7 @@ class UsersController extends WebController
         $userdata = ['membership_level' => $request->membership_level];
         $user->update($userdata);
 
-        return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $user->verified]);
+        return response()->json(['success' => true, 'message' => 'Membership level updated!', 'membership_level' => $user->membership_level]);
     }
 
 }

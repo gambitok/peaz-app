@@ -105,7 +105,7 @@
                         <div class="row">
                             <div class="col-12 text-right">
                                 <button type="submit" class="btn btn-primary">Update</button>
-                                <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
+                                <a href="{{ route('admin.user.index') }}" class="btn btn-secondary">Back</a>
                             </div>
                         </div>
                     </div>

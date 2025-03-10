@@ -527,7 +527,6 @@ class PostListController extends WebController
         ]);
     }
 
-
     private function handleFileUpload($file, $type)
     {
         $imageExtensions = ['jpeg', 'png', 'jpg', 'gif', 'svg'];

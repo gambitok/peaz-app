@@ -95,7 +95,7 @@
 </script>
 
 <script>
-    $(document).on('change', '.toggle-verified', function () {
+    $(document).on('change', '.toggle-user-verified', function () {
         let postId = $(this).data('id');
 
         $.ajax({
@@ -108,9 +108,10 @@
         });
     });
 
-    $(document).on('change', '.toggle-status', function () {
+    $(document).on('change', '.status-dropdown', function () {
         let postId = $(this).data('id');
         let status = $(this).val();
+        console.log(status);
 
         $.ajax({
             url: "{{ route('admin.user.status') }}",
@@ -123,9 +124,10 @@
         });
     });
 
-    $(document).on('change', '.toggle-membership', function () {
+    $(document).on('change', '.membership-dropdown', function () {
         let postId = $(this).data('id');
         let membership_level = $(this).val();
+        console.log(membership_level);
 
         $.ajax({
             url: "{{ route('admin.user.membership') }}",

@@ -27,27 +27,27 @@
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4">
                             <label for="title" class="col-form-label">Title</label>
-                            <input type="text" name="title" id="title" class="form-control w-50" value="" required>
+                            <input type="text" name="title" id="title" class="form-control w-50" placeholder="Title" required>
                         </div>
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4">
                             <label for="caption" class="col-form-label">Caption</label>
-                            <textarea class="form-control w-50" id="caption" name="caption" rows="3"></textarea>
+                            <textarea class="form-control w-50" id="caption" name="caption" rows="3" placeholder="Caption"></textarea>
                         </div>
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4 align-items-center">
                             <label class="col-form-label">Total Time</label>
                             <div class="d-flex gap-2 w-50">
-                                <input type="number" name="hours" id="hours" class="form-control w-25" value="">
+                                <input type="number" name="hours" id="hours" class="form-control w-25" placeholder="hours">
                                 <label for="hours">Hours</label>
-                                <input type="number" name="minutes" id="minutes" class="form-control w-25" value="">
+                                <input type="number" name="minutes" id="minutes" class="form-control w-25" placeholder="minutes">
                                 <label for="minutes">Minutes</label>
                             </div>
                         </div>
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4">
                             <label for="serving_size" class="col-form-label">Serving size</label>
-                            <input type="number" name="serving_size" id="serving_size" class="form-control w-50" value="">
+                            <input type="number" name="serving_size" id="serving_size" class="form-control w-50" placeholder="Serving size">
                         </div>
 
                         <hr>
@@ -56,7 +56,9 @@
                             <label for="tags" class="col-form-label">Tags</label>
                             <div class="w-50">
                                 <select name="tags[]" id="tags" class="select2" multiple>
-
+                                    @foreach($tags as $tag)
+                                        <option value="{{ $tag->id }}">{{ $tag->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -65,7 +67,9 @@
                             <label for="dietaries" class="col-form-label">Dietaries</label>
                             <div class="w-50">
                                 <select name="dietaries[]" id="dietaries" class="select2" multiple>
-
+                                    @foreach($dietaries as $dietary)
+                                        <option value="{{ $dietary->id }}">{{ $dietary->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -74,7 +78,9 @@
                             <label for="cuisines" class="col-form-label">Cuisines</label>
                             <div class="w-50">
                                 <select name="cuisines[]" id="cuisines" class="form-control select2 w-50" multiple>
-
+                                    @foreach($cuisines as $cuisine)
+                                        <option value="{{ $cuisine->id }}">{{ $cuisine->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>

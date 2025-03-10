@@ -54,7 +54,7 @@
                         </div>
                     </div>
                     <div>
-                        <a href="{{ route('admin.post.create') }}" class="btn btn-info">Create Post</a>
+                        <a href="{{ route('admin.post.create') }}" class="btn btn-info"><i class="fa fa-plus"></i> Create Post</a>
                     </div>
                 </div>
 

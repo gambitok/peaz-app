@@ -38,9 +38,7 @@
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4">
                             <label for="caption" class="col-form-label">Caption</label>
-                            <textarea class="form-control w-50" id="caption" name="caption" rows="3">
-                                {{ $data->caption }}
-                            </textarea>
+                            <textarea class="form-control w-50" id="caption" name="caption" rows="3">{{ $data->caption }}</textarea>
                         </div>
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4 align-items-center">
@@ -119,7 +117,7 @@
                                         <a href="{{ $data->file }}" target="_blank" id="file-link">
                                             <img src="{{ $data->file }}" alt="File" id="file-preview" style="max-width: 100px; max-height: 100px;">
                                         </a>
-                                        br<button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="{{ $data->id }}" data-type="file">Delete</button>
+                                        <button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="{{ $data->id }}" data-type="file">Delete</button>
                                     </div>
                                 @else
                                     <p>No file uploaded</p>
