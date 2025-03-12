@@ -37,7 +37,6 @@
             <thead>
             <tr>
                 <th>ID</th>
-                <th>Title</th>
                 <th>Membership level</th>
                 <th>Profile name</th>
                 <th>Join Date</th>
@@ -51,9 +50,6 @@
                     <tr>
                         <td>
                             {{ $billboard['id'] }}
-                        </td>
-                        <td>
-                            {{ $billboard['title'] }}
                         </td>
                         <td>
                             {{ $billboard['user']['membership_level'] }}

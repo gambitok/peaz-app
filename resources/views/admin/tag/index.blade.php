@@ -38,6 +38,7 @@
             <tr>
                 <th>ID</th>
                 <th>Title</th>
+                <th>Used in recipes</th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -50,6 +51,9 @@
                         </td>
                         <td>
                             {{ $tag['name'] }}
+                        </td>
+                        <td>
+                            {{ $tag['posts_count'] }}
                         </td>
                         <td>
                             <form action="{{ route('admin.tag.destroy', $tag['id']) }}" method="POST" style="display:inline;">

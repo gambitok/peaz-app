@@ -4,34 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Billboard;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BillboardRequest;
 use App\Http\Resources\BillboardResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class BillboardController extends Controller
 {
     public function index()
     {
-        $billboards = Billboard::with('user', 'tag')->get();
-
-        return BillboardResource::collection($billboards);
+        return BillboardResource::collection(Billboard::with('user', 'tag')->paginate(10));
     }
 
-    public function store(Request $request)
+    public function store(BillboardRequest $request)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'caption' => 'nullable|string|max:255',
-            'file' => 'nullable|string|max:255',
-            'link' => 'nullable|string|max:255',
-            'tag_id' => 'nullable|exists:tags,id',
-            'verified' => 'boolean',
-            'status' => 'boolean',
-        ]);
+        $data = $request->validated();
+        $data['file'] = $this->uploadFile($request);
+        $data['user_id'] = $request->user()->id;
 
-        $validatedData['user_id'] = $request->user()->id;
+        $billboard = Billboard::create($data);
 
-        $billboard = Billboard::create($validatedData);
         return response(new BillboardResource($billboard), 201);
     }
 
@@ -40,25 +32,38 @@ class BillboardController extends Controller
         return new BillboardResource($billboard);
     }
 
-    public function update(Request $request, Billboard $billboard)
+    public function update(BillboardRequest $request, Billboard $billboard)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'caption' => 'nullable|string|max:255',
-            'file' => 'nullable|string|max:255',
-            'link' => 'nullable|string|max:255',
-            'tag_id' => 'nullable|exists:tags,id',
-            'verified' => 'boolean',
-            'status' => 'boolean',
-        ]);
+        $data = $request->validated();
 
-        $billboard->update($validatedData);
+        if ($request->hasFile('file')) {
+            if ($billboard->file) Storage::disk('s3')->delete($billboard->file);
+            $data['file'] = $this->uploadFile($request);
+        }
+
+        $billboard->update($data);
         return new BillboardResource($billboard);
     }
 
     public function destroy(Billboard $billboard)
     {
+        if ($billboard->file) {
+            Storage::disk('s3')->delete($billboard->file);
+        }
         $billboard->delete();
+
         return response()->noContent();
+    }
+
+    private function uploadFile(Request $request): ?string
+    {
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $extension = $file->getClientOriginalExtension();
+            $path = $file->storeAs('uploads/billboards', time() . '.' . $extension, 's3');
+            Storage::disk('s3')->setVisibility($path, 'public');
+            return $path;
+        }
+        return null;
     }
 }

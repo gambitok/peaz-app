@@ -63,6 +63,7 @@ Route::group(['middleware' => 'Is_Admin'], function () {
 
         Route::post('/post/status',
             [PostListController::class, 'updateStatus'])->name('post.status');
+
         Route::post('/post/verified',
             [PostListController::class, 'updateVerified'])->name('post.verified');
 
@@ -74,6 +75,9 @@ Route::group(['middleware' => 'Is_Admin'], function () {
 
         Route::post('/user/status',
             [UsersController::class, 'updateUserStatus'])->name('user.status');
+
+        Route::post('/user/duplicate',
+            [UsersController::class, 'duplicate'])->name('user.duplicate');
 
         Route::get('/billboards', [BillboardViewController::class, 'index'])->name('billboards.index');
         Route::get('/billboards/create', [BillboardViewController::class, 'create'])->name('billboards.create');

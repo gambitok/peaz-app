@@ -105,6 +105,7 @@
                         <div class="row">
                             <div class="col-12 text-right">
                                 <button type="submit" class="btn btn-primary">Update</button>
+                                <button type="button" class="btn btn-secondary" onclick="duplicateForm()">Duplicate</button>
                                 <a href="{{ route('admin.user.index') }}" class="btn btn-secondary">Back</a>
                             </div>
                         </div>
@@ -237,5 +238,25 @@
                 }
             });
         });
+    </script>
+    <script>
+        function duplicateForm() {
+            $.ajax({
+                type: 'POST',
+                url: '{{ route("admin.user.duplicate") }}',
+                data: {
+                    id: '{{ $data->id }}',
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if(response.redirect_url) {
+                        window.location.href = response.redirect_url + '?success=' + encodeURIComponent(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error:', error);
+                }
+            });
+        }
     </script>
 @endsection

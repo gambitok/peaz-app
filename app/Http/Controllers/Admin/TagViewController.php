@@ -20,7 +20,10 @@ class TagViewController extends WebController
     public function index()
     {
         $tags = $this->apiTagController->index()->toArray(request());
-
+        $tags = array_map(function ($tag) {
+            $tag['posts_count'] = Tag::find($tag['id'])->posts()->count();
+            return $tag;
+        }, $tags);
         return view('admin.tag.index', compact('tags'));
     }
 

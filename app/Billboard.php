@@ -8,12 +8,8 @@ class Billboard extends Model
 {
 
     protected $fillable = [
-        'title',
-        'caption',
         'file',
         'link',
-        'tag_id',
-        'verified',
         'user_id',
         'status',
     ];

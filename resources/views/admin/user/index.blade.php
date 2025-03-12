@@ -13,6 +13,11 @@
 <div class="row">
     <div class="col-12">
         {!! success_error_view_generator() !!}
+        @if(session('success') || request()->query('success'))
+            <div class="alert alert-success">
+                {{ session('success') ?? request()->query('success') }}
+            </div>
+        @endif
     </div>
     <div class="card">
         <div class="card-body">

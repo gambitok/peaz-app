@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use App\Http\Controllers\WebController;
 use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use DataTables;
@@ -52,7 +51,7 @@ class UsersController extends WebController
             ->limit($datatable_filter['limit'])
             ->get();
 
-        $return_data['recordsFiltered'] = $query->count();
+        $query->count();
 
         if (!empty($all_data)) {
             foreach ($all_data as $key => $value) {
@@ -84,7 +83,7 @@ class UsersController extends WebController
 
                 $return_data['data'][] = array(
                     'user_id' => $value->id,
-                    'id' => $offset + $key + 1,
+                    'id' => $value->id,
                     'membership_level' => $membershipDropdown,
                     'username' => $value->username ?: " - ",
                     'verified' => $value->verified ? 1 : 0,
@@ -109,13 +108,6 @@ class UsersController extends WebController
             ->editColumn('membership_level', function ($row) {
                 return $row['membership_level'];
             })
-//            ->addColumn('verified', function ($row) {
-//                $checked = $row['verified'] ? 'checked' : '';
-//                return "<label class='switch'>
-//                <input type='checkbox' class='toggle-user-verified' data-id='{$row['id']}' {$checked}>
-//                <span class='slider slider-secondary round'></span>
-//            </label>";
-//            })
             ->addColumn('verified', function ($row) {
                 $checked = $row['verified'] ? 'checked' : '';
                 return "<label class='switch'>
@@ -127,10 +119,10 @@ class UsersController extends WebController
                 $param = [
                     'id' => $row['id'],
                     'url' => [
-                        'delete' => route('admin.user.destroy', $row['id']),
-                        'edit' => route('admin.user.edit', $row['id']),
-                        'view' => route('admin.user.show', $row['id']),
-                        'status' => route('admin.user.status_update', $row['id']),
+                        'delete' => route('admin.user.destroy', $row['user_id']),
+                        'edit' => route('admin.user.edit', $row['user_id']),
+                        'view' => route('admin.user.show', $row['user_id']),
+                        'status' => route('admin.user.status_update', $row['user_id']),
                     ]
                 ];
                 return $this->generate_actions_buttons($param);
@@ -283,6 +275,18 @@ class UsersController extends WebController
         $user->update($userdata);
 
         return response()->json(['success' => true, 'message' => 'Membership level updated!', 'membership_level' => $user->membership_level]);
+    }
+
+    public function duplicate(Request $request)
+    {
+        $originalUser = User::find($request->id);
+        $newUser = $originalUser->replicate();
+        $newUser->save();
+
+        return response()->json([
+            'message' => 'New user created successfully with ID ' . $newUser->id,
+            'redirect_url' => route('admin.user.index')
+        ]);
     }
 
 }

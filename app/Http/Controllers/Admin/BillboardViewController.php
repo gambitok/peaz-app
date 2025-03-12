@@ -2,33 +2,31 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\WebController;
-use App\Http\Controllers\Api\BillboardController as ApiBillboardController;
+use App\Http\Controllers\Controller;
 use App\Billboard;
 use App\Tag;
-use App\Http\Resources\BillboardResource;
-use Illuminate\Http\Request;
+use App\Http\Requests\BillboardRequest;
+use App\Services\BillboardService;
+use Illuminate\Support\Facades\Storage;
 
-class BillboardViewController extends WebController
+class BillboardViewController extends Controller
 {
-    protected $apiBillboardController;
+    protected $billboardService;
 
-    public function __construct(ApiBillboardController $apiBillboardController)
+    public function __construct(BillboardService $billboardService)
     {
-        $this->apiBillboardController = $apiBillboardController;
+        $this->billboardService = $billboardService;
     }
 
     public function index()
     {
-        $billboards = $this->apiBillboardController->index()->toArray(request());
-
+        $billboards = Billboard::with('user', 'tag')->get();
         return view('admin.billboards.index', compact('billboards'));
     }
 
     public function show($id)
     {
-        $billboard = $this->apiBillboardController->show(Billboard::findOrFail($id))->toArray(request());
-
+        $billboard = Billboard::with('user', 'tag')->findOrFail($id);
         return view('admin.billboards.show', compact('billboard'));
     }
 
@@ -38,45 +36,79 @@ class BillboardViewController extends WebController
         return view('admin.billboards.create', compact('tags'));
     }
 
-    public function store(Request $request)
+    public function store(BillboardRequest $request)
     {
-        $request->merge([
-            'verified' => $request->has('verified'),
-            'status' => $request->has('status'),
-        ]);
+        $validatedData = $request->validated(); // This ensures only validated data is used
 
-        $response = $this->apiBillboardController->store($request);
-
-        if ($response->getStatusCode() === 201) {
-            return redirect()->route('admin.billboards.index')->with('success', 'Billboard created successfully.');
-        } else {
-            $error = $response->json();
-            return redirect()->back()->withInput()->withErrors(['error' => 'Failed to create billboard.', 'api_error' => $error]);
+        // Handle file upload if present
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $extension = $file->getClientOriginalExtension();
+            $path = $file->storeAs('uploads/billboards', time() . '.' . $extension, 's3');
+            Storage::disk('s3')->setVisibility($path, 'public');
+            $validatedData['file'] = $path;
         }
+
+        $validatedData['user_id'] = $request->user()->id; // Assign the authenticated user
+
+        Billboard::create($validatedData);
+
+        // Redirect back to the list of billboards with a success message
+        return redirect()->route('admin.billboards.index')
+            ->with('success', 'Billboard created successfully.');
     }
 
     public function edit($id)
     {
-        $billboard = $this->apiBillboardController->show(Billboard::findOrFail($id))->toArray(request());
+        $billboard = Billboard::findOrFail($id);
         $tags = Tag::all();
 
         return view('admin.billboards.edit', compact('billboard', 'tags'));
     }
 
-    public function update(Request $request, $id)
+    public function update(BillboardRequest $request, $id)
     {
+        // Fetch the existing billboard from the database
         $billboard = Billboard::findOrFail($id);
 
-        $request->merge([
-            'verified' => $request->has('verified'),
-            'status' => $request->has('status'),
-        ]);
+        // Get the validated data from the request
+        $validatedData = $request->validated();
 
-        $response = $this->apiBillboardController->update($request, $billboard);
+        // Handle the file
+        $file = $billboard->getRawOriginal('file'); // Get the current file
 
-        if ($response instanceof BillboardResource) {
-            return redirect()->route('admin.billboards.index')->with('success', 'Billboard updated successfully.');
-        } else {
+        if ($request->hasFile('file')) {
+            $extension = $request->file('file')->getClientOriginalExtension();
+            $path = $request->file('file')->storeAs('uploads/billboards', time() . '.' . $extension, 's3');
+            if ($path) {
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $file = $path;
+            }
+        }
+
+        // Update the status
+        $status = filter_var($validatedData['status'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($status === null) {
+            $status = false; // Default to false if invalid
+        }
+
+        // Prepare the update data
+        $updateData = $request->only(['link']);
+        $updateData['status'] = $status;
+        $updateData['file'] = $file; // Only update the file if it changed
+
+        // Attempt to update the billboard
+        try {
+            // Perform the update
+            $updated = $billboard->update($updateData);
+
+            // Check if the update was successful
+            if ($updated) {
+                return redirect()->route('admin.billboards.index')->with('success', 'Billboard updated successfully.');
+            } else {
+                return redirect()->back()->withInput()->withErrors(['error' => 'Failed to update billboard.']);
+            }
+        } catch (\Exception $e) {
             return redirect()->back()->withInput()->withErrors(['error' => 'Failed to update billboard.']);
         }
     }
@@ -84,12 +116,8 @@ class BillboardViewController extends WebController
     public function destroy($id)
     {
         $billboard = Billboard::findOrFail($id);
-        $response = $this->apiBillboardController->destroy($billboard);
+        $this->billboardService->delete($billboard);
 
-        if ($response->getStatusCode() === 204) {
-            return redirect()->route('admin.billboards.index')->with('success', 'Billboard deleted successfully.');
-        } else {
-            return redirect()->back()->withErrors(['error' => 'Failed to delete billboard.']);
-        }
+        return redirect()->route('admin.billboards.index')->with('success', 'Billboard deleted successfully.');
     }
 }
