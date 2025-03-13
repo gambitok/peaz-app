@@ -20,14 +20,14 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex flex-column w-75">
                         <span class="font-weight-bold mb-2 font-size-18 font-weight-bold">Filters:</span>
-                        <div class="d-flex align-items-center mb-2">
-                            <label for="verifiedFilter" class="mr-2">Show Pending:</label>
-                            <label class="switch">
-                                <input type="checkbox" class="toggle" id="verifiedFilter">
-                                <span class="slider slider-secondary round"></span>
-                            </label>
-                        </div>
                         <div class="d-flex">
+                            <div class="d-flex align-items-center" style="width: 200px; margin-right: 15px">
+                                <label for="verifiedFilter" class="mr-2">Show Pending:</label>
+                                <label class="switch">
+                                    <input type="checkbox" class="toggle" id="verifiedFilter">
+                                    <span class="slider slider-secondary round"></span>
+                                </label>
+                            </div>
                             <div style="width: 200px; margin-right: 15px">
                                 <select id="tagsFilter" class="form-control select2" multiple="multiple" data-placeholder="Select Tags">
                                     @foreach($tags as $tag)

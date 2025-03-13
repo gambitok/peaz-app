@@ -13,15 +13,13 @@
 <div class="row">
     <div class="col-12">
         {!! success_error_view_generator() !!}
-        @if(session('success') || request()->query('success'))
-            <div class="alert alert-success">
-                {{ session('success') ?? request()->query('success') }}
-            </div>
-        @endif
     </div>
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive ">
+            <div>
+                <a href="{{ route('admin.user.create') }}" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add Member</a>
+            </div>
+            <div class="table-responsive">
                 <table id="listResults" class="table dt-responsive mb-4  nowrap w-100 mb-">
                     <thead>
                         <tr>

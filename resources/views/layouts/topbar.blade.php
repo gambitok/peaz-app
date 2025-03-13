@@ -4,23 +4,23 @@
             <!-- LOGO -->
             <div class="navbar-brand-box">
 
-                <a href="{{route('admin.dashboard')}}" class="logo logo-dark">
-                    <span class="logo-sm">
-                        <img src="{{ small_site_logo }}" alt="">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{{site_logo}}" alt="">
-                    </span>
-                </a>
+{{--                <a href="{{route('admin.dashboard')}}" class="logo logo-dark">--}}
+{{--                    <span class="logo-sm">--}}
+{{--                        <img src="{{small_site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                    <span class="logo-lg">--}}
+{{--                        <img src="{{site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                </a>--}}
 
-                <a href="{{route('admin.dashboard')}}" class="logo logo-light">
-                    <span class="logo-sm">
-                        <img src="{{small_site_logo }}" alt="">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{{site_logo}}" alt="">
-                    </span>
-                </a>
+{{--                <a href="{{route('admin.dashboard')}}" class="logo logo-light">--}}
+{{--                    <span class="logo-sm">--}}
+{{--                        <img src="{{small_site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                    <span class="logo-lg">--}}
+{{--                        <img src="{{site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                </a>--}}
             </div>
 
             <button type="button" class="btn btn-sm px-3 font-size-16 header-item waves-effect" id="vertical-menu-btn">

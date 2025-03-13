@@ -21,7 +21,13 @@ class BillboardViewController extends Controller
     public function index()
     {
         $billboards = Billboard::with('user', 'tag')->get();
-        return view('admin.billboards.index', compact('billboards'));
+        return view('admin.billboards.index', [
+            'billboards' => $billboards,
+            'title' => 'Billboards',
+            'breadcrumb' => breadcrumb([
+                'Billboards' => route('admin.billboards.index'),
+            ]),
+        ]);
     }
 
     public function show($id)
@@ -36,28 +42,6 @@ class BillboardViewController extends Controller
         return view('admin.billboards.create', compact('tags'));
     }
 
-    public function store(BillboardRequest $request)
-    {
-        $validatedData = $request->validated(); // This ensures only validated data is used
-
-        // Handle file upload if present
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $extension = $file->getClientOriginalExtension();
-            $path = $file->storeAs('uploads/billboards', time() . '.' . $extension, 's3');
-            Storage::disk('s3')->setVisibility($path, 'public');
-            $validatedData['file'] = $path;
-        }
-
-        $validatedData['user_id'] = $request->user()->id; // Assign the authenticated user
-
-        Billboard::create($validatedData);
-
-        // Redirect back to the list of billboards with a success message
-        return redirect()->route('admin.billboards.index')
-            ->with('success', 'Billboard created successfully.');
-    }
-
     public function edit($id)
     {
         $billboard = Billboard::findOrFail($id);
@@ -66,48 +50,65 @@ class BillboardViewController extends Controller
         return view('admin.billboards.edit', compact('billboard', 'tags'));
     }
 
+    public function store(BillboardRequest $request)
+    {
+        $validatedData = $request->validated();
+        $userId = $request->user()->id;
+
+        // Convert status to boolean and then to an integer (0 or 1)
+        $validatedData['status'] = isset($validatedData['status']) ? (int) filter_var($validatedData['status'], FILTER_VALIDATE_BOOLEAN) : 0;
+
+
+        // Create a new billboard entry to get its ID
+        $billboard = Billboard::create(['user_id' => $userId] + $validatedData);
+        $billboardId = $billboard->id;
+
+        // Array to store file fields
+        $fileFields = ['file', 'logo_file', 'horizontal_file', 'video_file'];
+
+        foreach ($fileFields as $field) {
+            if ($request->hasFile($field)) {
+                $file = $request->file($field);
+                $path = $file->storeAs("uploads/billboards/$billboardId", time() . '.' . $file->getClientOriginalExtension(), 's3');
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $validatedData[$field] = $path;
+            }
+        }
+
+        $billboard->update($validatedData);
+
+        return redirect()->route('admin.billboards.index')->with('success', 'Billboard created successfully.');
+    }
+
     public function update(BillboardRequest $request, $id)
     {
-        // Fetch the existing billboard from the database
         $billboard = Billboard::findOrFail($id);
-
-        // Get the validated data from the request
         $validatedData = $request->validated();
+        $billboardId = $billboard->id;
 
-        // Handle the file
-        $file = $billboard->getRawOriginal('file'); // Get the current file
+        // Convert status to boolean and then to an integer (0 or 1)
+        $validatedData['status'] = isset($validatedData['status']) ? (int) filter_var($validatedData['status'], FILTER_VALIDATE_BOOLEAN) : 0;
 
-        if ($request->hasFile('file')) {
-            $extension = $request->file('file')->getClientOriginalExtension();
-            $path = $request->file('file')->storeAs('uploads/billboards', time() . '.' . $extension, 's3');
-            if ($path) {
+        // Array to update file fields
+        $fileFields = ['file', 'logo_file', 'horizontal_file', 'video_file'];
+
+        foreach ($fileFields as $field) {
+            if ($request->hasFile($field)) {
+                $file = $request->file($field);
+                $path = $file->storeAs("uploads/billboards/$billboardId", time() . '.' . $file->getClientOriginalExtension(), 's3');
                 Storage::disk('s3')->setVisibility($path, 'public');
-                $file = $path;
-            }
-        }
-
-        // Update the status
-        $status = filter_var($validatedData['status'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if ($status === null) {
-            $status = false; // Default to false if invalid
-        }
-
-        // Prepare the update data
-        $updateData = $request->only(['link']);
-        $updateData['status'] = $status;
-        $updateData['file'] = $file; // Only update the file if it changed
-
-        // Attempt to update the billboard
-        try {
-            // Perform the update
-            $updated = $billboard->update($updateData);
-
-            // Check if the update was successful
-            if ($updated) {
-                return redirect()->route('admin.billboards.index')->with('success', 'Billboard updated successfully.');
+                $validatedData[$field] = $path;
             } else {
-                return redirect()->back()->withInput()->withErrors(['error' => 'Failed to update billboard.']);
+                $validatedData[$field] = $billboard->getRawOriginal($field);
             }
+        }
+
+        // Convert status to boolean
+        $validatedData['status'] = filter_var($validatedData['status'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        try {
+            $billboard->update($validatedData);
+            return redirect()->route('admin.billboards.index')->with('success', 'Billboard updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->withErrors(['error' => 'Failed to update billboard.']);
         }

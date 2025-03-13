@@ -35,7 +35,7 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         // User Module
         Route::get('user/listing', 'UsersController@listing')->name('user.listing');
         Route::get('user/status_update/{id}', 'UsersController@status_update')->name('user.status_update');
-        Route::resource('user', 'UsersController')->except(['create', 'store']);
+        Route::resource('user', 'UsersController');
 
         // Content Module
         Route::resource('content', 'ContentController')->except(['show', 'create', 'store', 'destroy']);

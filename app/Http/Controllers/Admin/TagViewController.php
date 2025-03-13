@@ -24,7 +24,13 @@ class TagViewController extends WebController
             $tag['posts_count'] = Tag::find($tag['id'])->posts()->count();
             return $tag;
         }, $tags);
-        return view('admin.tag.index', compact('tags'));
+        return view('admin.tag.index', [
+            'tags' => $tags,
+            'title' => 'Tags',
+            'breadcrumb' => breadcrumb([
+                'Tags' => route('admin.tag.index'),
+            ]),
+        ]);
     }
 
     public function show($id)

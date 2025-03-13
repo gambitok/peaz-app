@@ -21,7 +21,13 @@ class CuisineViewController extends WebController
     {
         $cuisines = $this->apiCuisineController->index()->toArray(request());
 
-        return view('admin.cuisine.index', compact('cuisines'));
+        return view('admin.cuisine.index', [
+            'cuisines' => $cuisines,
+            'title' => 'Cuisines',
+            'breadcrumb' => breadcrumb([
+                'Cuisines' => route('admin.cuisine.index'),
+            ]),
+        ]);
     }
 
     public function show($id)

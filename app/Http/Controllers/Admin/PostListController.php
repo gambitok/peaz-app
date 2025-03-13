@@ -26,25 +26,17 @@ class PostListController extends WebController
 
     public function index()
     {
-//        $title = 'Post List';
-//        return view('admin.post.index', [
-//            'title' => $title,
-//            'breadcrumb' => breadcrumb([
-//                'Post' => route('admin.post.index'),
-//            ]),
-//        ]);
-        $title = 'Post List';
         $tags = Tag::all();
         $dietaries = Dietary::all();
         $cuisines = Cuisine::all();
 
         return view('admin.post.index', [
-            'title' => $title,
             'tags' => $tags,
             'dietaries' => $dietaries,
             'cuisines' => $cuisines,
+            'title' => 'Recipes',
             'breadcrumb' => breadcrumb([
-                'Post' => route('admin.post.index'),
+                'Recipes' => route('admin.post.index'),
             ]),
         ]);
     }

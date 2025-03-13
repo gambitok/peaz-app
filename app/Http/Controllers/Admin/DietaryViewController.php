@@ -21,7 +21,13 @@ class DietaryViewController extends WebController
     {
         $dietaries = $this->apiDietaryController->index()->toArray(request());
 
-        return view('admin.dietary.index', compact('dietaries'));
+        return view('admin.dietary.index', [
+            'dietaries' => $dietaries,
+            'title' => 'Dietaries',
+            'breadcrumb' => breadcrumb([
+                'Dietaries' => route('admin.dietary.index'),
+            ]),
+        ]);
     }
 
     public function show($id)

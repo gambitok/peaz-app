@@ -15,9 +15,9 @@ class UsersController extends WebController
     public function index()
     {
         return view('admin.user.index', [
-            'title' => 'Users',
+            'title' => 'Members',
             'breadcrumb' => breadcrumb([
-                'Users' => route('admin.user.index'),
+                'Members' => route('admin.post.index'),
             ]),
         ]);
     }
@@ -54,7 +54,7 @@ class UsersController extends WebController
         $query->count();
 
         if (!empty($all_data)) {
-            foreach ($all_data as $key => $value) {
+            foreach ($all_data as $value) {
                 $param = [
                     'id' => $value->id,
                     'url' => [
@@ -195,6 +195,22 @@ class UsersController extends WebController
         return redirect()->route('admin.user.index');
     }
 
+    public function create()
+    {
+        $title = "Create user";
+        $statusOptions = User::getStatusOptions();
+        $membershipOptions = User::getMembershipOptions();
+        return view('admin.user.create', [
+            'title' => $title,
+            'statusOptions' => $statusOptions,
+            'membershipOptions' => $membershipOptions,
+            'breadcrumb' => breadcrumb([
+                'User' => route('admin.user.index'),
+                'create' => route('admin.user.create')
+            ]),
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
         $data = User::find($id);
@@ -233,6 +249,42 @@ class UsersController extends WebController
         } else {
             error_session('user not found');
         }
+
+        return redirect()->route('admin.user.index');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', Rule::unique('users')->whereNull('deleted_at')],
+            'profile_image' => ['file', 'image'],
+            'membership_level' => ['required', Rule::in(array_keys(User::getMembershipOptions()))],
+            'status' => ['required', Rule::in(array_keys(User::getStatusOptions()))],
+        ]);
+
+        $profile_image = null;
+        if ($request->hasFile('profile_image')) {
+            $path = $request->file('profile_image')->store('uploads/users', 's3');
+            if ($path) {
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $profile_image = $path;
+            }
+        }
+
+        $userdata = [
+            'email' => $request->email,
+            'profile_image' => $profile_image,
+            'name' => $request->name,
+            'username' => $request->username,
+            'bio' => $request->bio,
+            'website' => $request->website,
+            'verified' => $request->has('verified') ? 1 : 0,
+            'membership_level' => $request->membership_level,
+            'status' => $request->status,
+        ];
+
+        User::create($userdata);
+        success_session('user created successfully');
 
         return redirect()->route('admin.user.index');
     }

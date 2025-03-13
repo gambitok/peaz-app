@@ -192,6 +192,8 @@ div#datatable_length label select.form-select.form-select-sm {
     background-color: #6FCA7F !important;
  	background: #6FCA7F !important;
     border-radius: 50%;
+    width: 35px;
+    font-weight: bold;
 }
 .btn-group.btn-group-example button {
     padding: 5px 20px;
@@ -1165,7 +1167,7 @@ color: #FF6600;
     font-size: 40px;
     line-height: 46px;
     color: #556ee6;
-    
+
         padding-bottom: 18px;
 }
 .price-blogs .main-blog-price .main-price h4 sup {

@@ -9,6 +9,9 @@ class Billboard extends Model
 
     protected $fillable = [
         'file',
+        'logo_file',
+        'horizontal_file',
+        'video_file',
         'link',
         'user_id',
         'status',

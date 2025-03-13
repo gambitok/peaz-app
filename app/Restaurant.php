@@ -9,6 +9,7 @@ class Restaurant extends Model
 
     protected $fillable = [
         'file',
+        'title',
         'link',
         'user_id',
         'status',
