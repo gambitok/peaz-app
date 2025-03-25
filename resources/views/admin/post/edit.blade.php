@@ -115,7 +115,11 @@
                                 @if($data->file)
                                     <div class="d-flex align-items-center mt-2">
                                         <a href="{{ $data->file }}" target="_blank" id="file-link">
-                                            <img src="{{ $data->file }}" alt="File" id="file-preview" style="max-width: 100px; max-height: 100px;">
+                                            @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $data->file))
+                                                <img src="{{ $data->file }}" alt="File" id="file-preview" style="max-width: 200px; max-height: 200px;">
+                                            @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->file))
+                                                <video src="{{ $data->file }}" id="file-preview" style="max-width: 100%; max-height: 500px;" controls></video>
+                                            @endif
                                         </a>
                                         <button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="{{ $data->id }}" data-type="file">Delete</button>
                                     </div>
@@ -140,9 +144,13 @@
                                 @if($data->thumbnail)
                                     <div class="d-flex align-items-center mt-2">
                                         <a href="{{ $data->thumbnail }}" target="_blank" id="thumbnail-link">
-                                            <img src="{{ $data->thumbnail }}" alt="Thumbnail" id="thumbnail-preview" style="max-width: 100px; max-height: 100px;">
+                                            @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $data->thumbnail))
+                                                <img src="{{ $data->thumbnail }}" alt="Thumbnail" id="thumbnail-preview" style="max-width: 200px; max-height: 200px;">
+                                            @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->thumbnail))
+                                                <video src="{{ $data->thumbnail }}" id="thumbnail-preview" style="max-width: 100%; max-height: 500px;" controls></video>
+                                            @endif
                                         </a>
-                                        <br><button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="{{ $data->id }}" data-type="thumbnail">Delete</button>
+                                        <button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="{{ $data->id }}" data-type="thumbnail">Delete</button>
                                     </div>
                                 @else
                                     <p>No thumbnail uploaded</p>
