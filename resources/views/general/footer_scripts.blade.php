@@ -8,14 +8,11 @@
 
 
 <script>
-    {{--
-     Event Grave Yard
-     --}}
+
     function delete_record(event) {
         event.preventDefault();
         let el = this;
         swal({
-            // title: "Are you sure you want to delete this?",
             text: "Are you sure you want to delete this?",
             icon: "warning",
             buttons: true,
@@ -26,7 +23,6 @@
             }
         });
     }
-
 
     $(function () {
         $(document).on('click', '.btnDelete', delete_record);

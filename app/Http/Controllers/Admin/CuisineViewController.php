@@ -20,7 +20,10 @@ class CuisineViewController extends WebController
     public function index()
     {
         $cuisines = $this->apiCuisineController->index()->toArray(request());
-
+        $cuisines = array_map(function ($cuisine) {
+            $cuisine['posts_count'] = Cuisine::find($cuisine['id'])->posts()->count();
+            return $cuisine;
+        }, $cuisines);
         return view('admin.cuisine.index', [
             'cuisines' => $cuisines,
             'title' => 'Cuisines',

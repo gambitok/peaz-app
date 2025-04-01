@@ -343,11 +343,26 @@ class PostController extends Controller
                 'posts.file',
                 'posts.thumbnail',
                 'posts.user_id',
+                'posts.status',
+                'posts.verified',
                 DB::raw('(SELECT GROUP_CONCAT(DISTINCT tags.name SEPARATOR ", ") FROM post_tag LEFT JOIN tags ON post_tag.tag_id = tags.id WHERE post_tag.post_id = posts.id) as tags'),
                 DB::raw('(SELECT GROUP_CONCAT(DISTINCT dietaries.name SEPARATOR ", ") FROM post_dietary LEFT JOIN dietaries ON post_dietary.dietary_id = dietaries.id WHERE post_dietary.post_id = posts.id) as dietaries'),
                 DB::raw('(SELECT GROUP_CONCAT(DISTINCT cuisines.name SEPARATOR ", ") FROM post_cuisine LEFT JOIN cuisines ON post_cuisine.cuisine_id = cuisines.id WHERE post_cuisine.post_id = posts.id) as cuisines')
             )
-            ->groupBy('posts.id', 'posts.title', 'posts.caption', 'posts.serving_size', 'posts.minutes', 'posts.hours', 'posts.type', 'posts.file', 'posts.thumbnail', 'posts.user_id')
+            ->groupBy(
+                'posts.id',
+                'posts.title',
+                'posts.caption',
+                'posts.serving_size',
+                'posts.minutes',
+                'posts.hours',
+                'posts.type',
+                'posts.file',
+                'posts.thumbnail',
+                'posts.user_id',
+                'posts.status',
+                'posts.verified'
+            )
             ->where('posts.user_id', '=', $user_id);
 
         if ($request->filled('title')) {
@@ -383,6 +398,10 @@ class PostController extends Controller
             $query->where('posts.user_id', '=', $user_id);
         }
 
+        if ($request->filled('status')) {
+            $query->where('posts.status', '=', $request->input('status'));
+        }
+
         $sortField = 'posts.' . $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
@@ -408,6 +427,7 @@ class PostController extends Controller
             'data' => $posts
         ]);
     }
+
 
     public function userSearch(Request $request)
     {

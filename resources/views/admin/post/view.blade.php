@@ -12,49 +12,52 @@
 <div class="row">
     <div class="col-md-3">
         <div class="card">
-            <div class="card-body" style="font-size:14px;">
-                <div class="justify-content-between">
-                    <span class="card-title">Post Details</span>
-                    <a href="{{ route('admin.post.edit', $data->id) }}">Edit Post</a>
-                </div>
-                 <!-- <div class="card-title">
-                    <div class="kt-widget__media text-center w-100">
-                        {!! get_fancy_box_html(get_asset($data->getRawOriginal('file'))) !!}
+            <div class="card p-3 m-0">
+                <div class="card-body" style="font-size:14px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="card-title font-weight-bold">Post Details</span>
+                        <a href="{{ route('admin.post.edit', $data->id) }}" class="btn btn-primary btn-sm">Edit Post</a>
                     </div>
-                </div>  -->
-                <!-- <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Name:</span>
-                    <a href="#">{{$data->title}}</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Email:</span>
-                    <a href="mailto:{{$data->email}}">{{$data->email}}</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Status:</span>
-                    <span class="kt-widget__data">{!! user_status($data->status,$data->deleted_at) !!}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Mobile:</span>
-                    <a href="mailto:{{$data->email}}">@if(!empty($data->mobile)) {{$data->mobile}}  @else -- @endif </a>
-                </div> -->
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Title:</span>
-                    <div>{{$data->title}}</div>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">File:</span>
-                    <a href="{{$data->file}}"  target="_blank">Show File</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Thumbnail:</span>
-                    <a href="{{$data->thumbnail}}"  target="_blank">Show File</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Time:</span>
-                    <div>{{$data->hours}}h {{$data->minutes}}min</div>
+
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex" style="padding: 15px 0;">
+                            <span class="font-weight-bold" style="flex: 0 0 50%;">Title:</span>
+                            <span style="flex: 1; text-align: right">{{$data->title}}</span>
+                        </li>
+                        <li class="list-group-item d-flex" style="padding: 15px 0;">
+                            <span class="font-weight-bold" style="flex: 0 0 50%;">Time:</span>
+                            <span style="flex: 1; text-align: right">{{$data->hours}}h {{$data->minutes}}min</span>
+                        </li>
+
+                        @if($data->file)
+                            <li class="list-group-item d-flex" style="padding: 15px 0;">
+                                <span class="font-weight-bold" style="flex: 0 0 50%;">File:</span>
+                                <div class="text-right" style="flex: 1;">
+                                    @if(preg_match('/\.(jpg|jpeg|png|gif)$/i',  $data->file))
+                                        <img src="{{ $data->file }}" alt="File" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;">
+                                    @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->file))
+                                        <video src="{{ $data->file }}" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;" controls></video>
+                                    @endif
+                                </div>
+                            </li>
+                        @endif
+
+                        @if($data->thumbnail)
+                            <li class="list-group-item d-flex" style="padding: 15px 0;">
+                                <span class="font-weight-bold" style="flex: 0 0 50%;">Thumbnail:</span>
+                                <div class="text-right" style="flex: 1;">
+                                    @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $data->thumbnail))
+                                        <img src="{{ $data->thumbnail }}" alt="Thumbnail" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;">
+                                    @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->thumbnail))
+                                        <video src="{{ $data->thumbnail }}" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;" controls></video>
+                                    @endif
+                                </div>
+                            </li>
+                        @endif
+                    </ul>
                 </div>
             </div>
+
         </div>
 
         <div class="card">

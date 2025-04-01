@@ -84,7 +84,7 @@
     <script src="{{asset('/assets/admin/vendors/general/validate/jquery.validate.min.js')}}"></script>
     <script src="{{asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.js')}}"></script>
     <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{{--    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>--}}
     <script src="{{ asset('/assets/libs/select2/js/select2.full.min.js') }}"></script>
 
     <script type="text/javascript">
@@ -155,7 +155,6 @@
 
         $(document).on('change', '.toggle-status', function () {
             let postId = $(this).data('id');
-
             $.ajax({
                 url: "{{ route('admin.post.status') }}",
                 type: "POST",
@@ -165,9 +164,9 @@
                 }
             });
         });
+
         $(document).on('change', '.toggle-verified', function () {
             let postId = $(this).data('id');
-
             $.ajax({
                 url: "{{ route('admin.post.verified') }}",
                 type: "POST",

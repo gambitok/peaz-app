@@ -118,5 +118,6 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::get('/cuisine/{id}/edit', [CuisineViewController::class, 'edit'])->name('cuisine.edit');
         Route::put('/cuisine/{id}', [CuisineViewController::class, 'update'])->name('cuisine.update');
         Route::delete('/cuisine/{id}', [CuisineViewController::class, 'destroy'])->name('cuisine.destroy');
+
     });
 });

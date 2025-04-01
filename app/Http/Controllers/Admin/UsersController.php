@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Http\Controllers\WebController;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use DataTables;
@@ -260,6 +261,7 @@ class UsersController extends WebController
             'profile_image' => ['file', 'image'],
             'membership_level' => ['required', Rule::in(array_keys(User::getMembershipOptions()))],
             'status' => ['required', Rule::in(array_keys(User::getStatusOptions()))],
+            'password' => ['required', 'string', 'min:8'], // Add validation rule for password
         ]);
 
         $profile_image = null;
@@ -271,19 +273,21 @@ class UsersController extends WebController
             }
         }
 
-        $userdata = [
-            'email' => $request->email,
-            'profile_image' => $profile_image,
-            'name' => $request->name,
-            'username' => $request->username,
-            'bio' => $request->bio,
-            'website' => $request->website,
-            'verified' => $request->has('verified') ? 1 : 0,
-            'membership_level' => $request->membership_level,
-            'status' => $request->status,
-        ];
+        $user = new User();
+        $user->email = $request->email;
+        $user->profile_image = $profile_image;
+        $user->name = $request->name;
+        $user->username = $request->username;
+        $user->bio = $request->bio;
+        $user->website = $request->website;
+        $user->verified = $request->has('verified') ? 1 : 0;
+        $user->membership_level = $request->membership_level;
+        $user->status = $request->status;
+        $user->type = 'admin';
+        $user->password = $request->password;
 
-        User::create($userdata);
+        $user->save();
+
         success_session('user created successfully');
 
         return redirect()->route('admin.user.index');

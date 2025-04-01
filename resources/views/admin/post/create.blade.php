@@ -32,22 +32,22 @@
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4">
                             <label for="caption" class="col-form-label">Caption</label>
-                            <textarea class="form-control w-50" id="caption" name="caption" rows="3" placeholder="Caption"></textarea>
+                            <textarea class="form-control w-50" id="caption" name="caption" rows="3" placeholder="Caption" required></textarea>
                         </div>
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4 align-items-center">
                             <label class="col-form-label">Total Time</label>
                             <div class="d-flex gap-2 w-50">
-                                <input type="number" name="hours" id="hours" class="form-control w-25" placeholder="hours">
+                                <input type="number" name="hours" id="hours" class="form-control w-25" placeholder="hours" required>
                                 <label for="hours">Hours</label>
-                                <input type="number" name="minutes" id="minutes" class="form-control w-25" placeholder="minutes">
+                                <input type="number" name="minutes" id="minutes" class="form-control w-25" placeholder="minutes" required>
                                 <label for="minutes">Minutes</label>
                             </div>
                         </div>
 
                         <div class="form-group d-flex justify-content-between mt-4 mb-4">
                             <label for="serving_size" class="col-form-label">Serving size</label>
-                            <input type="number" name="serving_size" id="serving_size" class="form-control w-50" placeholder="Serving size">
+                            <input type="number" name="serving_size" id="serving_size" class="form-control w-50" placeholder="Serving size" required>
                         </div>
 
                         <hr>
@@ -93,21 +93,27 @@
                             </div>
                         </div>
 
-                        <div class="form-group d-flex justify-content-between">
-                            <label for="thumbnail" class="col-form-label">Thumbnail</label>
-                            <div class="w-50">
-                                <input type="file" name="thumbnail" id="thumbnail" class="form-control">
-                                <p>No thumbnail uploaded</p>
+                        <div class="form-group">
+                            <label class="col-form-label">Thumbnails</label>
+                            <div id="thumbnail-container">
+                                @for($i = 0; $i < 4; $i++)
+                                    <div class="thumbnail-upload">
+                                        <input type="file" name="thumbnails[]" class="form-control thumbnail-input" accept="image/*,video/*">
+                                        <div class="preview-container" id="preview-{{$i}}"></div>
+                                        <div class="thumbnail-preview" id="preview-section-{{$i}}">
+                                            <!-- Preview content will be injected here -->
+                                        </div>
+                                        <button type="button" class="btn btn-danger btn-sm remove-thumbnail" data-index="{{$i}}">Remove</button>
+                                    </div>
+                                @endfor
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
-                            <button type="submit" class="btn btn-primary">Create</button>
+                            <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
+                            <button type="submit" class="btn btn-success">Save</button>
                         </div>
 
-                        <div class="d-flex justify-content-end mt-2">
-                            <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
-                        </div>
                     </form>
                 </div>
             </div>
@@ -122,7 +128,49 @@
     <script src="{{ asset('/assets/libs/select2/js/select2.full.min.js') }}"></script>
     <script>
         $(document).ready(function() {
-            $('.select2').select2();
+
+            $('.select2').select2({
+                placeholder: {
+                    id: '-1',
+                    text: 'Select an option'
+                }
+            });
+
+            $('.thumbnail-input').on('change', function(e) {
+                var file = e.target.files[0];
+                var index = $(this).closest('.thumbnail-upload').find('.remove-thumbnail').data('index');
+                var previewContainer = $('#preview-' + index);
+                var previewSection = $('#preview-section-' + index);
+                var removeButton = $(this).siblings('.remove-thumbnail');
+
+                if (file) {
+                    var reader = new FileReader();
+
+                    if (file.type.startsWith('image/')) {
+                        reader.onload = function(e) {
+                            previewSection.html('<img src="' + e.target.result + '" class="img-thumbnail" width="100">');
+                            removeButton.show();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                    else if (file.type.startsWith('video/')) {
+                        reader.onload = function(e) {
+                            previewSection.html('<video width="100" controls><source src="' + e.target.result + '" type="' + file.type + '"></video>');
+                            removeButton.show();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+
+            $('.remove-thumbnail').on('click', function() {
+                var index = $(this).data('index');
+                var inputField = $('input[name="thumbnails[]"]:eq(' + index + ')');
+                inputField.val('');
+                $('#preview-section-' + index).html('');
+                $(this).hide();
+            });
         });
+
     </script>
 @endsection

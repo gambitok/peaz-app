@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Cuisine;
 use App\Dietary;
 use App\Tag;
+use App\PostThumbnail;
 use App\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\WebController;
@@ -14,6 +15,7 @@ use App\Ingredient;
 use App\Instruction;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class PostListController extends WebController
 {
@@ -128,18 +130,19 @@ class PostListController extends WebController
         ]);
     }
 
+
     public function store(Request $request)
     {
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
         $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
 
-        $fileSrc = '';
-        $thumbnailSrc = '';
+        Log::info('Request files:', $request->all());
 
         $request->validate([
-            'title' => 'required',
+            'title' => 'required|string|max:255',
             'file' => 'nullable|file',
-            'thumbnail' => 'nullable|file',
+            'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
+            'thumbnails' => 'array|max:4',
             'hours' => 'required|numeric',
             'minutes' => 'required|numeric',
             'serving_size' => 'nullable|numeric',
@@ -149,45 +152,52 @@ class PostListController extends WebController
             'cuisines' => 'nullable|array',
         ]);
 
+        $fileSrc = '';
         if ($request->hasFile('file')) {
             $extension = strtolower($request->file('file')->getClientOriginalExtension());
-
+            Log::info('File extension:', ['extension' => $extension]);
             if (in_array($extension, $imageExtensions)) {
                 $path = $request->file('file')->store('uploads/posts/images', 's3');
             } elseif (in_array($extension, $videoExtensions)) {
                 $path = $request->file('file')->store('uploads/posts/videos', 's3');
             }
-
             if (isset($path)) {
                 Storage::disk('s3')->setVisibility($path, 'public');
                 $fileSrc = $path;
-            }
-        }
-
-        if ($request->hasFile('thumbnail')) {
-            $extension = strtolower($request->file('thumbnail')->getClientOriginalExtension());
-
-            if (in_array($extension, $imageExtensions)) {
-                $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/images', 's3');
-            } elseif (in_array($extension, $videoExtensions)) {
-                $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/videos', 's3');
-            }
-
-            if (isset($path)) {
-                Storage::disk('s3')->setVisibility($path, 'public');
-                $thumbnailSrc = $path;
+                Log::info('File saved to S3:', ['path' => $path]);
             }
         }
 
         $post = Post::create([
             'title' => $request->title,
             'file' => $fileSrc,
-            'thumbnail' => $thumbnailSrc,
             'hours' => $request->hours,
             'minutes' => $request->minutes,
             'serving_size' => $request->serving_size,
             'caption' => $request->caption,
+            'user_id' => $request->user_id,
         ]);
+
+        if ($request->hasFile('thumbnails')) {
+            foreach ($request->file('thumbnails') as $thumbnail) {
+                $extension = strtolower($thumbnail->getClientOriginalExtension());
+                Log::info('Thumbnail extension:', ['extension' => $extension]);
+                if (in_array($extension, $imageExtensions)) {
+                    $path = $thumbnail->store('uploads/posts/thumbnails/images', 's3');
+                } elseif (in_array($extension, $videoExtensions)) {
+                    $path = $thumbnail->store('uploads/posts/thumbnails/videos', 's3');
+                }
+
+                if (isset($path)) {
+                    Storage::disk('s3')->setVisibility($path, 'public');
+                    PostThumbnail::create([
+                        'post_id' => $post->id,
+                        'thumbnail' => $path,
+                    ]);
+                    Log::info('Thumbnail saved to S3:', ['path' => $path]);
+                }
+            }
+        }
 
         if ($request->has('tags')) {
             $post->tags()->sync($request->tags);
@@ -201,8 +211,9 @@ class PostListController extends WebController
             $post->cuisines()->sync($request->cuisines);
         }
 
-        return redirect()->route('admin.post.show', $post->id)
-            ->with('success', 'Post created successfully');
+        Log::info('Post created successfully:', ['post_id' => $post->id]);
+
+        return redirect()->route('admin.post.index')->with('success', 'Post created successfully.');
     }
 
     public function show($id)
@@ -422,21 +433,21 @@ class PostListController extends WebController
         $data = $this->ingredient_obj->find($id);
 
         if (isset($data) && !empty($data)) {
-            return view('admin.post.create', [
+            return view('admin.post.post_details_edit', [
                 'title' => 'Ingredients Update',
                 'breadcrumb' => breadcrumb([
                     'post' => route('admin.post.show', $data->post_id),
                     'edit' => route('admin.post.post_details_edit', $id),
                 ]),
-            ])->with(compact('data'));
+                'data' => $data // Додаємо 'data' до масиву
+            ]);
         } else {
             return redirect()->route('admin.post.index')->with('error', 'Ingredient not found');
         }
     }
-
     public function postDetailsUpdate(Request $request, $id)
     {
-        $data =$this->ingredient_obj->find($id);
+        $data = $this->ingredient_obj->find($id);
 
         if (isset($data) && !empty($data)) {
             $return_data = $request->all();

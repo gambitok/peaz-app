@@ -11,6 +11,11 @@ class Post extends Model
     public $table = "posts";
     protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','not_interested','status','created_at','verified'];
 
+    public function thumbnails()
+    {
+        return $this->hasMany(PostThumbnail::class);
+    }
+
     public function tags()
     {
         return $this->belongsToMany(Tag::class, 'post_tag', 'post_id', 'tag_id');

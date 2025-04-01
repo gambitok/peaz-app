@@ -35,11 +35,11 @@
                                         <div class="mt-2">
                                             @if($field == 'video_file')
                                                 <video width="100%" height="240" controls>
-                                                    <source src="{{ Storage::disk('s3')->url($billboard[$field]) }}" type="video/mp4">
+                                                    <source src="{{ $billboard[$field] }}" type="video/mp4">
                                                     Your browser does not support the video tag.
                                                 </video>
                                             @else
-                                                <img src="{{ Storage::disk('s3')->url($billboard[$field]) }}" alt="image" class="img-thumbnail" width="140" height="140">
+                                                <img src="{{ $billboard[$field] }}" alt="image" class="img-thumbnail" width="140" height="140">
                                             @endif
                                         </div>
                                     @else

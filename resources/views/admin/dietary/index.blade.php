@@ -41,6 +41,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Title</th>
+                            <th>Used in recipes</th>
                             <th>Actions</th>
                         </tr>
                         </thead>
@@ -53,6 +54,9 @@
                                     </td>
                                     <td>
                                         {{ $dietary['name'] }}
+                                    </td>
+                                    <td>
+                                        {{ $dietary['posts_count'] }}
                                     </td>
                                     <td>
                                         <form action="{{ route('admin.dietary.destroy', $dietary['id']) }}" method="POST" style="display:inline;">

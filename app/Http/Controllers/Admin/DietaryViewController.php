@@ -20,7 +20,10 @@ class DietaryViewController extends WebController
     public function index()
     {
         $dietaries = $this->apiDietaryController->index()->toArray(request());
-
+        $dietaries = array_map(function ($dietary) {
+            $dietary['posts_count'] = Dietary::find($dietary['id'])->posts()->count();
+            return $dietary;
+        }, $dietaries);
         return view('admin.dietary.index', [
             'dietaries' => $dietaries,
             'title' => 'Dietaries',

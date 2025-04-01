@@ -46,6 +46,13 @@
                     </div>
 
                     <div class="mb-3 row">
+                        <label for="example-text-input" class="col-md-2 col-form-label"><span class="text-danger">*</span>Password</label>
+                        <div class="col-md-10">
+                            <input type="password" name="password" id="password" class="form-control" value="">
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
                         <label for="example-text-input" class="col-md-2 col-form-label">Biography</label>
                         <div class="col-md-10">
                             <input type="text" name="bio" id="bio" class="form-control" value="" >

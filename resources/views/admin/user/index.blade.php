@@ -114,7 +114,6 @@
     $(document).on('change', '.status-dropdown', function () {
         let postId = $(this).data('id');
         let status = $(this).val();
-        console.log(status);
 
         $.ajax({
             url: "{{ route('admin.user.status') }}",
@@ -130,7 +129,6 @@
     $(document).on('change', '.membership-dropdown', function () {
         let postId = $(this).data('id');
         let membership_level = $(this).val();
-        console.log(membership_level);
 
         $.ajax({
             url: "{{ route('admin.user.membership') }}",

@@ -9,7 +9,25 @@
   background-color: #ffffff;
   -webkit-box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.03);
           box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.03); }
-
+.thumbnail-upload {
+    margin-bottom: 15px;
+}
+.thumbnail-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+.thumbnail-preview img, .thumbnail-preview video {
+    max-width: 100px;
+}
+.thumbnail-preview button {
+    display: none; /* Спочатку кнопка не видима */
+    margin-left: 10px;
+}
+.thumbnail-upload input[type="file"] {
+    width: 100%;
+}
 .navbar-header {
   display: -webkit-box;
   display: -ms-flexbox;
