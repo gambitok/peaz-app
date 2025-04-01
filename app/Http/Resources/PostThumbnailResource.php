@@ -18,6 +18,7 @@ class PostThumbnailResource extends JsonResource
             'id' => $this->id,
             'post_id' => $this->post_id,
             'thumbnail' => $this->thumbnail,
+            'type' => $this->type ?: null,
             'created_at' => $this->created_at ? $this->created_at->format('d.m.Y') : null,
         ];
     }

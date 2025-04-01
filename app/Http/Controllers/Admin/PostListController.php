@@ -130,7 +130,6 @@ class PostListController extends WebController
         ]);
     }
 
-
     public function store(Request $request)
     {
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
@@ -182,10 +181,13 @@ class PostListController extends WebController
             foreach ($request->file('thumbnails') as $thumbnail) {
                 $extension = strtolower($thumbnail->getClientOriginalExtension());
                 Log::info('Thumbnail extension:', ['extension' => $extension]);
+
                 if (in_array($extension, $imageExtensions)) {
                     $path = $thumbnail->store('uploads/posts/thumbnails/images', 's3');
+                    $type = 'image';
                 } elseif (in_array($extension, $videoExtensions)) {
                     $path = $thumbnail->store('uploads/posts/thumbnails/videos', 's3');
+                    $type = 'video';
                 }
 
                 if (isset($path)) {
@@ -193,8 +195,9 @@ class PostListController extends WebController
                     PostThumbnail::create([
                         'post_id' => $post->id,
                         'thumbnail' => $path,
+                        'type' => $type,
                     ]);
-                    Log::info('Thumbnail saved to S3:', ['path' => $path]);
+                    Log::info('Thumbnail saved to S3:', ['path' => $path, 'type' => $type]);
                 }
             }
         }
@@ -215,6 +218,7 @@ class PostListController extends WebController
 
         return redirect()->route('admin.post.index')->with('success', 'Post created successfully.');
     }
+
 
     public function show($id)
     {

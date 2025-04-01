@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Ingredient;
 use App\Instruction;
 use App\PostLike;
+use App\PostThumbnail;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use App\Post;
@@ -77,13 +78,14 @@ class PostController extends Controller
             'type' => 'required|string',
             'user_id' => 'required|integer',
             'file' => 'required|string',
-            'thumbnail' => 'required|string',
             'tags' => 'nullable|array',
             'tags.*' => 'integer|exists:tags,id',
             'dietaries' => 'nullable|array',
             'dietaries.*' => 'integer|exists:dietaries,id',
             'cuisines' => 'nullable|array',
             'cuisines.*' => 'integer|exists:cuisines,id',
+            'thumbnails' => 'nullable|array',
+            'thumbnails.*' => 'string',
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -108,21 +110,35 @@ class PostController extends Controller
             $post->cuisines()->attach($validatedData['cuisines']);
         }
 
-        $post->load('tags', 'dietaries', 'cuisines');
+            if ($request->has('thumbnails')) {
+            foreach ($validatedData['thumbnails'] as $thumbnail) {
+                $extension = strtolower(pathinfo($thumbnail, PATHINFO_EXTENSION));
 
-        if ($post->tags && $post->tags instanceof Collection) {
-            $post->tags = $post->tags->pluck('name');
+                $imageExtensions = ['jpeg', 'png', 'jpg', 'gif'];
+                $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+
+                if (in_array($extension, $imageExtensions)) {
+                    $type = 'image';
+                } elseif (in_array($extension, $videoExtensions)) {
+                    $type = 'video';
+                } else {
+                    return response()->json(['error' => 'Unsupported file format for thumbnails'], 400);
+                }
+
+                PostThumbnail::create([
+                    'post_id' => $post->id,
+                    'thumbnail' => $thumbnail,
+                    'type' => $type,
+                ]);
+
+            }
         }
 
-        if ($post->dietaries && $post->dietaries instanceof Collection) {
-            $post->dietaries = $post->dietaries->pluck('name');
-        }
+        $post->load('tags', 'dietaries', 'cuisines', 'thumbnails');
 
-        if ($post->cuisines && $post->cuisines instanceof Collection) {
-            $post->cuisines = $post->cuisines->pluck('name');
-        }
-
-        return response()->json($post, 201);
+        return response()->json([
+            'post' => $post
+        ], 201);
     }
 
     /**
