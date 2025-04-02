@@ -10,9 +10,157 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use DateTime;
+use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
+
+    public function index()
+    {
+        $users = User::withCount(['followers', 'following'])->get();
+
+        if ($users->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No users found',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => UserResource::collection($users)
+        ]);
+    }
+
+    public function show($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User with ID ' . $id . ' not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => new UserResource($user)
+        ]);
+    }
+
+    public function create(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'username' => 'required|string|max:255|unique:users,username',
+            'profile_image' => 'nullable|string|max:255',
+            'password' => 'required|min:4',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 400);
+        }
+
+        $user = User::create([
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'username' => $request->input('username'),
+            'password' => Hash::make($request->input('password')),
+            'profile_image' => $request->input('profile_image'),
+            'bio' => $request->input('bio') ?? null,
+            'website' => $request->input('website') ?? null,
+            'type' => $request->input('type') ?? null,
+            'membership_level' => $request->input('membership_level') ?? null,
+            'verified' => $request->input('verified') ?? null,
+            'status' => $request->input('status') ?? null,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User created successfully',
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'profile_image' => $user->profile_image,
+                'bio' => $user->bio,
+                'website' => $user->website,
+                'email' => $user->email,
+                'type' => $user->type,
+                'membership_level' => $user->membership_level,
+                'verified' => $user->verified,
+                'status' => $user->status,
+                'created_at' => $user->created_at,
+            ],
+        ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email,' . $id,
+                'username' => 'nullable|string|max:255',
+                'profile_image' => 'nullable|string|max:255',
+                'bio' => 'nullable|string',
+                'website' => 'nullable|string|max:255',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User with ID ' . $id . ' not found'
+            ], 404);
+        }
+
+        $user->name = $validatedData['name'];
+        $user->email = $validatedData['email'];
+        $user->username = $validatedData['username'] ?? $user->username;
+        $user->profile_image = $validatedData['profile_image'] ?? $user->profile_image;
+        $user->bio = $validatedData['bio'] ?? $user->bio;
+        $user->website = $validatedData['website'] ?? $user->website;
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => new UserResource($user)
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User with ID ' . $id . ' not found'
+            ], 404);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User deleted successfully'
+        ]);
+    }
+
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -82,117 +230,9 @@ class UserController extends Controller
         return response()->json(['error' => 'User not authenticated'], 401);
     }
 
-    public function getUsers()
-    {
-        $users = User::withCount(['followers', 'following'])->get();
-
-        if ($users->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No users found',
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $users
-        ]);
-    }
-
-    public function getUser($id)
-    {
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User with ID ' . $id . ' not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $user
-        ]);
-    }
-
-    public function updateUser(Request $request, $id)
-    {
-        try {
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255|unique:users,email,' . $id,
-                'username' => 'nullable|string|max:255',
-                'profile_image' => 'nullable|string|max:255',
-                'bio' => 'nullable|string',
-                'website' => 'nullable|string|max:255',
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-
-        $user = User::find($id);
-
-        if (!$user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User with ID ' . $id . ' not found'
-            ], 404);
-        }
-
-        $user->name = $validatedData['name'];
-        $user->email = $validatedData['email'];
-        $user->username = $validatedData['username'] ?? $user->username;
-        $user->profile_image = $validatedData['profile_image'] ?? $user->profile_image;
-        $user->bio = $validatedData['bio'] ?? $user->bio;
-        $user->website = $validatedData['website'] ?? $user->website;
-        $user->save();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $user
-        ]);
-    }
-
-    public function addUserById(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'username' => 'required|string|max:255|unique:users,username',
-            'profile_image' => 'nullable|string|max:255',
-            'password' => 'required|min:4',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 400);
-        }
-
-        $user = User::create([
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-            'username' => $request->input('username'),
-            'password' => $request->input('password'),
-            'profile_image' => $request->input('profile_image'),
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'User created successfully',
-            'data' => $user,
-        ], 201);
-    }
-
     public function search(Request $request)
     {
-        $authUserId = auth()->id(); // Get the authenticated user's ID
+        $authUserId = auth()->id();
 
         $query = User::query();
 
@@ -212,13 +252,11 @@ class UserController extends Controller
         $sortOrder = $request->input('sort_order', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
-        // Add a left join to check if the authenticated user is following each user
         $query->leftJoin('user_relationships', function ($join) use ($authUserId) {
             $join->on('users.id', '=', 'user_relationships.following_id')
                 ->where('user_relationships.follower_id', '=', $authUserId);
         });
 
-        // Select the necessary fields and add the is_following field
         $query->select('users.*', \DB::raw('CASE WHEN user_relationships.follower_id IS NULL THEN false ELSE true END AS is_following'));
 
         $users = $query->paginate(10);

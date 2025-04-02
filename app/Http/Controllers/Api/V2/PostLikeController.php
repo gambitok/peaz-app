@@ -21,6 +21,7 @@ class PostLikeController extends Controller
         }
 
         $cuisines = $request->input('cuisines');
+        $status = $request->input('status');
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
@@ -43,6 +44,10 @@ class PostLikeController extends Controller
             $likesGroupedQuery->where('cuisines.name', 'LIKE', '%' . $cuisines . '%');
         }
 
+        if ($status) {
+            $likesGroupedQuery->where('posts.status', $status);
+        }
+
         $sortField = !empty($sortField) ? 'postlikes.' . $sortField : $sortField;
 
         $likesGroupedQuery->orderBy($sortField, $sortOrder);
@@ -53,68 +58,32 @@ class PostLikeController extends Controller
             foreach ($likesGrouped as $group) {
                 $posts = DB::table('posts')
                     ->whereIn('id', explode(',', $group->post_ids))
-                    ->select('id', 'title', 'type', 'hours', 'minutes', 'file', 'thumbnail')
+                    ->select('id', 'title', 'type', 'hours', 'minutes', 'file', 'status', 'verified', 'created_at')
                     ->limit(3)
                     ->get();
 
                 foreach ($posts as $post) {
-                    $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
-                    $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
+                    $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . ltrim($post->file, '/');
+
+                    $thumbnails = DB::table('post_thumbnails')
+                        ->where('post_id', $post->id)
+                        ->get(['thumbnail', 'type']);
+
+                    foreach ($thumbnails as $thumbnail) {
+                        $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : rtrim($awsUrl, '/') . '/' . ltrim($thumbnail->thumbnail, '/');
+                    }
+
+                    $post->thumbnails = $thumbnails;
                 }
 
                 $group->posts = $posts;
             }
 
-            $response = [
+            return response()->json([
                 'status' => 'success',
                 'message' => 'Liked posts grouped by cuisines with first 3 posts fetched successfully',
-                'data' => $likesGrouped->items(),
-                'pagination' => [
-                    'total' => $likesGrouped->total(),
-                    'per_page' => $likesGrouped->perPage(),
-                    'current_page' => $likesGrouped->currentPage(),
-                    'last_page' => $likesGrouped->lastPage(),
-                    'from' => $likesGrouped->firstItem(),
-                    'to' => $likesGrouped->lastItem(),
-                    'path' => $likesGrouped->path(),
-                    'last_page_url' => $likesGrouped->url($likesGrouped->lastPage()),
-                    'next_page_url' => $likesGrouped->nextPageUrl()
-                ]
-            ];
-
-            if (!$cuisines) {
-                $uncategorizedPosts = DB::table('postlikes')
-                    ->join('posts', 'postlikes.post_id', '=', 'posts.id')
-                    ->leftJoin('post_cuisine', 'posts.id', '=', 'post_cuisine.post_id')
-                    ->whereNull('post_cuisine.cuisine_id')
-                    ->where('postlikes.user_id', $userId)
-                    ->select(
-                        DB::raw('GROUP_CONCAT(postlikes.post_id) AS post_ids'),
-                        DB::raw('COUNT(posts.id) AS totalCount')
-                    )
-                    ->first();
-
-                if ($uncategorizedPosts && $uncategorizedPosts->totalCount > 0) {
-                    $posts = DB::table('posts')
-                        ->whereIn('id', explode(',', $uncategorizedPosts->post_ids))
-                        ->select('id', 'title', 'type', 'hours', 'minutes', 'file', 'thumbnail')
-                        ->get();
-
-                    foreach ($posts as $post) {
-                        $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
-                        $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
-                    }
-
-                    $response['data'][] = [
-                        'cuisine_id' => null,
-                        'post_ids' => $uncategorizedPosts->post_ids,
-                        'totalCount' => $uncategorizedPosts->totalCount,
-                        'posts' => $posts
-                    ];
-                }
-            }
-
-            return response()->json($response, 200);
+                'data' => $likesGrouped
+            ], 200);
         } else {
             return response()->json([
                 'status' => 'error',
@@ -122,6 +91,7 @@ class PostLikeController extends Controller
             ], 404);
         }
     }
+
 
     public function getLikes(Request $request)
     {
@@ -190,8 +160,19 @@ class PostLikeController extends Controller
                     ->where('post_id', $post->id)
                     ->get();
 
-                $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
+                $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . ltrim($post->file, '/');
+
                 $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
+
+                $thumbnails = DB::table('post_thumbnails')
+                    ->where('post_id', $post->id)
+                    ->get(['thumbnail', 'type']);
+
+                foreach ($thumbnails as $thumbnail) {
+                    $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : rtrim($awsUrl, '/') . '/' . ltrim($thumbnail->thumbnail, '/');
+                }
+
+                $post->thumbnails = $thumbnails;
 
                 $likesWithPosts[] = $post;
             }

@@ -23,6 +23,7 @@ class PostCommentController extends Controller
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
+        $status = $request->input('status');  // Додано: отримуємо параметр status
 
         $commentsQuery = DB::table('comments')
             ->where('user_id', $userId)
@@ -39,12 +40,36 @@ class PostCommentController extends Controller
         }
 
         $commentsWithPosts = [];
+        $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
         foreach ($comments as $comment) {
-            $post = DB::table('posts')
-                ->where('id', $comment->post_id)
-                ->first();
+            $postQuery = DB::table('posts')
+                ->where('id', $comment->post_id);
+
+            if ($status !== null) {
+                $postQuery->where('status', $status);
+            }
+
+            $post = $postQuery->first();
+
+            if (!$post) {
+                continue;
+            }
+
+            $thumbnails = DB::table('post_thumbnails')
+                ->where('post_id', $post->id)
+                ->get(['thumbnail', 'type']);
+
+            foreach ($thumbnails as $thumbnail) {
+                $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : $awsUrl . $thumbnail->thumbnail;
+            }
+
+            $post->thumbnails = $thumbnails;
+
+            $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
+            $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
 
             $comment->post = $post;
+
             $commentsWithPosts[] = $comment;
         }
 

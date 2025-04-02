@@ -55,11 +55,11 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::get('users/search', [UserController::class, 'search'])->name('v2.users.search');
     Route::get('users/searchProfile', [UserController::class, 'searchProfile'])->name('v2.users.searchProfile');
 
-    Route::get('user', [UserController::class, 'getUsers'])->name('v2.user.index');
-    Route::get('user/{id}', [UserController::class, 'getUser'])->name('v2.user.show');
-    Route::put('user/{id}', [UserController::class, 'updateUser'])->name('v2.user.update');
-    Route::post('user/create', [UserController::class, 'addUserById'])->name('v2.user.create');
-    Route::delete('user/{id}', [UserController::class, 'deleteUser'])->name('v2.user.delete');
+    Route::get('user', [UserController::class, 'index'])->name('v2.user.index');
+    Route::get('user/{id}', [UserController::class, 'show'])->name('v2.user.show');
+    Route::put('user/{id}', [UserController::class, 'update'])->name('v2.user.update');
+    Route::post('user/create', [UserController::class, 'create'])->name('v2.user.create');
+    Route::delete('user/{id}', [UserController::class, 'destroy'])->name('v2.user.delete');
 
     Route::post('user/post-like', [PostController::class, 'postLike']);
     Route::post('user/comment-like', [PostController::class, 'commentLike']);

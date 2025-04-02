@@ -135,8 +135,6 @@ class PostListController extends WebController
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
         $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
 
-        Log::info('Request files:', $request->all());
-
         $request->validate([
             'title' => 'required|string|max:255',
             'file' => 'nullable|file',
@@ -152,24 +150,26 @@ class PostListController extends WebController
         ]);
 
         $fileSrc = '';
+        $fileType = null;
         if ($request->hasFile('file')) {
             $extension = strtolower($request->file('file')->getClientOriginalExtension());
-            Log::info('File extension:', ['extension' => $extension]);
             if (in_array($extension, $imageExtensions)) {
                 $path = $request->file('file')->store('uploads/posts/images', 's3');
+                $fileType = 'image';
             } elseif (in_array($extension, $videoExtensions)) {
                 $path = $request->file('file')->store('uploads/posts/videos', 's3');
+                $fileType = 'video';
             }
             if (isset($path)) {
                 Storage::disk('s3')->setVisibility($path, 'public');
                 $fileSrc = $path;
-                Log::info('File saved to S3:', ['path' => $path]);
             }
         }
 
         $post = Post::create([
             'title' => $request->title,
             'file' => $fileSrc,
+            'type' => $fileType,
             'hours' => $request->hours,
             'minutes' => $request->minutes,
             'serving_size' => $request->serving_size,
@@ -180,7 +180,6 @@ class PostListController extends WebController
         if ($request->hasFile('thumbnails')) {
             foreach ($request->file('thumbnails') as $thumbnail) {
                 $extension = strtolower($thumbnail->getClientOriginalExtension());
-                Log::info('Thumbnail extension:', ['extension' => $extension]);
 
                 if (in_array($extension, $imageExtensions)) {
                     $path = $thumbnail->store('uploads/posts/thumbnails/images', 's3');
@@ -197,7 +196,6 @@ class PostListController extends WebController
                         'thumbnail' => $path,
                         'type' => $type,
                     ]);
-                    Log::info('Thumbnail saved to S3:', ['path' => $path, 'type' => $type]);
                 }
             }
         }
@@ -214,11 +212,8 @@ class PostListController extends WebController
             $post->cuisines()->sync($request->cuisines);
         }
 
-        Log::info('Post created successfully:', ['post_id' => $post->id]);
-
         return redirect()->route('admin.post.index')->with('success', 'Post created successfully.');
     }
-
 
     public function show($id)
     {

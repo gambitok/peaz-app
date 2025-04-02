@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class PostThumbnail extends Model
 {
@@ -14,5 +15,13 @@ class PostThumbnail extends Model
     public function post()
     {
         return $this->belongsTo(Post::class);
+    }
+
+    public function getThumbnailAttribute($val)
+    {
+        if(!empty($val)){
+            return Storage::disk('s3')->url($val);
+        }
+        return '';
     }
 }

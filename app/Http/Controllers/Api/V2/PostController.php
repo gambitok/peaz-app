@@ -10,6 +10,7 @@ use App\Instruction;
 use App\PostLike;
 use App\PostThumbnail;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Post;
 use App\Http\Controllers\Api\ResponseController;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class PostController extends Controller
 {
@@ -31,7 +33,7 @@ class PostController extends Controller
     /**
      * Display a listing of the posts.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -72,8 +74,9 @@ class PostController extends Controller
     /**
      * Store a newly created post in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return JsonResponse
+     * @throws ValidationException
      */
     public function store(Request $request)
     {
@@ -154,7 +157,7 @@ class PostController extends Controller
      * Display the specified post.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
@@ -215,7 +218,14 @@ class PostController extends Controller
 
     public function details($id)
     {
-        $post = Post::with(['instructions', 'ingredients', 'tags', 'dietaries', 'cuisines'])->find($id);
+        $post = Post::with([
+            'instructions',
+            'ingredients',
+            'tags',
+            'dietaries',
+            'cuisines',
+            'thumbnails'
+        ])->find($id);
 
         if (!$post) {
             return response()->json([
@@ -236,6 +246,15 @@ class PostController extends Controller
             $post->cuisines = $post->cuisines->pluck('name');
         }
 
+        if ($post->thumbnails && $post->thumbnails instanceof Collection) {
+            $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
+                return [
+                    'thumbnail' => $thumbnail->thumbnail,
+                    'type' => $thumbnail->type
+                ];
+            });
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => $post
@@ -245,8 +264,9 @@ class PostController extends Controller
     /**
      * Update the specified post in storage.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @param int $id
+     * @return JsonResponse
+     * @throws ValidationException
      */
     public function update(Request $request, $id)
     {
@@ -259,9 +279,9 @@ class PostController extends Controller
             ], 404);
         }
 
-        $validatedData = $request->validate([
+        $rules = [
             'title' => 'required|string|max:100',
-            'caption' => 'required|string|max:255',
+            'caption' => 'nullable|string|max:255',
             'serving_size' => 'nullable|integer',
             'minutes' => 'nullable|integer',
             'hours' => 'nullable|integer',
@@ -269,48 +289,52 @@ class PostController extends Controller
             'type' => 'nullable|string',
             'user_id' => 'nullable|integer',
             'file' => 'nullable|string',
-            'thumbnail' => 'nullable|string',
+            'thumbnails' => 'nullable|array|max:4',
+            'thumbnails.*' => 'string',
             'tags' => 'nullable|array',
             'tags.*' => 'integer|exists:tags,id',
             'dietaries' => 'nullable|array',
             'dietaries.*' => 'integer|exists:dietaries,id',
             'cuisines' => 'nullable|array',
             'cuisines.*' => 'integer|exists:cuisines,id',
-        ]);
+        ];
 
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        $validatedData = $validator->validated();
         $post->update($validatedData);
 
-        if ($request->has('tags')) {
-            $post->tags()->sync($validatedData['tags']);
-        } else {
-            $post->tags()->detach();
+        $post->tags()->sync($validatedData['tags'] ?? []);
+        $post->dietaries()->sync($validatedData['dietaries'] ?? []);
+        $post->cuisines()->sync($validatedData['cuisines'] ?? []);
+
+        if ($request->has('thumbnails')) {
+            $post->thumbnails()->delete();
+
+            foreach ($validatedData['thumbnails'] as $thumbnail) {
+                $extension = strtolower(pathinfo($thumbnail, PATHINFO_EXTENSION));
+                $imageExtensions = ['jpeg', 'png', 'jpg', 'gif'];
+                $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+
+                $type = in_array($extension, $imageExtensions) ? 'image' : (in_array($extension, $videoExtensions) ? 'video' : null);
+
+                if (!$type) {
+                    return response()->json(['error' => 'Unsupported file format for thumbnails'], 400);
+                }
+
+                PostThumbnail::create([
+                    'post_id' => $post->id,
+                    'thumbnail' => $thumbnail,
+                    'type' => $type,
+                ]);
+            }
         }
 
-        if ($request->has('dietaries')) {
-            $post->dietaries()->sync($validatedData['dietaries']);
-        } else {
-            $post->dietaries()->detach();
-        }
-
-        if ($request->has('cuisines')) {
-            $post->cuisines()->sync($validatedData['cuisines']);
-        } else {
-            $post->cuisines()->detach();
-        }
-
-        $post->load('tags', 'dietaries', 'cuisines');
-
-        if ($post->tags && $post->tags instanceof Collection) {
-            $post->tags = $post->tags->pluck('name');
-        }
-
-        if ($post->dietaries && $post->dietaries instanceof Collection) {
-            $post->dietaries = $post->dietaries->pluck('name');
-        }
-
-        if ($post->cuisines && $post->cuisines instanceof Collection) {
-            $post->cuisines = $post->cuisines->pluck('name');
-        }
+        $post->load('tags', 'dietaries', 'cuisines', 'thumbnails');
 
         return response()->json($post, 200);
     }
@@ -319,7 +343,7 @@ class PostController extends Controller
      * Remove the specified post from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($id)
     {
@@ -476,9 +500,15 @@ class PostController extends Controller
 
         $user_id = $request->input('user_id');
 
-        $query = Post::with(['user' => function($query) {
-            $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website');
-        }, 'comment', 'postlike', 'report_statuses'])
+        $query = Post::with([
+            'user' => function ($query) {
+                $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website');
+            },
+            'comment',
+            'postlike',
+            'report_statuses',
+            'thumbnails' // Додаємо thumbnails
+        ])
             ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
             ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')
             ->leftJoin('post_dietary', 'posts.id', '=', 'post_dietary.post_id')
@@ -494,45 +524,41 @@ class PostController extends Controller
                 'posts.hours',
                 'posts.type',
                 'posts.file',
-                'posts.thumbnail',
                 'posts.user_id',
+                'posts.status',
                 DB::raw('(SELECT GROUP_CONCAT(DISTINCT tags.name SEPARATOR ", ") FROM post_tag LEFT JOIN tags ON post_tag.tag_id = tags.id WHERE post_tag.post_id = posts.id) as tags'),
                 DB::raw('(SELECT GROUP_CONCAT(DISTINCT dietaries.name SEPARATOR ", ") FROM post_dietary LEFT JOIN dietaries ON post_dietary.dietary_id = dietaries.id WHERE post_dietary.post_id = posts.id) as dietaries'),
                 DB::raw('(SELECT GROUP_CONCAT(DISTINCT cuisines.name SEPARATOR ", ") FROM post_cuisine LEFT JOIN cuisines ON post_cuisine.cuisine_id = cuisines.id WHERE post_cuisine.post_id = posts.id) as cuisines')
             )
-            ->groupBy('posts.id', 'posts.title', 'posts.caption', 'posts.serving_size', 'posts.minutes', 'posts.hours', 'posts.type', 'posts.file', 'posts.thumbnail', 'posts.user_id');
+            ->groupBy('posts.id', 'posts.title', 'posts.caption', 'posts.serving_size', 'posts.minutes', 'posts.hours', 'posts.type', 'posts.file', 'posts.user_id', 'posts.status');
 
         if ($request->filled('title')) {
             $query->where('posts.title', 'LIKE', '%' . $request->input('title') . '%');
         }
-
         if ($request->filled('type')) {
             $query->where('posts.type', 'LIKE', '%' . $request->input('type') . '%');
         }
-
         if ($request->filled('caption')) {
             $query->where('posts.caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
-
         if ($request->filled('dietaries')) {
             $query->where('dietaries.name', 'LIKE', '%' . $request->input('dietaries') . '%');
         }
-
         if ($request->filled('tags')) {
             $query->where('tags.name', 'LIKE', '%' . $request->input('tags') . '%');
         }
-
         if ($request->filled('cuisines')) {
             $query->where('cuisines.name', 'LIKE', '%' . $request->input('cuisines') . '%');
         }
-
         if ($request->filled('time')) {
             $inputTime = (int) $request->input('time');
             $query->whereRaw('(posts.hours * 3600000000 + posts.minutes * 60000000) <= ?', [$inputTime]);
         }
-
         if ($request->filled('user_id')) {
             $query->where('posts.user_id', '=', $user_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('posts.status', '=', $request->input('status'));
         }
 
         $sortField = $request->input('sort_by', 'posts.created_at');
@@ -552,7 +578,14 @@ class PostController extends Controller
         }
 
         $posts->getCollection()->transform(function ($post) use ($user_id) {
-            return $this->addExtraFields($post, $user_id);
+            $postData = $this->addExtraFields($post, $user_id);
+            $postData['thumbnails'] = $post->thumbnails->map(function ($thumbnail) {
+                return [
+                    'thumbnail' => $thumbnail->thumbnail,
+                    'type' => $thumbnail->type
+                ];
+            });
+            return $postData;
         });
 
         return response()->json([
@@ -640,9 +673,9 @@ class PostController extends Controller
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
 
-        if ($sortField === 'posts.user_interests') {
+        if ($sortField === 'posts.users_interests') {
             // Fetch user interests
-            $userInterests = DB::table('user_interests')->where('user_id', $user_id)->first();
+            $userInterests = DB::table('users_interests')->where('user_id', $user_id)->first();
             if ($userInterests) {
                 $userTags = json_decode($userInterests->tags, true) ?? [];
                 $userDietaries = json_decode($userInterests->dietaries, true) ?? [];
