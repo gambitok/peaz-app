@@ -35,7 +35,7 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with(['tags', 'dietaries', 'cuisines'])->get();
+        $posts = Post::with(['tags', 'dietaries', 'cuisines', 'thumbnails'])->get();
 
         foreach ($posts as $post) {
             if ($post->tags && $post->tags instanceof Collection) {
@@ -53,6 +53,15 @@ class PostController extends Controller
             if ($post->cuisines && $post->cuisines instanceof Collection) {
                 $post->cuisines = $post->cuisines->mapWithKeys(function ($cuisine) {
                     return [$cuisine->id => $cuisine->name];
+                });
+            }
+
+            if ($post->thumbnails && $post->thumbnails instanceof Collection) {
+                $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
+                    return [
+                        'thumbnail' => $thumbnail->thumbnail,
+                        'type' => $thumbnail->type
+                    ];
                 });
             }
         }
@@ -149,7 +158,7 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = Post::with(['user', 'instructions', 'ingredients', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines'])->find($id);
+        $post = Post::with(['user', 'instructions', 'ingredients', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines', 'thumbnails'])->find($id);
 
         if (!$post) {
             return response()->json([
@@ -168,6 +177,15 @@ class PostController extends Controller
 
         if ($post->cuisines && $post->cuisines instanceof Collection) {
             $post->cuisines = $post->cuisines->pluck('name');
+        }
+
+        if ($post->thumbnails && $post->thumbnails instanceof Collection) {
+            $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
+                return [
+                    'thumbnail' => $thumbnail->thumbnail,
+                    'type' => $thumbnail->type
+                ];
+            });
         }
 
         $post = $this->addExtraFields($post);
@@ -339,9 +357,15 @@ class PostController extends Controller
 
         $user_id = $user->id;
 
-        $query = Post::with(['user' => function($query) {
-            $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified');
-        }, 'comment', 'postlike', 'report_statuses'])
+        $query = Post::with([
+            'user' => function ($query) {
+                $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified');
+            },
+            'comment',
+            'postlike',
+            'report_statuses',
+            'thumbnails' // Додаємо thumbnails
+        ])
             ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
             ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')
             ->leftJoin('post_dietary', 'posts.id', '=', 'post_dietary.post_id')
@@ -357,7 +381,6 @@ class PostController extends Controller
                 'posts.hours',
                 'posts.type',
                 'posts.file',
-                'posts.thumbnail',
                 'posts.user_id',
                 'posts.status',
                 'posts.verified',
@@ -374,7 +397,6 @@ class PostController extends Controller
                 'posts.hours',
                 'posts.type',
                 'posts.file',
-                'posts.thumbnail',
                 'posts.user_id',
                 'posts.status',
                 'posts.verified'
@@ -384,36 +406,28 @@ class PostController extends Controller
         if ($request->filled('title')) {
             $query->where('posts.title', 'LIKE', '%' . $request->input('title') . '%');
         }
-
         if ($request->filled('type')) {
             $query->where('posts.type', 'LIKE', '%' . $request->input('type') . '%');
         }
-
         if ($request->filled('caption')) {
             $query->where('posts.caption', 'LIKE', '%' . $request->input('caption') . '%');
         }
-
         if ($request->filled('dietaries')) {
             $query->where('dietaries.name', 'LIKE', '%' . $request->input('dietaries') . '%');
         }
-
         if ($request->filled('tags')) {
             $query->where('tags.name', 'LIKE', '%' . $request->input('tags') . '%');
         }
-
         if ($request->filled('cuisines')) {
             $query->where('cuisines.name', 'LIKE', '%' . $request->input('cuisines') . '%');
         }
-
         if ($request->filled('time')) {
             $inputTime = (int) $request->input('time');
             $query->whereRaw('(posts.hours * 3600000000 + posts.minutes * 60000000) <= ?', [$inputTime]);
         }
-
         if ($request->filled('user_id')) {
             $query->where('posts.user_id', '=', $user_id);
         }
-
         if ($request->filled('status')) {
             $query->where('posts.status', '=', $request->input('status'));
         }
@@ -435,7 +449,14 @@ class PostController extends Controller
         }
 
         $posts->getCollection()->transform(function ($post) use ($user_id) {
-            return $this->addExtraFields($post, $user_id);
+            $postData = $this->addExtraFields($post, $user_id);
+            $postData['thumbnails'] = $post->thumbnails->map(function ($thumbnail) {
+                return [
+                    'thumbnail' => $thumbnail->thumbnail,
+                    'type' => $thumbnail->type
+                ];
+            });
+            return $postData;
         });
 
         return response()->json([
@@ -443,7 +464,6 @@ class PostController extends Controller
             'data' => $posts
         ]);
     }
-
 
     public function userSearch(Request $request)
     {

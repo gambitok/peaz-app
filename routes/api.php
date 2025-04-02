@@ -86,23 +86,12 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::delete('posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
 });
 
-//Route::post('convert-video', [S3Controller::class, 'convertVideo']);
 Route::get('generate-presigned-url', [S3Controller::class, 'generatePresignedUrl']);
 Route::post('initiate-multipart-upload', [S3Controller::class, 'initiateMultipartUpload']);
 Route::post('generate-multipart-presigned-url', [S3Controller::class, 'generateMultipartPresignedUrl']);
 Route::post('complete-multipart-upload', [S3Controller::class, 'completeMultipartUpload']);
 
 Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
-
-//    Route::post('verify-OTP-mobile', [GuestController::class, 'verifyOTPmobile']);
-//    Route::post('send-OTP-email', [GuestController::class, 'sendOTPemail']);
-//    Route::post('verify-OTP-email', [GuestController::class, 'verifyOTPemail']);
-//    Route::post('verifyOTP', [GuestController::class, 'verifyOTP']);
-//    Route::post('resetPassword', [GuestController::class, 'resetPassword']);
-//    Route::post('login', [GuestController::class, 'login']);
-//    Route::post('signup', [GuestController::class, 'signup']);
-//    Route::post('forgot_password', [GuestController::class, 'forgot_password']);
-//    Route::post('home', [PostV1Controller::class, 'home']);
 
     Route::post('check-social-ability', [GuestController::class, 'check_social_ability']);
     Route::get('content/{type}', [GuestController::class, 'content']);
@@ -128,19 +117,6 @@ Route::group(['namespace' => 'Api\V1', 'prefix' => 'V1'], function () {
     Route::post('user/search-username', [PostV1Controller::class, 'searchUsername']);
     Route::post('user/user-tag', [PostV1Controller::class, 'userTag']);
 
-//    Route::group(['prefix' => 'user'], function () {
-//        Route::get('getProfile', [UserV1Controller::class, 'getProfile']);
-//        Route::get('logout', [UserV1Controller::class, 'logout']);
-//        Route::post('create-post', [PostV1Controller::class, 'createPost']);
-//        Route::post('delete-post', [PostV1Controller::class, 'destory']);
-//    });
-
-//    Route::group(['middleware' => 'ApiTokenChecker'], function () {
-//        Route::group(['prefix' => 'user'], function () {
-//
-//
-//        });
-//    });
 });
 
 
