@@ -173,7 +173,7 @@ function get_asset($val = "", $file_exits_check = true, $no_image_available = nu
     }
 }
 
-function print_title($title)
+function print_title($title): string
 {
     return ucfirst($title);
 }
