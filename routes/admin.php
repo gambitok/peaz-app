@@ -49,6 +49,8 @@ Route::group(['middleware' => 'Is_Admin'], function () {
 
         Route::get('postlist/listing','PostListController@listing')->name('post.listing');
         Route::get('post_details','PostListController@postDetails')->name('post.post_details');
+        Route::get('post_details_create/{id}','PostListController@postDetailsCreate')->name('post.post_details_create');
+        Route::post('post_details_store/{id}','PostListController@postDetailsStore')->name('post.post_details_store');
         Route::get('post_details_edit/{id}','PostListController@postDetailsEdit')->name('post.post_details_edit');
         Route::patch('post_details_update/{id}','PostListController@postDetailsUpdate')->name('post.post_details_update');
         Route::delete('post_details_destroy/{id}','PostListController@postDetailsDestroy')->name('post.post_details_destroy');

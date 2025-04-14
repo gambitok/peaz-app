@@ -3,8 +3,6 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Post;
-
 
 class Ingredient extends Model
 {
@@ -16,7 +14,8 @@ class Ingredient extends Model
         return $this->belongsTo(Post::class, 'post_id');
     }
 
-    public function saveIngredient($data=[],$object_id=0,$object = null){
+    public function saveIngredient($data = [], $object_id = 0, $object = null)
+    {
         if(!empty($object)){
             //
         }

@@ -427,6 +427,39 @@ class PostListController extends WebController
             ->make(true);
     }
 
+    public function postDetailsCreate($post_id)
+    {
+        return view('admin.post.post_details_create', [
+            'title' => 'Create Ingredient',
+            'post_id' => $post_id,
+            'breadcrumb' => breadcrumb([
+                'post' => route('admin.post.index'),
+                'create' => route('admin.post.create')
+            ]),
+        ]);
+    }
+
+    public function postDetailsStore(Request $request, $post_id)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'type'        => 'nullable|string|max:255',
+            'measurement' => 'nullable|string|max:255',
+        ]);
+
+        $ingredient = new Ingredient();
+        $ingredient->post_id = $post_id;
+        $ingredient->user_id = auth()->id();
+        $ingredient->name = $validated['name'];
+        $ingredient->type = $validated['type'] ?? '';
+        $ingredient->measurement = $validated['measurement'] ?? '';
+        $ingredient->save();
+
+        success_session('Ingredients updated successfully');
+
+        return redirect()->route('admin.post.show', $post_id);
+    }
+
     public function postDetailsEdit($id)
     {
         $data = $this->ingredient_obj->find($id);
@@ -438,12 +471,13 @@ class PostListController extends WebController
                     'post' => route('admin.post.show', $data->post_id),
                     'edit' => route('admin.post.post_details_edit', $id),
                 ]),
-                'data' => $data // Додаємо 'data' до масиву
+                'data' => $data
             ]);
         } else {
             return redirect()->route('admin.post.index')->with('error', 'Ingredient not found');
         }
     }
+
     public function postDetailsUpdate(Request $request, $id)
     {
         $data = $this->ingredient_obj->find($id);

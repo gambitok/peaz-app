@@ -65,7 +65,7 @@
             <div class="card-title">
                 Tags
                 </div>
-                <table  class="table dt-responsive mb-4  nowrap w-100 mb-">
+                <table  class="table dt-responsive mb-4 nowrap w-100">
                     <thead>
                         <tr>
                             <th>Id</th>
@@ -91,7 +91,7 @@
             <div class="card-title">
                 Dietaries
                 </div>
-                <table  class="table dt-responsive mb-4  nowrap w-100 mb-">
+                <table  class="table dt-responsive mb-4 nowrap w-100">
                     <thead>
                         <tr>
                             <th>Id</th>
@@ -117,7 +117,7 @@
                 <div class="card-title">
                     Cuisines
                 </div>
-                <table  class="table dt-responsive mb-4  nowrap w-100 mb-">
+                <table  class="table dt-responsive mb-4 nowrap w-100">
                     <thead>
                     <tr>
                         <th>Id</th>
@@ -143,35 +143,29 @@
         <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                   Ingredient
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Ingredient</span>
+                        <a href="{{ route('admin.post.post_details_create', $data->id) }}" class="btn btn-primary btn-sm">Add Ingredient</a>
+                    </div>
                 </div>
                 <div>
-                <table id="listResults" class="table dt-responsive mb-4  nowrap w-100 mb-">
-                    <thead>
-                        <tr>
-
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                    <table id="listResults" class="table dt-responsive mb-4 nowrap w-100">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
         <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                Instruction
+                    Instruction
                 </div>
                 <div>
-
-                <table id="instruction" class="table dt-responsive mb-4  nowrap w-100 mb-">
-                    <thead>
-                        <tr>
-
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                    <table id="instruction" class="table dt-responsive mb-4 nowrap w-100">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
