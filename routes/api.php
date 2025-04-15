@@ -37,6 +37,8 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::apiResource('billboards', BillboardController::class);
     Route::apiResource('restaurants', RestaurantController::class);
 
+    Route::apiResource('filters', FilterController::class);
+
     Route::resource('user-interests', UserInterestController::class);
 
     Route::apiResource('user-relationships', UserRelationshipController::class);
@@ -75,6 +77,8 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::get('likes', [PostLikeController::class, 'getLikes']);
     Route::get('likes-grouped-by-cuisines', [PostLikeController::class, 'getLikesGroupedByCuisines']);
     Route::get('post-details/{id}', [PostController::class, 'details'])->name('posts.details');
+
+    Route::get('posts/by-filter/{filter_id}', [PostController::class, 'byFilter']);
 
     Route::get('posts/search', [PostController::class, 'search'])->name('posts.search');
     Route::get('posts/interests-search', [PostController::class, 'interestsSearch'])->name('posts.interests-search');

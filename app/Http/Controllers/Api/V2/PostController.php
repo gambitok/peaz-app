@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use App\Filter;
 
 class PostController extends Controller
 {
@@ -1130,6 +1131,42 @@ class PostController extends Controller
                 'data' => $th->getMessage()
             ]);
         }
+    }
+
+    public function byFilter($filter_id)
+    {
+        $filter = Filter::with('tags')->findOrFail($filter_id);
+
+        $tagIds = $filter->tags->pluck('id')->toArray();
+
+        $posts = Post::with(['tags', 'dietaries', 'cuisines', 'thumbnails'])
+            ->whereHas('tags', function ($q) use ($tagIds) {
+                $q->whereIn('tags.id', $tagIds);
+            })
+            ->get();
+
+        foreach ($posts as $post) {
+            if ($post->tags instanceof Collection) {
+                $post->tags = $post->tags->mapWithKeys(fn($tag) => [$tag->id => $tag->name]);
+            }
+
+            if ($post->dietaries instanceof Collection) {
+                $post->dietaries = $post->dietaries->mapWithKeys(fn($d) => [$d->id => $d->name]);
+            }
+
+            if ($post->cuisines instanceof Collection) {
+                $post->cuisines = $post->cuisines->mapWithKeys(fn($c) => [$c->id => $c->name]);
+            }
+
+            if ($post->thumbnails instanceof Collection) {
+                $post->thumbnails = $post->thumbnails->map(fn($thumb) => [
+                    'thumbnail' => $thumb->thumbnail,
+                    'type' => $thumb->type,
+                ]);
+            }
+        }
+
+        return response()->json($posts);
     }
 
 }
