@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +15,7 @@ class ReportSeeder extends Seeder
     public function run()
     {
         $keys = collect([
-            
+
             'title',
             'status'
         ]);

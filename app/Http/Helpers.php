@@ -314,6 +314,17 @@ function admin_modules()
 //            ]
 //        ],
         [
+            'route' => route('admin.filter.index'),
+            'name' => "Inspiration sections",
+            'icon' => 'fas fa-users',
+            'child' => [],
+            'all_routes' => [
+                'admin.filters.index',
+                'admin.filters.show',
+                'admin.filters.add',
+            ]
+        ],
+        [
             'route' => route('admin.billboards.index'),
             'name' => "Billboards",
             'icon' => 'fas fa-users',

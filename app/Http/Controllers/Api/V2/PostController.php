@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use App\Filter;
 
 class PostController extends Controller
 {
@@ -38,38 +37,52 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with(['tags', 'dietaries', 'cuisines', 'thumbnails'])->get();
+        $posts = Post::with([
+            'user' => function ($query) {
+                $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified');
+            },
+            'tags',
+            'dietaries',
+            'cuisines',
+            'comment',
+            'postlike',
+            'report_statuses',
+            'thumbnails'
+        ])->get();
 
-        foreach ($posts as $post) {
-            if ($post->tags && $post->tags instanceof Collection) {
-                $post->tags = $post->tags->mapWithKeys(function ($tag) {
-                    return [$tag->id => $tag->name];
-                });
-            }
+        $posts = $posts->map(function ($post) {
+            $postData = method_exists($this, 'addExtraFields')
+                ? $this->addExtraFields($post, null)
+                : $post->toArray();
 
-            if ($post->dietaries && $post->dietaries instanceof Collection) {
-                $post->dietaries = $post->dietaries->mapWithKeys(function ($dietary) {
-                    return [$dietary->id => $dietary->name];
-                });
-            }
+            $postData['tags'] = $post->tags && $post->tags instanceof \Illuminate\Support\Collection
+                ? $post->tags->pluck('name')->toArray()
+                : [];
 
-            if ($post->cuisines && $post->cuisines instanceof Collection) {
-                $post->cuisines = $post->cuisines->mapWithKeys(function ($cuisine) {
-                    return [$cuisine->id => $cuisine->name];
-                });
-            }
+            $postData['dietaries'] = $post->dietaries && $post->dietaries instanceof \Illuminate\Support\Collection
+                ? $post->dietaries->pluck('name')->toArray()
+                : [];
 
-            if ($post->thumbnails && $post->thumbnails instanceof Collection) {
-                $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
+            $postData['cuisines'] = $post->cuisines && $post->cuisines instanceof \Illuminate\Support\Collection
+                ? $post->cuisines->pluck('name')->toArray()
+                : [];
+
+            $postData['thumbnails'] = $post->thumbnails && $post->thumbnails instanceof \Illuminate\Support\Collection
+                ? $post->thumbnails->map(function ($thumbnail) {
                     return [
                         'thumbnail' => $thumbnail->thumbnail,
                         'type' => $thumbnail->type
                     ];
-                });
-            }
-        }
+                })
+                : [];
 
-        return response()->json($posts);
+            return $postData;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $posts
+        ]);
     }
 
     /**
@@ -389,7 +402,7 @@ class PostController extends Controller
             'comment',
             'postlike',
             'report_statuses',
-            'thumbnails' // Додаємо thumbnails
+            'thumbnails'
         ])
             ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
             ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')
@@ -1135,14 +1148,19 @@ class PostController extends Controller
 
     public function byFilter($filter_id)
     {
-        $filter = Filter::with('tags')->findOrFail($filter_id);
+        $tagIds = DB::table('filter_tag')
+            ->where('filter_id', $filter_id)
+            ->pluck('tag_id')
+            ->toArray();
 
-        $tagIds = $filter->tags->pluck('id')->toArray();
+        if (empty($tagIds)) {
+            return response()->json([]);
+        }
 
         $posts = Post::with(['tags', 'dietaries', 'cuisines', 'thumbnails'])
             ->whereHas('tags', function ($q) use ($tagIds) {
                 $q->whereIn('tags.id', $tagIds);
-            })
+            }, '=', count($tagIds))
             ->get();
 
         foreach ($posts as $post) {

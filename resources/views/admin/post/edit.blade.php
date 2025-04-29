@@ -91,6 +91,8 @@
                             </div>
                         </div>
 
+                        <hr>
+
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="submit" class="btn btn-primary">Update</button>
                             <button type="button" class="btn btn-danger">Delete</button>
@@ -132,32 +134,51 @@
 
                     <hr>
 
-                    <div class="form-group d-flex justify-content-between">
-                        <label for="thumbnail" class="col-form-label">Thumbnail</label>
-                        <div class="w-50">
-                            <input type="file" name="thumbnail" id="thumbnail" class="form-control upload-file" data-type="thumbnail" data-id="{{ $data->id }}" style="display:none;">
-                            <button type="button" id="thumbnail-btn" class="btn btn-primary w-100">
-                                {{ $data->thumbnail !== '' ? 'Change' : 'Add new' }}
-                            </button>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Thumbnails</h3>
 
-                            <div id="thumbnail-preview-container" class="mt-2">
-                                @if($data->thumbnail)
-                                    <div class="d-flex align-items-center mt-2">
-                                        <a href="{{ $data->thumbnail }}" target="_blank" id="thumbnail-link">
-                                            @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $data->thumbnail))
-                                                <img src="{{ $data->thumbnail }}" alt="Thumbnail" id="thumbnail-preview" style="max-width: 200px; max-height: 200px;">
-                                            @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->thumbnail))
-                                                <video src="{{ $data->thumbnail }}" id="thumbnail-preview" style="max-width: 100%; max-height: 500px;" controls></video>
-                                            @endif
-                                        </a>
-                                        <button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="{{ $data->id }}" data-type="thumbnail">Delete</button>
+                    @for ($i = 0; $i < 4; $i++)
+                        @php
+                            $thumbnail = $data->thumbnails[$i] ?? null;
+                        @endphp
+
+                        <div class="mb-6 border p-4 rounded-md shadow-sm">
+                            <input type="hidden" name="thumbnails[{{ $i }}][id]" value="{{ $thumbnail->id ?? '' }}">
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold">Thumbnail</label>
+                                @if($thumbnail)
+                                    <div class="relative">
+                                        @if($thumbnail->type === 'image')
+                                            <img src="{{ $thumbnail->thumbnail }}" alt="thumb" class="h-32 object-cover rounded mb-2">
+                                        @else
+                                            <video controls src="{{ $thumbnail->thumbnail }}" class="h-32 rounded mb-2"></video>
+                                        @endif
                                     </div>
+                                @endif
+
+                                <input type="file" name="thumbnails[{{ $i }}][file]" class="form-control mt-2">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="block text-sm font-semibold">Title</label>
+                                <input type="text" name="thumbnails[{{ $i }}][title]" value="{{ old("thumbnails.$i.title", $thumbnail->title ?? '') }}" class="form-control">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="block text-sm font-semibold">Description</label>
+                                <textarea name="thumbnails[{{ $i }}][description]" class="form-control">{{ old("thumbnails.$i.description", $thumbnail->description ?? '') }}</textarea>
+                            </div>
+
+                            <div class="flex justify-between mt-4">
+                                @if($thumbnail)
+                                    <button type="submit" name="thumbnails[{{ $i }}][action]" value="delete" class="btn btn-danger btn-sm">Delete</button>
+                                    <button type="submit" name="thumbnails[{{ $i }}][action]" value="update" class="btn btn-warning btn-sm">Update</button>
                                 @else
-                                    <p>No thumbnail uploaded</p>
+                                    <button type="submit" name="thumbnails[{{ $i }}][action]" value="add" class="btn btn-info btn-sm">Add</button>
                                 @endif
                             </div>
                         </div>
-                    </div>
+                    @endfor
 
                 </div>
             </div>

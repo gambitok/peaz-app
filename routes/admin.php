@@ -8,7 +8,9 @@ use App\Http\Controllers\Admin\RestaurantViewController;
 use App\Http\Controllers\Admin\TagViewController;
 use App\Http\Controllers\Admin\DietaryViewController;
 use App\Http\Controllers\Admin\CuisineViewController;
+use App\Http\Controllers\Admin\FilterViewController;
 use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\PostThumbnailController;
 
 Route::group(['middleware' => 'guest', 'namespace' => 'General'], function () {
     Route::post('login', 'GeneralController@login')->name('login_post');
@@ -31,6 +33,7 @@ Route::group(['middleware' => 'Is_Admin'], function () {
     Route::post('/update_password', 'General\GeneralController@update_password')->name('update_password');
     Route::get('/site_settings', 'General\GeneralController@get_site_settings')->name('get_site_settings');
     Route::post('/site_settings', 'General\GeneralController@site_settings')->name('site_settings');
+
     Route::group(['namespace' => 'Admin'], function () {
         // User Module
         Route::get('user/listing', 'UsersController@listing')->name('user.listing');
@@ -57,6 +60,10 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::get('instruction','PostListController@instruction')->name('post.instruction');
 
         Route::resource('post','PostListController');
+
+        Route::post('/post-thumbnails', [PostThumbnailController::class, 'store'])->name('post_thumbnail.store');
+        Route::put('/post-thumbnails/{id}', [PostThumbnailController::class, 'update'])->name('post_thumbnail.update');
+        Route::delete('/post-thumbnails/{id}', [PostThumbnailController::class, 'delete'])->name('post_thumbnail.delete');
 
         Route::delete('/post/{id}/delete-file',
             [PostListController::class, 'deleteFile'])->name('admin.post.deleteFile');
@@ -120,6 +127,14 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::get('/cuisine/{id}/edit', [CuisineViewController::class, 'edit'])->name('cuisine.edit');
         Route::put('/cuisine/{id}', [CuisineViewController::class, 'update'])->name('cuisine.update');
         Route::delete('/cuisine/{id}', [CuisineViewController::class, 'destroy'])->name('cuisine.destroy');
+
+        Route::get('/filter', [FilterViewController::class, 'index'])->name('filter.index');
+        Route::get('/filter/create', [FilterViewController::class, 'create'])->name('filter.create');
+        Route::post('/filter', [FilterViewController::class, 'store'])->name('filter.store');
+        Route::get('/filter/{id}', [FilterViewController::class, 'show'])->name('filter.show');
+        Route::get('/filter/{id}/edit', [FilterViewController::class, 'edit'])->name('filter.edit');
+        Route::put('/filter/{id}', [FilterViewController::class, 'update'])->name('filter.update');
+        Route::delete('/filter/{id}', [FilterViewController::class, 'destroy'])->name('filter.destroy');
 
     });
 });

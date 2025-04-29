@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PostThumbnailResource extends JsonResource
+class FilterResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,11 +16,7 @@ class PostThumbnailResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'post_id' => $this->post_id,
-            'thumbnail' => $this->thumbnail,
-            'type' => $this->type ?: null,
-            'title' => $this->title,
-            'description' => $this->description,
+            'name' => $this->name,
             'created_at' => $this->created_at ? $this->created_at->format('d.m.Y') : null,
         ];
     }

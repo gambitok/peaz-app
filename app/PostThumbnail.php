@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class PostThumbnail extends Model
 {
-    protected $fillable = ['post_id', 'thumbnail', 'type'];
+    protected $fillable = ['post_id', 'thumbnail', 'type', 'title', 'description'];
 
     /**
      * Get the post that owns the thumbnail.

@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -10,7 +12,7 @@ class General_Setting_Seeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(): void
     {
         $keys = collect([
             'label',
@@ -141,7 +143,7 @@ class General_Setting_Seeder extends Seeder
                 null,
                 'is Ios update is forced'
             ],
-           
+
         ];
         foreach ($values as $value) {
             $data = $keys->combine($value);

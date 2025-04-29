@@ -1,6 +1,7 @@
 <?php
 
-use Database\Seeders\PostsTableSeeder;
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -10,13 +11,11 @@ class DatabaseSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(): void
     {
         $this->call(General_Setting_Seeder::class);
         $this->call(Users_Seeder::class);
-        $this->call(ContentSeeder::class);
         $this->call(InterestedListSeeder::class);
-        $this->call(ReportSeeder::class);
         $this->call(CategorySeeder::class);
         $this->call(TagSeeder::class);
         $this->call(DietarySeeder::class);

@@ -1,8 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class Users_Seeder extends Seeder
@@ -12,7 +13,7 @@ class Users_Seeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(): void
     {
         $statuses = ['active', 'inactive'];
         $membership_levels = ['individual', 'business'];

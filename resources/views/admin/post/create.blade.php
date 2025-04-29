@@ -97,10 +97,18 @@
                             <label class="col-form-label">Thumbnails</label>
                             <div id="thumbnail-container">
                                 @for($i = 0; $i < 4; $i++)
-                                    <div class="thumbnail-upload">
-                                        <input type="file" name="thumbnails[]" class="form-control thumbnail-input" accept="image/*,video/*">
-                                        <div class="preview-container" id="preview-{{$i}}"></div>
-                                        <div class="thumbnail-preview" id="preview-section-{{$i}}">
+                                    <div class="thumbnail-upload mb-4 border p-3 rounded">
+                                        <div class="mb-2">
+                                            <input type="file" name="thumbnails[]" class="form-control thumbnail-input" accept="image/*,video/*">
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <input type="text" name="thumbnail_titles[]" class="form-control" placeholder="Thumbnail title">
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <textarea name="thumbnail_descriptions[]" class="form-control" rows="2" placeholder="Thumbnail description"></textarea>
+                                        </div>
+                                        <div class="preview-container mb-2" id="preview-{{$i}}"></div>
+                                        <div class="thumbnail-preview mb-2" id="preview-section-{{$i}}">
                                             <!-- Preview content will be injected here -->
                                         </div>
                                         <button type="button" class="btn btn-danger btn-sm remove-thumbnail" data-index="{{$i}}">Remove</button>
@@ -108,6 +116,7 @@
                                 @endfor
                             </div>
                         </div>
+
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>

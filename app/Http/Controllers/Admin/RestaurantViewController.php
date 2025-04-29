@@ -51,15 +51,11 @@ class RestaurantViewController extends Controller
         $validatedData = $request->validated();
         $userId = $request->user()->id;
 
-        // Convert status to boolean and then to an integer (0 or 1)
         $validatedData['status'] = isset($validatedData['status']) ? (int) filter_var($validatedData['status'], FILTER_VALIDATE_BOOLEAN) : 0;
 
-
-        // Create a new Restaurant entry to get its ID
         $restaurant = Restaurant::create(['user_id' => $userId] + $validatedData);
         $restaurantId = $restaurant->id;
 
-        // Array to store file fields
         $fileFields = ['file'];
 
         foreach ($fileFields as $field) {

@@ -140,6 +140,10 @@ class PostListController extends WebController
             'file' => 'nullable|file',
             'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
             'thumbnails' => 'array|max:4',
+            'thumbnail_titles' => 'nullable|array|max:4',
+            'thumbnail_titles.*' => 'nullable|string|max:255',
+            'thumbnail_descriptions' => 'nullable|array|max:4',
+            'thumbnail_descriptions.*' => 'nullable|string|max:1000',
             'hours' => 'required|numeric',
             'minutes' => 'required|numeric',
             'serving_size' => 'nullable|numeric',
@@ -178,7 +182,7 @@ class PostListController extends WebController
         ]);
 
         if ($request->hasFile('thumbnails')) {
-            foreach ($request->file('thumbnails') as $thumbnail) {
+            foreach ($request->file('thumbnails') as $index => $thumbnail) {
                 $extension = strtolower($thumbnail->getClientOriginalExtension());
 
                 if (in_array($extension, $imageExtensions)) {
@@ -191,10 +195,13 @@ class PostListController extends WebController
 
                 if (isset($path)) {
                     Storage::disk('s3')->setVisibility($path, 'public');
+
                     PostThumbnail::create([
                         'post_id' => $post->id,
                         'thumbnail' => $path,
                         'type' => $type,
+                        'title' => $request->thumbnail_titles[$index] ?? null,
+                        'description' => $request->thumbnail_descriptions[$index] ?? null,
                     ]);
                 }
             }

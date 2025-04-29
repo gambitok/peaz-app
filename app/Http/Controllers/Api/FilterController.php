@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Filter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FilterRequest;
-use App\Filter;
+use App\Http\Resources\FilterResource;
 
 class FilterController extends Controller
 {
     public function index()
     {
-        return response()->json(Filter::with('tags')->get());
+        $filters = Filter::with('tags')->get();
+        return FilterResource::collection($filters);
     }
 
     public function store(FilterRequest $request)
@@ -19,19 +21,17 @@ class FilterController extends Controller
         $filter = Filter::create($data);
         $filter->tags()->sync($request->tag_ids);
 
-        return response()->json(['message' => 'Filter created', 'filter' => $filter->load('tags')], 201);
+        return response(new FilterResource($filter->load('tags')), 201);
     }
 
-    public function show($id)
+    public function show(Filter $filter)
     {
-        $filter = Filter::with('tags')->findOrFail($id);
-        return response()->json($filter);
+        $filter->load('tags');
+        return new FilterResource($filter);
     }
 
-    public function update(FilterRequest $request, $id)
+    public function update(FilterRequest $request, Filter $filter)
     {
-        $filter = Filter::findOrFail($id);
-
         if ($request->has('name')) {
             $filter->name = $request->name;
         }
@@ -42,15 +42,14 @@ class FilterController extends Controller
             $filter->tags()->sync($request->tag_ids);
         }
 
-        return response()->json(['message' => 'Filter updated', 'filter' => $filter->load('tags')]);
+        return new FilterResource($filter->load('tags'));
     }
 
-    public function destroy($id)
+    public function destroy(Filter $filter)
     {
-        $filter = Filter::findOrFail($id);
         $filter->tags()->detach();
         $filter->delete();
 
-        return response()->json(['message' => 'Filter deleted']);
+        return response()->noContent();
     }
 }

@@ -283,7 +283,7 @@ class UsersController extends WebController
         $user->verified = $request->has('verified') ? 1 : 0;
         $user->membership_level = $request->membership_level;
         $user->status = $request->status;
-        $user->type = 'admin';
+        $user->type = 'user';
         $user->password = $request->password;
 
         $user->save();
