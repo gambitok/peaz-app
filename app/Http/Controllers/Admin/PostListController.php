@@ -138,8 +138,10 @@ class PostListController extends WebController
         $request->validate([
             'title' => 'required|string|max:255',
             'file' => 'nullable|file',
+            'thumbnails' => 'nullable|array|max:4',
             'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
-            'thumbnails' => 'array|max:4',
+            'thumbnails_files' => 'nullable|array|max:4',
+            'thumbnails_files.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:51200',
             'thumbnail_titles' => 'nullable|array|max:4',
             'thumbnail_titles.*' => 'nullable|string|max:255',
             'thumbnail_descriptions' => 'nullable|array|max:4',
@@ -182,28 +184,51 @@ class PostListController extends WebController
         ]);
 
         if ($request->hasFile('thumbnails')) {
-            foreach ($request->file('thumbnails') as $index => $thumbnail) {
-                $extension = strtolower($thumbnail->getClientOriginalExtension());
+            foreach ($request->file('thumbnails') as $index => $thumbnailFile) {
+                $thumbPath = null;
+                $filePath = null;
+                $thumbType = null;
+                $fileType = null;
 
-                if (in_array($extension, $imageExtensions)) {
-                    $path = $thumbnail->store('uploads/posts/thumbnails/images', 's3');
-                    $type = 'image';
-                } elseif (in_array($extension, $videoExtensions)) {
-                    $path = $thumbnail->store('uploads/posts/thumbnails/videos', 's3');
-                    $type = 'video';
+                $thumbExt = strtolower($thumbnailFile->getClientOriginalExtension());
+                if (in_array($thumbExt, $imageExtensions)) {
+                    $thumbPath = $thumbnailFile->store('uploads/posts/thumbnails/images', 's3');
+                    $thumbType = 'image';
+                } elseif (in_array($thumbExt, $videoExtensions)) {
+                    $thumbPath = $thumbnailFile->store('uploads/posts/thumbnails/videos', 's3');
+                    $thumbType = 'video';
                 }
 
-                if (isset($path)) {
-                    Storage::disk('s3')->setVisibility($path, 'public');
-
-                    PostThumbnail::create([
-                        'post_id' => $post->id,
-                        'thumbnail' => $path,
-                        'type' => $type,
-                        'title' => $request->thumbnail_titles[$index] ?? null,
-                        'description' => $request->thumbnail_descriptions[$index] ?? null,
-                    ]);
+                if ($thumbPath) {
+                    Storage::disk('s3')->setVisibility($thumbPath, 'public');
                 }
+
+                if ($request->hasFile("thumbnails_files.$index")) {
+                    $file = $request->file("thumbnails_files.$index");
+                    $fileExt = strtolower($file->getClientOriginalExtension());
+
+                    if (in_array($fileExt, $imageExtensions)) {
+                        $filePath = $file->store('uploads/posts/thumbnails/files/images', 's3');
+                        $fileType = 'image';
+                    } elseif (in_array($fileExt, $videoExtensions)) {
+                        $filePath = $file->store('uploads/posts/thumbnails/files/videos', 's3');
+                        $fileType = 'video';
+                    }
+
+                    if ($filePath) {
+                        Storage::disk('s3')->setVisibility($filePath, 'public');
+                    }
+                }
+
+                PostThumbnail::create([
+                    'post_id' => $post->id,
+                    'file' => $filePath,
+                    'thumbnail' => $thumbPath,
+                    'type' => $thumbType,
+                    'file_type' => $fileType,
+                    'title' => $request->thumbnail_titles[$index] ?? null,
+                    'description' => $request->thumbnail_descriptions[$index] ?? null,
+                ]);
             }
         }
 

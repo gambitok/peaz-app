@@ -37,7 +37,17 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with([
+        $sortOrder = request()->get('sort', 'desc');
+        $validSortOrders = ['asc', 'desc'];
+
+        if (!in_array(strtolower($sortOrder), $validSortOrders)) {
+            $sortOrder = 'desc';
+        }
+
+        $statusFilter = request()->get('status');
+        $verifiedFilter = request()->get('verified');
+
+        $postsQuery = Post::with([
             'user' => function ($query) {
                 $query->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified');
             },
@@ -48,26 +58,36 @@ class PostController extends Controller
             'postlike',
             'report_statuses',
             'thumbnails'
-        ])->get();
+        ]);
+
+        if ($statusFilter !== null) {
+            $postsQuery->where('status', $statusFilter);
+        }
+
+        if ($verifiedFilter !== null) {
+            $postsQuery->where('verified', (bool) $verifiedFilter);
+        }
+
+        $posts = $postsQuery->orderBy('created_at', $sortOrder)->get();
 
         $posts = $posts->map(function ($post) {
             $postData = method_exists($this, 'addExtraFields')
                 ? $this->addExtraFields($post, null)
                 : $post->toArray();
 
-            $postData['tags'] = $post->tags && $post->tags instanceof \Illuminate\Support\Collection
+            $postData['tags'] = $post->tags instanceof \Illuminate\Support\Collection
                 ? $post->tags->pluck('name')->toArray()
                 : [];
 
-            $postData['dietaries'] = $post->dietaries && $post->dietaries instanceof \Illuminate\Support\Collection
+            $postData['dietaries'] = $post->dietaries instanceof \Illuminate\Support\Collection
                 ? $post->dietaries->pluck('name')->toArray()
                 : [];
 
-            $postData['cuisines'] = $post->cuisines && $post->cuisines instanceof \Illuminate\Support\Collection
+            $postData['cuisines'] = $post->cuisines instanceof \Illuminate\Support\Collection
                 ? $post->cuisines->pluck('name')->toArray()
                 : [];
 
-            $postData['thumbnails'] = $post->thumbnails && $post->thumbnails instanceof \Illuminate\Support\Collection
+            $postData['thumbnails'] = $post->thumbnails instanceof \Illuminate\Support\Collection
                 ? $post->thumbnails->map(function ($thumbnail) {
                     return [
                         'thumbnail' => $thumbnail->thumbnail,
@@ -92,295 +112,323 @@ class PostController extends Controller
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function store(Request $request)
-    {
-        $rules = [
-            'title' => 'required|string|max:100',
-            'caption' => 'required|string|max:255',
-            'serving_size' => 'required|integer',
-            'minutes' => 'required|integer',
-            'hours' => 'required|integer',
-            'method' => 'nullable|string',
-            'type' => 'required|string',
-            'user_id' => 'required|integer',
-            'file' => 'required|string',
-            'tags' => 'nullable|array',
-            'tags.*' => 'integer|exists:tags,id',
-            'dietaries' => 'nullable|array',
-            'dietaries.*' => 'integer|exists:dietaries,id',
-            'cuisines' => 'nullable|array',
-            'cuisines.*' => 'integer|exists:cuisines,id',
-            'thumbnails' => 'nullable|array',
-            'thumbnails.*' => 'string',
-        ];
+        public function store(Request $request)
+        {
+            $rules = [
+                'title' => 'required|string|max:100',
+                'caption' => 'required|string|max:255',
+                'serving_size' => 'required|integer',
+                'minutes' => 'required|integer',
+                'hours' => 'required|integer',
+                'method' => 'nullable|string',
+                'type' => 'required|string',
+                'user_id' => 'required|integer',
+                'file' => 'required|string',
+                'tags' => 'nullable|array',
+                'tags.*' => 'integer|exists:tags,id',
+                'dietaries' => 'nullable|array',
+                'dietaries.*' => 'integer|exists:dietaries,id',
+                'cuisines' => 'nullable|array',
+                'cuisines.*' => 'integer|exists:cuisines,id',
+                'thumbnails' => 'nullable|array',
+                'thumbnails.*.file' => 'required|string',
+                'thumbnails.*.thumbnail' => 'required|string',
+                'thumbnails.*.title' => 'nullable|string|max:255',
+                'thumbnails.*.description' => 'nullable|string|max:1000',
+            ];
 
-        $validator = Validator::make($request->all(), $rules);
+            $validator = Validator::make($request->all(), $rules);
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
 
-        $validatedData = $validator->validated();
+            $validatedData = $validator->validated();
 
-        $post = Post::create($validatedData);
+            $post = Post::create($validatedData);
 
-        if ($request->has('tags')) {
-            $post->tags()->attach($validatedData['tags']);
-        }
+            if (!empty($validatedData['tags'])) {
+                $post->tags()->attach($validatedData['tags']);
+            }
 
-        if ($request->has('dietaries')) {
-            $post->dietaries()->attach($validatedData['dietaries']);
-        }
+            if (!empty($validatedData['dietaries'])) {
+                $post->dietaries()->attach($validatedData['dietaries']);
+            }
 
-        if ($request->has('cuisines')) {
-            $post->cuisines()->attach($validatedData['cuisines']);
-        }
+            if (!empty($validatedData['cuisines'])) {
+                $post->cuisines()->attach($validatedData['cuisines']);
+            }
 
-            if ($request->has('thumbnails')) {
-            foreach ($validatedData['thumbnails'] as $thumbnail) {
-                $extension = strtolower(pathinfo($thumbnail, PATHINFO_EXTENSION));
-
+            if (!empty($validatedData['thumbnails'])) {
                 $imageExtensions = ['jpeg', 'png', 'jpg', 'gif'];
                 $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
 
-                if (in_array($extension, $imageExtensions)) {
-                    $type = 'image';
-                } elseif (in_array($extension, $videoExtensions)) {
-                    $type = 'video';
-                } else {
-                    return response()->json(['error' => 'Unsupported file format for thumbnails'], 400);
+                foreach ($validatedData['thumbnails'] as $thumb) {
+                    $fileExt = strtolower(pathinfo($thumb['file'], PATHINFO_EXTENSION));
+                    $thumbExt = strtolower(pathinfo($thumb['thumbnail'], PATHINFO_EXTENSION));
+
+                    $fileType = in_array($fileExt, $imageExtensions) ? 'image' : (in_array($fileExt, $videoExtensions) ? 'video' : null);
+                    $thumbType = in_array($thumbExt, $imageExtensions) ? 'image' : (in_array($thumbExt, $videoExtensions) ? 'video' : null);
+
+                    if (!$fileType || !$thumbType) {
+                        return response()->json(['error' => 'Unsupported file format in thumbnails'], 400);
+                    }
+
+                    PostThumbnail::create([
+                        'post_id' => $post->id,
+                        'file' => $thumb['file'],
+                        'thumbnail' => $thumb['thumbnail'],
+                        'title' => $thumb['title'] ?? null,
+                        'description' => $thumb['description'] ?? null,
+                        'file_type' => $fileType,
+                        'type' => $thumbType,
+                    ]);
                 }
-
-                PostThumbnail::create([
-                    'post_id' => $post->id,
-                    'thumbnail' => $thumbnail,
-                    'type' => $type,
-                ]);
-
             }
-        }
 
-        $post->load('tags', 'dietaries', 'cuisines', 'thumbnails');
+            $post->load('tags', 'dietaries', 'cuisines', 'thumbnails');
 
-        return response()->json([
-            'post' => $post
-        ], 201);
-    }
-
-    /**
-     * Display the specified post.
-     *
-     * @param  int  $id
-     * @return JsonResponse
-     */
-    public function show($id)
-    {
-        $post = Post::with(['user', 'instructions', 'ingredients', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines', 'thumbnails'])->find($id);
-
-        if (!$post) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Post not found'
-            ], 404);
+                'post' => $post
+            ], 201);
         }
 
-        if ($post->tags && $post->tags instanceof Collection) {
-            $post->tags = $post->tags->pluck('name');
-        }
+        /**
+         * Display the specified post.
+         *
+         * @param  int  $id
+         * @return JsonResponse
+         */
+        public function show($id)
+        {
+            $post = Post::with(['user', 'instructions', 'ingredients', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines', 'thumbnails'])->find($id);
 
-        if ($post->dietaries && $post->dietaries instanceof Collection) {
-            $post->dietaries = $post->dietaries->pluck('name');
-        }
+            if (!$post) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Post not found'
+                ], 404);
+            }
 
-        if ($post->cuisines && $post->cuisines instanceof Collection) {
-            $post->cuisines = $post->cuisines->pluck('name');
-        }
+            if ($post->tags && $post->tags instanceof Collection) {
+                $post->tags = $post->tags->pluck('name');
+            }
 
-        if ($post->thumbnails && $post->thumbnails instanceof Collection) {
-            $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
-                return [
-                    'thumbnail' => $thumbnail->thumbnail,
-                    'type' => $thumbnail->type
-                ];
-            });
-        }
+            if ($post->dietaries && $post->dietaries instanceof Collection) {
+                $post->dietaries = $post->dietaries->pluck('name');
+            }
 
-        $post = $this->addExtraFields($post);
+            if ($post->cuisines && $post->cuisines instanceof Collection) {
+                $post->cuisines = $post->cuisines->pluck('name');
+            }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $post,
-        ]);
-    }
+            if ($post->thumbnails && $post->thumbnails instanceof Collection) {
+                $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
+                    return [
+                        'thumbnail' => $thumbnail->thumbnail,
+                        'type' => $thumbnail->type
+                    ];
+                });
+            }
 
-    protected function addExtraFields($post, $user_id = null)
-    {
-        $post->comment_count = $post->comment->count();
-        $post->postlike_count = $post->postlike->count();
-        $post->avg_rating = $post->comment->avg('rating') ?? '0';
-        $post->is_rating = false;
-        $post->is_like = false;
-        $post->is_reported = false;
+            $post = $this->addExtraFields($post);
 
-        if ($user_id) {
-            $post->is_like = $post->postlike()->where('user_id', $user_id)->exists();
-            $post->is_reported = $post->report_statuses()->where('user_id', $user_id)->exists();
-        }
-
-        return $post;
-    }
-
-    public function details($id)
-    {
-        $post = Post::with([
-            'instructions',
-            'ingredients',
-            'tags',
-            'dietaries',
-            'cuisines',
-            'thumbnails'
-        ])->find($id);
-
-        if (!$post) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Post not found'
-            ], 404);
+                'status' => 'success',
+                'data' => $post,
+            ]);
         }
 
-        if ($post->tags && $post->tags instanceof Collection) {
-            $post->tags = $post->tags->pluck('name');
+        protected function addExtraFields($post, $user_id = null)
+        {
+            $post->comment_count = $post->comment->count();
+            $post->postlike_count = $post->postlike->count();
+            $post->avg_rating = $post->comment->avg('rating') ?? '0';
+            $post->is_rating = false;
+            $post->is_like = false;
+            $post->is_reported = false;
+
+            if ($user_id) {
+                $post->is_like = $post->postlike()->where('user_id', $user_id)->exists();
+                $post->is_reported = $post->report_statuses()->where('user_id', $user_id)->exists();
+            }
+
+            return $post;
         }
 
-        if ($post->dietaries && $post->dietaries instanceof Collection) {
-            $post->dietaries = $post->dietaries->pluck('name');
-        }
+        public function details($id)
+        {
+            $post = Post::with([
+                'instructions',
+                'ingredients',
+                'tags',
+                'dietaries',
+                'cuisines',
+                'thumbnails'
+            ])->find($id);
 
-        if ($post->cuisines && $post->cuisines instanceof Collection) {
-            $post->cuisines = $post->cuisines->pluck('name');
-        }
+            if (!$post) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Post not found'
+                ], 404);
+            }
 
-        if ($post->thumbnails && $post->thumbnails instanceof Collection) {
-            $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
-                return [
-                    'thumbnail' => $thumbnail->thumbnail,
-                    'type' => $thumbnail->type
-                ];
-            });
-        }
+            if ($post->tags && $post->tags instanceof Collection) {
+                $post->tags = $post->tags->pluck('name');
+            }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $post
-        ]);
-    }
+            if ($post->dietaries && $post->dietaries instanceof Collection) {
+                $post->dietaries = $post->dietaries->pluck('name');
+            }
 
-    /**
-     * Update the specified post in storage.
-     *
-     * @param int $id
-     * @return JsonResponse
-     * @throws ValidationException
-     */
-    public function update(Request $request, $id)
-    {
-        $post = Post::find($id);
+            if ($post->cuisines && $post->cuisines instanceof Collection) {
+                $post->cuisines = $post->cuisines->pluck('name');
+            }
 
-        if (!$post) {
+            if ($post->thumbnails && $post->thumbnails instanceof Collection) {
+                $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
+                    return [
+                        'thumbnail' => $thumbnail->thumbnail,
+                        'type' => $thumbnail->type
+                    ];
+                });
+            }
+
             return response()->json([
-                'status' => 'error',
-                'message' => 'Post not found'
-            ], 404);
+                'status' => 'success',
+                'data' => $post
+            ]);
         }
 
-        $rules = [
-            'title' => 'required|string|max:100',
-            'caption' => 'nullable|string|max:255',
-            'serving_size' => 'nullable|integer',
-            'minutes' => 'nullable|integer',
-            'hours' => 'nullable|integer',
-            'method' => 'nullable|string',
-            'type' => 'nullable|string',
-            'user_id' => 'nullable|integer',
-            'file' => 'nullable|string',
-            'thumbnails' => 'nullable|array|max:4',
-            'thumbnails.*' => 'string',
-            'tags' => 'nullable|array',
-            'tags.*' => 'integer|exists:tags,id',
-            'dietaries' => 'nullable|array',
-            'dietaries.*' => 'integer|exists:dietaries,id',
-            'cuisines' => 'nullable|array',
-            'cuisines.*' => 'integer|exists:cuisines,id',
-        ];
+        /**
+         * Update the specified post in storage.
+         *
+         * @param int $id
+         * @return JsonResponse
+         * @throws ValidationException
+         */
+        public function update(Request $request, $id)
+        {
+            $post = Post::find($id);
 
-        $validator = Validator::make($request->all(), $rules);
+            if (!$post) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Post not found'
+                ], 404);
+            }
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
+            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+            $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
 
-        $validatedData = $validator->validated();
-        $post->update($validatedData);
+            $rules = [
+                'title' => 'required|string|max:100',
+                'caption' => 'nullable|string|max:255',
+                'serving_size' => 'nullable|integer',
+                'minutes' => 'nullable|integer',
+                'hours' => 'nullable|integer',
+                'method' => 'nullable|string',
+                'type' => 'nullable|string',
+                'user_id' => 'nullable|integer',
+                'file' => 'nullable|string',
+                'thumbnails' => 'nullable|array|max:4',
+                'thumbnails.*.file' => 'nullable|string',
+                'thumbnails.*.thumbnail' => 'nullable|string',
+                'thumbnails.*.title' => 'nullable|string|max:255',
+                'thumbnails.*.description' => 'nullable|string|max:1000',
+                'tags' => 'nullable|array',
+                'tags.*' => 'integer|exists:tags,id',
+                'dietaries' => 'nullable|array',
+                'dietaries.*' => 'integer|exists:dietaries,id',
+                'cuisines' => 'nullable|array',
+                'cuisines.*' => 'integer|exists:cuisines,id',
+            ];
 
-        $post->tags()->sync($validatedData['tags'] ?? []);
-        $post->dietaries()->sync($validatedData['dietaries'] ?? []);
-        $post->cuisines()->sync($validatedData['cuisines'] ?? []);
+            $validator = Validator::make($request->all(), $rules);
 
-        if ($request->has('thumbnails')) {
-            $post->thumbnails()->delete();
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
 
-            foreach ($validatedData['thumbnails'] as $thumbnail) {
-                $extension = strtolower(pathinfo($thumbnail, PATHINFO_EXTENSION));
-                $imageExtensions = ['jpeg', 'png', 'jpg', 'gif'];
-                $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+            $validated = $validator->validated();
 
-                $type = in_array($extension, $imageExtensions) ? 'image' : (in_array($extension, $videoExtensions) ? 'video' : null);
+            $post->update([
+                'title' => $validated['title'],
+                'caption' => $validated['caption'] ?? $post->caption,
+                'serving_size' => $validated['serving_size'] ?? $post->serving_size,
+                'minutes' => $validated['minutes'] ?? $post->minutes,
+                'hours' => $validated['hours'] ?? $post->hours,
+                'method' => $validated['method'] ?? $post->method,
+                'type' => $validated['type'] ?? $post->type,
+                'user_id' => $validated['user_id'] ?? $post->user_id,
+                'file' => $validated['file'] ?? $post->file,
+            ]);
 
-                if (!$type) {
-                    return response()->json(['error' => 'Unsupported file format for thumbnails'], 400);
+            $post->tags()->sync($validated['tags'] ?? []);
+            $post->dietaries()->sync($validated['dietaries'] ?? []);
+            $post->cuisines()->sync($validated['cuisines'] ?? []);
+
+            // Обновлюємо thumbnails
+            if (isset($validated['thumbnails'])) {
+                $post->thumbnails()->delete();
+
+                foreach ($validated['thumbnails'] as $thumb) {
+                    $fileExtension = strtolower(pathinfo($thumb['file'], PATHINFO_EXTENSION));
+                    $thumbnailExtension = strtolower(pathinfo($thumb['thumbnail'], PATHINFO_EXTENSION));
+
+                    $fileType = in_array($fileExtension, $videoExtensions) ? 'video' : (in_array($fileExtension, $imageExtensions) ? 'image' : null);
+                    $thumbType = in_array($thumbnailExtension, $videoExtensions) ? 'video' : (in_array($thumbnailExtension, $imageExtensions) ? 'image' : null);
+
+                    if (!$fileType || !$thumbType) {
+                        return response()->json(['error' => 'Unsupported file or thumbnail type'], 400);
+                    }
+
+                    PostThumbnail::create([
+                        'post_id' => $post->id,
+                        'file' => $thumb['file'],
+                        'thumbnail' => $thumb['thumbnail'],
+                        'type' => $thumbType,
+                        'file_type' => $fileType,
+                        'title' => $thumb['title'] ?? null,
+                        'description' => $thumb['description'] ?? null,
+                    ]);
                 }
-
-                PostThumbnail::create([
-                    'post_id' => $post->id,
-                    'thumbnail' => $thumbnail,
-                    'type' => $type,
-                ]);
             }
+
+            $post->load('tags', 'dietaries', 'cuisines', 'thumbnails');
+
+            return response()->json($post, 200);
         }
 
-        $post->load('tags', 'dietaries', 'cuisines', 'thumbnails');
+        /**
+         * Remove the specified post from storage.
+         *
+         * @param  int  $id
+         * @return JsonResponse
+         */
+        public function destroy($id)
+        {
+            $post = Post::find($id);
 
-        return response()->json($post, 200);
-    }
+            if (!$post) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Post not found'
+                ], 404);
+            }
 
-    /**
-     * Remove the specified post from storage.
-     *
-     * @param  int  $id
-     * @return JsonResponse
-     */
-    public function destroy($id)
-    {
-        $post = Post::find($id);
+            $post->tags()->detach();
+            $post->dietaries()->detach();
+            $post->cuisines()->detach();
 
-        if (!$post) {
+            $post->delete();
+
             return response()->json([
-                'status' => 'error',
-                'message' => 'Post not found'
-            ], 404);
+                'status' => 'success',
+                'message' => 'Post deleted successfully'
+            ]);
         }
-
-        $post->tags()->detach();
-        $post->dietaries()->detach();
-        $post->cuisines()->detach();
-
-        $post->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Post deleted successfully'
-        ]);
-    }
 
     public function search(Request $request)
     {

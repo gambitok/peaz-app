@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class PostThumbnail extends Model
 {
-    protected $fillable = ['post_id', 'thumbnail', 'type', 'title', 'description'];
+    protected $fillable = ['post_id', 'file', 'file_type', 'thumbnail', 'type', 'title', 'description'];
 
     /**
      * Get the post that owns the thumbnail.
@@ -18,6 +18,14 @@ class PostThumbnail extends Model
     }
 
     public function getThumbnailAttribute($val)
+    {
+        if(!empty($val)){
+            return Storage::disk('s3')->url($val);
+        }
+        return '';
+    }
+
+    public function getFileAttribute($val)
     {
         if(!empty($val)){
             return Storage::disk('s3')->url($val);

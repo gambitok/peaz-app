@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V2\UserController;
 use App\Http\Controllers\Api\V1\UserController as UserV1Controller;
 
 use App\Http\Controllers\Api\V2\PostController;
+use App\Http\Controllers\Api\V2\IngredientController;
+use App\Http\Controllers\Api\V2\PostThumbnailController;
 use App\Http\Controllers\Api\V1\PostController as PostV1Controller;
 use App\Http\Controllers\Api\V2\PostLikeController;
 use App\Http\Controllers\Api\V2\PostCommentController;
@@ -79,6 +81,18 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::get('post-details/{id}', [PostController::class, 'details'])->name('posts.details');
 
     Route::get('posts/by-filter/{filter_id}', [PostController::class, 'byFilter']);
+
+    Route::get('ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
+    Route::get('ingredients/{id}', [IngredientController::class, 'show'])->name('ingredients.show');
+    Route::post('ingredients/', [IngredientController::class, 'store'])->name('ingredients.store');
+    Route::put('ingredients/{id}', [IngredientController::class, 'update'])->name('ingredients.update');
+    Route::delete('ingredients/{id}', [IngredientController::class, 'destroy'])->name('ingredients.destroy');
+
+    Route::get('instructions', [PostThumbnailController::class, 'index'])->name('instructions.index');
+    Route::get('instructions/{id}', [PostThumbnailController::class, 'show'])->name('instructions.show');
+    Route::post('instructions/', [PostThumbnailController::class, 'store'])->name('instructions.store');
+    Route::put('instructions/{id}', [PostThumbnailController::class, 'update'])->name('instructions.update');
+    Route::delete('instructions/{id}', [PostThumbnailController::class, 'destroy'])->name('instructions.destroy');
 
     Route::get('posts/search', [PostController::class, 'search'])->name('posts.search');
     Route::get('posts/interests-search', [PostController::class, 'interestsSearch'])->name('posts.interests-search');

@@ -134,7 +134,7 @@
 
                     <hr>
 
-                    <h3 class="text-lg font-bold mt-6 mb-2">Thumbnails</h3>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Instructions</h3>
 
                     @for ($i = 0; $i < 4; $i++)
                         @php
@@ -145,7 +145,6 @@
                             <input type="hidden" name="thumbnails[{{ $i }}][id]" value="{{ $thumbnail->id ?? '' }}">
 
                             <div class="mb-4">
-                                <label class="block text-sm font-semibold">Thumbnail</label>
                                 @if($thumbnail)
                                     <div class="relative">
                                         @if($thumbnail->type === 'image')
@@ -178,6 +177,7 @@
                                 @endif
                             </div>
                         </div>
+                        <br>
                     @endfor
 
                 </div>
