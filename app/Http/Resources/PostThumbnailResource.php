@@ -17,9 +17,9 @@ class PostThumbnailResource extends JsonResource
         return [
             'id' => $this->id,
             'post_id' => $this->post_id,
-            'file' => $this->file,
+            'file' => $this->file ?: null,
             'file_type' => $this->file_type ?: null,
-            'thumbnail' => $this->thumbnail,
+            'thumbnail' => $this->thumbnail ?: null,
             'type' => $this->type ?: null,
             'title' => $this->title,
             'description' => $this->description,

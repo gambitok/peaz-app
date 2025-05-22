@@ -124,6 +124,7 @@ class PostController extends Controller
                 'type' => 'required|string',
                 'user_id' => 'required|integer',
                 'file' => 'required|string',
+                'thumbnail' => 'required|string',
                 'tags' => 'nullable|array',
                 'tags.*' => 'integer|exists:tags,id',
                 'dietaries' => 'nullable|array',
@@ -332,6 +333,7 @@ class PostController extends Controller
                 'type' => 'nullable|string',
                 'user_id' => 'nullable|integer',
                 'file' => 'nullable|string',
+                'thumbnail' => 'nullable|string',
                 'thumbnails' => 'nullable|array|max:4',
                 'thumbnails.*.file' => 'nullable|string',
                 'thumbnails.*.thumbnail' => 'nullable|string',
@@ -362,7 +364,7 @@ class PostController extends Controller
                 'method' => $validated['method'] ?? $post->method,
                 'type' => $validated['type'] ?? $post->type,
                 'user_id' => $validated['user_id'] ?? $post->user_id,
-                'file' => $validated['file'] ?? $post->file,
+                'file' => isset($validated['file']) ? $validated['file'] : $post->file,
             ]);
 
             $post->tags()->sync($validated['tags'] ?? []);
@@ -467,6 +469,7 @@ class PostController extends Controller
                 'posts.hours',
                 'posts.type',
                 'posts.file',
+                'posts.thumnbail',
                 'posts.user_id',
                 'posts.status',
                 'posts.verified',
@@ -569,7 +572,7 @@ class PostController extends Controller
             'comment',
             'postlike',
             'report_statuses',
-            'thumbnails' // Додаємо thumbnails
+            'thumbnails'
         ])
             ->leftJoin('post_tag', 'posts.id', '=', 'post_tag.post_id')
             ->leftJoin('tags', 'post_tag.tag_id', '=', 'tags.id')
@@ -586,6 +589,7 @@ class PostController extends Controller
                 'posts.hours',
                 'posts.type',
                 'posts.file',
+                'posts.thumbnail',
                 'posts.user_id',
                 'posts.status',
                 DB::raw('(SELECT GROUP_CONCAT(DISTINCT tags.name SEPARATOR ", ") FROM post_tag LEFT JOIN tags ON post_tag.tag_id = tags.id WHERE post_tag.post_id = posts.id) as tags'),

@@ -32,4 +32,15 @@ class PostThumbnail extends Model
         }
         return '';
     }
+
+    public function setFileAttribute($val)
+    {
+        $this->attributes['file'] = $val;
+    }
+
+    public function setThumbnailAttribute($val)
+    {
+        $this->attributes['thumbnail'] = $val;
+    }
 }
+

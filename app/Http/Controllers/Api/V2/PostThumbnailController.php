@@ -41,7 +41,6 @@ class PostThumbnailController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        // === Обробка file ===
         $filePath = $validated['file'];
         $fileExtension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
@@ -53,7 +52,6 @@ class PostThumbnailController extends Controller
             return response()->json(['error' => 'Invalid file type for "file".'], 400);
         }
 
-        // === Обробка thumbnail ===
         $thumbnailPath = $validated['thumbnail'];
         $thumbnailExtension = strtolower(pathinfo($thumbnailPath, PATHINFO_EXTENSION));
 
@@ -78,8 +76,10 @@ class PostThumbnailController extends Controller
         return response()->json(new PostThumbnailResource($thumbnail), 201);
     }
 
-    public function update(Request $request, PostThumbnail $thumbnail)
+    public function update(Request $request, $id)
     {
+        $thumbnail = PostThumbnail::findOrFail($id);
+
         $validated = $request->validate([
             'post_id' => 'nullable|integer|exists:posts,id',
             'file' => 'nullable|string|max:2048',
@@ -134,7 +134,6 @@ class PostThumbnailController extends Controller
 
         return response()->json(new PostThumbnailResource($thumbnail));
     }
-
 
     public function destroy($id)
     {
