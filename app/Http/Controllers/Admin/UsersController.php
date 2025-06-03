@@ -228,7 +228,7 @@ class UsersController extends WebController
             if ($request->hasFile('profile_image')) {
                 $path = $request->file('profile_image')->store('uploads/users', 's3');
                 if ($path) {
-                    Storage::disk('s3')->setVisibility($path, 'public');
+                    //Storage::disk('s3')->setVisibility($path, 'public');
                     $profile_image = $path;
                 }
             }
@@ -268,7 +268,7 @@ class UsersController extends WebController
         if ($request->hasFile('profile_image')) {
             $path = $request->file('profile_image')->store('uploads/users', 's3');
             if ($path) {
-                Storage::disk('s3')->setVisibility($path, 'public');
+                //Storage::disk('s3')->setVisibility($path, 'public');
                 $profile_image = $path;
             }
         }

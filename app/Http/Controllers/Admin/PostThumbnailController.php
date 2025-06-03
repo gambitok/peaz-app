@@ -24,7 +24,7 @@ class PostThumbnailController extends Controller
         $file = $request->file('thumbnail');
         $filename = time() . '.' . $file->getClientOriginalExtension();
         $filePath = 'thumbnails/' . $filename;
-        Storage::disk('s3')->put($filePath, file_get_contents($file), 'public');
+        //Storage::disk('s3')->put($filePath, file_get_contents($file), 'public');
 
         // Create thumbnail record
         $thumbnail = PostThumbnail::create([
@@ -57,7 +57,7 @@ class PostThumbnailController extends Controller
             $file = $request->file('thumbnail');
             $filename = time() . '.' . $file->getClientOriginalExtension();
             $filePath = 'thumbnails/' . $filename;
-            Storage::disk('s3')->put($filePath, file_get_contents($file), 'public');
+            //Storage::disk('s3')->put($filePath, file_get_contents($file), 'public');
 
             $thumbnail->thumbnail = $filePath;
         }

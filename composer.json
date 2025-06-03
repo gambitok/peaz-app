@@ -4,11 +4,12 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^10.0",
-        "aws/aws-sdk-php": "^3.342",
+        "aws/aws-sdk-php": "^3.171",
         "guzzlehttp/guzzle": "^7.0",
         "laravel/tinker": "^2.8",
         "laravel/passport": "^11.0",
-        "league/flysystem-aws-s3-v3": "^3.0"
+        "league/flysystem-aws-s3-v3": "^3.0",
+        "yajra/laravel-datatables-oracle": "^10.11"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",

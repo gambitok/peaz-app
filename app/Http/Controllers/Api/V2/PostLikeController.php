@@ -25,7 +25,7 @@ class PostLikeController extends Controller
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
-        $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
+        $awsUrl = env('AWS_URL');
 
         $likesGroupedQuery = DB::table('postlikes')
             ->join('posts', 'postlikes.post_id', '=', 'posts.id')
@@ -154,7 +154,7 @@ class PostLikeController extends Controller
 
         if ($posts->isNotEmpty()) {
             $likesWithPosts = [];
-            $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
+            $awsUrl = env('AWS_URL');
             foreach ($posts as $post) {
                 $post->likes = DB::table('postlikes')
                     ->where('post_id', $post->id)

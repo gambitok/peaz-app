@@ -157,17 +157,17 @@ class PostListController extends WebController
 
         $fileSrc = '';
         $fileType = null;
+
         if ($request->hasFile('file')) {
             $extension = strtolower($request->file('file')->getClientOriginalExtension());
             if (in_array($extension, $imageExtensions)) {
-                $path = $request->file('file')->store('uploads/posts/images', 's3');
+                $path = Storage::disk('s3')->putFile('uploads/posts/images', $request->file('file'), 'public');
                 $fileType = 'image';
             } elseif (in_array($extension, $videoExtensions)) {
-                $path = $request->file('file')->store('uploads/posts/videos', 's3');
+                $path = Storage::disk('s3')->putFile('uploads/posts/videos', $request->file('file'), 'public');
                 $fileType = 'video';
             }
             if (isset($path)) {
-                Storage::disk('s3')->setVisibility($path, 'public');
                 $fileSrc = $path;
             }
         }
@@ -192,15 +192,11 @@ class PostListController extends WebController
 
                 $thumbExt = strtolower($thumbnailFile->getClientOriginalExtension());
                 if (in_array($thumbExt, $imageExtensions)) {
-                    $thumbPath = $thumbnailFile->store('uploads/posts/thumbnails/images', 's3');
+                    $thumbPath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $thumbnailFile, 'public');
                     $thumbType = 'image';
                 } elseif (in_array($thumbExt, $videoExtensions)) {
-                    $thumbPath = $thumbnailFile->store('uploads/posts/thumbnails/videos', 's3');
+                    $thumbPath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/videos', $thumbnailFile, 'public');
                     $thumbType = 'video';
-                }
-
-                if ($thumbPath) {
-                    Storage::disk('s3')->setVisibility($thumbPath, 'public');
                 }
 
                 if ($request->hasFile("thumbnails_files.$index")) {
@@ -208,24 +204,20 @@ class PostListController extends WebController
                     $fileExt = strtolower($file->getClientOriginalExtension());
 
                     if (in_array($fileExt, $imageExtensions)) {
-                        $filePath = $file->store('uploads/posts/thumbnails/files/images', 's3');
+                        $filePath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/files/images', $file, 'public');
                         $fileType = 'image';
                     } elseif (in_array($fileExt, $videoExtensions)) {
-                        $filePath = $file->store('uploads/posts/thumbnails/files/videos', 's3');
+                        $filePath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/files/videos', $file, 'public');
                         $fileType = 'video';
-                    }
-
-                    if ($filePath) {
-                        Storage::disk('s3')->setVisibility($filePath, 'public');
                     }
                 }
 
                 PostThumbnail::create([
                     'post_id' => $post->id,
-                    'file' => $filePath,
+                    'file' => $filePath ?? '',
                     'thumbnail' => $thumbPath,
                     'type' => $thumbType,
-                    'file_type' => $fileType,
+                    'file_type' => $fileType ?? '',
                     'title' => $request->thumbnail_titles[$index] ?? null,
                     'description' => $request->thumbnail_descriptions[$index] ?? null,
                 ]);
@@ -295,6 +287,7 @@ class PostListController extends WebController
         return view('admin.post.edit', [
             'title' => 'Edit post',
             'data' => $post,
+            'urlPath' => parse_url($post->file, PHP_URL_PATH),
             'tags' => $tags,
             'dietaries' => $dietaries,
             'cuisines' => $cuisines,
@@ -338,7 +331,7 @@ class PostListController extends WebController
 
                     if ($path) {
 
-                        Storage::disk('s3')->setVisibility($path, 'public');
+                        //Storage::disk('s3')->setVisibility($path, 'public');
 
                         $fileSrc = $path;
                     }
@@ -349,7 +342,7 @@ class PostListController extends WebController
 
                     if ($path) {
 
-                        Storage::disk('s3')->setVisibility($path, 'public');
+                        //Storage::disk('s3')->setVisibility($path, 'public');
 
                         $fileSrc = $path;
                     }
@@ -365,7 +358,7 @@ class PostListController extends WebController
 
                     if ($path) {
 
-                        Storage::disk('s3')->setVisibility($path, 'public');
+                        //Storage::disk('s3')->setVisibility($path, 'public');
 
                         $thumbnailSrc = $path;
                     }
@@ -376,7 +369,7 @@ class PostListController extends WebController
 
                     if ($path) {
 
-                        Storage::disk('s3')->setVisibility($path, 'public');
+                        //Storage::disk('s3')->setVisibility($path, 'public');
 
                         $thumbnailSrc = $path;
                     }
@@ -618,7 +611,7 @@ class PostListController extends WebController
 
         if ($path) {
             // Set the file visibility to public on S3
-            Storage::disk('s3')->setVisibility($path, 'public');
+            //Storage::disk('s3')->setVisibility($path, 'public');
 
             // Return only the relative path (without full URL)
             return $path; // E.g., 'uploads/posts/images/thumb-88533FAC-...'

@@ -18,21 +18,21 @@ class Instruction extends Model
 
     public function getFileAttribute($val)
     {
-        if(!empty($val)){
+        if (!empty($val) && !preg_match('#^https?://#', $val)) {
             return Storage::disk('s3')->url($val);
         }
-        return get_asset($val, false, get_constants('default.user_image'));
+
+        return $val;
     }
 
     public function getThumbnailAttribute($val)
     {
-        if(!empty($val)){
+        if (!empty($val) && !preg_match('#^https?://#', $val)) {
             return Storage::disk('s3')->url($val);
         }
-        return get_asset($val, false, get_constants('default.user_image'));
+
+        return $val;
     }
-
-
 
     public function saveInstruction($data=[],$object_id=0,$object = null){
         if(!empty($object)){

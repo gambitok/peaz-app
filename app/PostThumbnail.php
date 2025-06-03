@@ -17,20 +17,22 @@ class PostThumbnail extends Model
         return $this->belongsTo(Post::class);
     }
 
-    public function getThumbnailAttribute($val)
-    {
-        if(!empty($val)){
-            return Storage::disk('s3')->url($val);
-        }
-        return '';
-    }
-
     public function getFileAttribute($val)
     {
-        if(!empty($val)){
+        if (!empty($val) && !preg_match('#^https?://#', $val)) {
             return Storage::disk('s3')->url($val);
         }
-        return '';
+
+        return $val;
+    }
+
+    public function getThumbnailAttribute($val)
+    {
+        if (!empty($val) && !preg_match('#^https?://#', $val)) {
+            return Storage::disk('s3')->url($val);
+        }
+
+        return $val;
     }
 
     public function setFileAttribute($val)

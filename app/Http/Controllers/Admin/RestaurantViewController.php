@@ -62,7 +62,7 @@ class RestaurantViewController extends Controller
             if ($request->hasFile($field)) {
                 $file = $request->file($field);
                 $path = $file->storeAs("uploads/restaurants/$restaurantId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                Storage::disk('s3')->setVisibility($path, 'public');
+                //Storage::disk('s3')->setVisibility($path, 'public');
                 $validatedData[$field] = $path;
             }
         }
@@ -88,7 +88,7 @@ class RestaurantViewController extends Controller
             if ($request->hasFile($field)) {
                 $file = $request->file($field);
                 $path = $file->storeAs("uploads/restaurants/$restaurantId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                Storage::disk('s3')->setVisibility($path, 'public');
+                //Storage::disk('s3')->setVisibility($path, 'public');
                 $validatedData[$field] = $path;
             } else {
                 $validatedData[$field] = $restaurant->getRawOriginal($field);

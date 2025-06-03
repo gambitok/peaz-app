@@ -70,7 +70,7 @@ class BillboardViewController extends Controller
             if ($request->hasFile($field)) {
                 $file = $request->file($field);
                 $path = $file->storeAs("uploads/billboards/$billboardId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                Storage::disk('s3')->setVisibility($path, 'public');
+                //Storage::disk('s3')->setVisibility($path, 'public');
                 $validatedData[$field] = $path;
             }
         }
@@ -96,7 +96,7 @@ class BillboardViewController extends Controller
             if ($request->hasFile($field)) {
                 $file = $request->file($field);
                 $path = $file->storeAs("uploads/billboards/$billboardId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                Storage::disk('s3')->setVisibility($path, 'public');
+                //Storage::disk('s3')->setVisibility($path, 'public');
                 $validatedData[$field] = $path;
             } else {
                 $validatedData[$field] = $billboard->getRawOriginal($field);

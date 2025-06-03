@@ -730,7 +730,7 @@ function upload_base_64_img($base64 = "", $path = "uploads/product/")
     if (preg_match('/^data:image\/(\w+);base64,/', $base64)) {
         $data = substr($base64, strpos($base64, ',') + 1);
         $up_file = rtrim($path, '/') . '/' . md5(uniqid()) . '.png';
-        $img = Storage::disk('s3')->put($up_file, base64_decode($data), 'public');
+        $img = Storage::disk('s3')->put($up_file, base64_decode($data));
         if ($img) {
             $file = $up_file;
         }
@@ -740,14 +740,12 @@ function upload_base_64_img($base64 = "", $path = "uploads/product/")
 function upload_file($file_name = "", $path = null)
 {
     try {
-    $file = "";
     $request = \request();
     if ($request->hasFile($file_name) && $path) {
         $hash = Str::random(40);
         $extension = $request->file($file_name)->getClientOriginalExtension();
         $path = config('constants.upload_paths.' . $path);
-        $file = $request->file($file_name)->storeAs($path, $hash . '.' . $extension, ['disk' => 's3', 'visibility' => 'public']);
-        // $file = $request->file($file_name)->storeAs($path, config('constants.upload_type'));
+        $file = $request->file($file_name)->storeAs($path, $hash . '.' . $extension, ['disk' => 's3']);
     } else {
         echo 'Provide Valid Const from web controller';
         die();

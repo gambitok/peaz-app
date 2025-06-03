@@ -61,7 +61,7 @@ class BillboardController extends Controller
             $file = $request->file('file');
             $extension = $file->getClientOriginalExtension();
             $path = $file->storeAs('uploads/billboards', time() . '.' . $extension, 's3');
-            Storage::disk('s3')->setVisibility($path, 'public');
+            //Storage::disk('s3')->setVisibility($path, 'public');
             return $path;
         }
         return null;

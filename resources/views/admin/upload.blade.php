@@ -1,28 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload File</title>
-</head>
-<body>
-<h1>Upload File to AWS S3</h1>
-
 @if(session('success'))
     <p>{{ session('success') }}</p>
-    <p>File URL: <a href="{{ session('file_url') }}" target="_blank">{{ session('file_url') }}</a></p>
+    <img src="{{ session('file_url') }}" alt="Uploaded Image" style="max-width: 300px; height: auto;">
 @endif
 
-@if(!empty($imageUrl))
-    <p>Here is your image:</p>
-    <img src="{{ $imageUrl }}" alt="Uploaded Image" style="max-width: 100%; height: auto;">
-@else
-    <p>No image available.</p>
+@if($imageUrl)
+    <p>Current image:</p>
+    <img src="{{ $imageUrl }}" alt="Current Image" style="max-width: 300px; height: auto;">
 @endif
 
-<form action="{{ route('admin.file.upload') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('admin.upload.file') }}" method="POST" enctype="multipart/form-data">
     @csrf
-    <label for="file">Choose a file:</label>
-    <input type="file" name="file" id="file" required>
+    <input type="file" name="file" required>
     <button type="submit">Upload</button>
 </form>
-</body>
-</html>
+
+@if($errors->any())
+    <ul>
+        @foreach($errors->all() as $error)
+            <li style="color:red;">{{ $error }}</li>
+        @endforeach
+    </ul>
+@endif

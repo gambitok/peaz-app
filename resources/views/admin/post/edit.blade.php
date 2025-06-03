@@ -117,9 +117,9 @@
                                 @if($data->file)
                                     <div class="d-flex align-items-center mt-2">
                                         <a href="{{ $data->file }}" target="_blank" id="file-link">
-                                            @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $data->file))
+                                            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $urlPath))
                                                 <img src="{{ $data->file }}" alt="File" id="file-preview" style="max-width: 200px; max-height: 200px;">
-                                            @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->file))
+                                            @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv)$/i', $urlPath))
                                                 <video src="{{ $data->file }}" id="file-preview" style="max-width: 100%; max-height: 500px;" controls></video>
                                             @endif
                                         </a>

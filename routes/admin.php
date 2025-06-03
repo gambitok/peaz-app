@@ -23,8 +23,8 @@ Route::group(['middleware' => 'Is_Admin'], function () {
 
     Route::get('/', 'General\GeneralController@Admin_dashboard')->name('dashboard');
 
-    Route::get('/upload', [FileUploadController::class, 'showForm']);
-    Route::post('/upload', [FileUploadController::class, 'uploadFile'])->name('file.upload');
+    Route::get('/upload', [FileUploadController::class, 'showForm'])->name('upload.form');
+    Route::post('upload', [FileUploadController::class, 'uploadFile'])->name('upload.file');
 
     Route::get('/totalusers', 'General\GeneralController@totalusers')->name('totalusers');
     Route::get('/profile', 'General\GeneralController@get_profile')->name('profile');

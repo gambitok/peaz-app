@@ -469,7 +469,7 @@ class PostController extends Controller
                 'posts.hours',
                 'posts.type',
                 'posts.file',
-                'posts.thumnbail',
+                'posts.thumbnail',
                 'posts.user_id',
                 'posts.status',
                 'posts.verified',

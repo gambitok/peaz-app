@@ -42,7 +42,7 @@ class RestaurantService
     private function uploadFile($file, $restaurantId)
     {
         $path = $file->storeAs("uploads/restaurants/$restaurantId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-        Storage::disk('s3')->setVisibility($path, 'public');
+        //Storage::disk('s3')->setVisibility($path, 'public');
 
         return $path;
     }

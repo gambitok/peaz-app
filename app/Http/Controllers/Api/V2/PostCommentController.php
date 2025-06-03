@@ -40,7 +40,7 @@ class PostCommentController extends Controller
         }
 
         $commentsWithPosts = [];
-        $awsUrl = env('AWS_URL', 'https://peazapi.s3.amazonaws.com');
+        $awsUrl = env('AWS_URL');
         foreach ($comments as $comment) {
             $postQuery = DB::table('posts')
                 ->where('id', $comment->post_id);
