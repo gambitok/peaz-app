@@ -26,6 +26,7 @@ class PostLikeController extends Controller
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
         $awsUrl = env('AWS_URL');
+        $awsBucket = env('AWS_BUCKET');
 
         $likesGroupedQuery = DB::table('postlikes')
             ->join('posts', 'postlikes.post_id', '=', 'posts.id')
@@ -63,14 +64,14 @@ class PostLikeController extends Controller
                     ->get();
 
                 foreach ($posts as $post) {
-                    $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . ltrim($post->file, '/');
+                    $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($post->file, '/');
 
                     $thumbnails = DB::table('post_thumbnails')
                         ->where('post_id', $post->id)
                         ->get(['thumbnail', 'type']);
 
                     foreach ($thumbnails as $thumbnail) {
-                        $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : rtrim($awsUrl, '/') . '/' . ltrim($thumbnail->thumbnail, '/');
+                        $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($thumbnail->thumbnail, '/');
                     }
 
                     $post->thumbnails = $thumbnails;
@@ -91,7 +92,6 @@ class PostLikeController extends Controller
             ], 404);
         }
     }
-
 
     public function getLikes(Request $request)
     {
@@ -155,21 +155,22 @@ class PostLikeController extends Controller
         if ($posts->isNotEmpty()) {
             $likesWithPosts = [];
             $awsUrl = env('AWS_URL');
+            $awsBucket = env('AWS_BUCKET');
             foreach ($posts as $post) {
                 $post->likes = DB::table('postlikes')
                     ->where('post_id', $post->id)
                     ->get();
 
-                $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . ltrim($post->file, '/');
+                $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($post->file, '/');
 
-                $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
+                $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($post->thumbnail, '/');
 
                 $thumbnails = DB::table('post_thumbnails')
                     ->where('post_id', $post->id)
                     ->get(['thumbnail', 'type']);
 
                 foreach ($thumbnails as $thumbnail) {
-                    $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : rtrim($awsUrl, '/') . '/' . ltrim($thumbnail->thumbnail, '/');
+                    $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($thumbnail->thumbnail, '/');
                 }
 
                 $post->thumbnails = $thumbnails;

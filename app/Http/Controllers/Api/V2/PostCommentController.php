@@ -23,7 +23,7 @@ class PostCommentController extends Controller
         $sortField = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
-        $status = $request->input('status');  // Додано: отримуємо параметр status
+        $status = $request->input('status');
 
         $commentsQuery = DB::table('comments')
             ->where('user_id', $userId)
@@ -41,6 +41,8 @@ class PostCommentController extends Controller
 
         $commentsWithPosts = [];
         $awsUrl = env('AWS_URL');
+        $awsBucket = env('AWS_BUCKET');
+
         foreach ($comments as $comment) {
             $postQuery = DB::table('posts')
                 ->where('id', $comment->post_id);
@@ -60,13 +62,13 @@ class PostCommentController extends Controller
                 ->get(['thumbnail', 'type']);
 
             foreach ($thumbnails as $thumbnail) {
-                $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : $awsUrl . $thumbnail->thumbnail;
+                $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : $awsUrl . '/' . $awsBucket . $thumbnail->thumbnail;
             }
 
             $post->thumbnails = $thumbnails;
 
-            $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . $post->file;
-            $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . $post->thumbnail;
+            $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . '/' . $awsBucket . $post->file;
+            $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . '/' . $awsBucket . $post->thumbnail;
 
             $comment->post = $post;
 

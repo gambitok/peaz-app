@@ -7,6 +7,7 @@ use App\Billboard;
 use App\Tag;
 use App\Http\Requests\BillboardRequest;
 use App\Services\BillboardService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class BillboardViewController extends Controller
@@ -55,22 +56,16 @@ class BillboardViewController extends Controller
         $validatedData = $request->validated();
         $userId = $request->user()->id;
 
-        // Convert status to boolean and then to an integer (0 or 1)
         $validatedData['status'] = isset($validatedData['status']) ? (int) filter_var($validatedData['status'], FILTER_VALIDATE_BOOLEAN) : 0;
 
-
-        // Create a new billboard entry to get its ID
         $billboard = Billboard::create(['user_id' => $userId] + $validatedData);
         $billboardId = $billboard->id;
 
-        // Array to store file fields
         $fileFields = ['file', 'logo_file', 'horizontal_file', 'video_file'];
 
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                $path = $file->storeAs("uploads/billboards/$billboardId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                //Storage::disk('s3')->setVisibility($path, 'public');
+                $path = Storage::disk('s3')->putFile("uploads/billboards/$billboardId", $request->file($field), 'public');
                 $validatedData[$field] = $path;
             }
         }
@@ -94,9 +89,7 @@ class BillboardViewController extends Controller
 
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                $path = $file->storeAs("uploads/billboards/$billboardId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                //Storage::disk('s3')->setVisibility($path, 'public');
+                $path = Storage::disk('s3')->putFile("uploads/billboards/$billboardId", $request->file($field), 'public');
                 $validatedData[$field] = $path;
             } else {
                 $validatedData[$field] = $billboard->getRawOriginal($field);

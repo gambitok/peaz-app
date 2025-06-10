@@ -19,7 +19,7 @@ class User extends Authenticatable
 
     protected $guarded = [];
     protected $hidden = ['password', 'remember_token'];
-    protected $fillable = ['id', 'name', 'username', 'profile_image', 'bio', 'website', 'email', 'type', 'membership', 'status', 'membership_level', 'verified', 'created_at'];
+    protected $fillable = ['id', 'name', 'username', 'profile_image', 'bio', 'website', 'email', 'password', 'type', 'membership', 'status', 'membership_level', 'verified', 'created_at'];
     protected $casts = [];
 
     const STATUS_ACTIVE = 'active';

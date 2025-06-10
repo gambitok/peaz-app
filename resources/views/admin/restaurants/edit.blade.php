@@ -32,7 +32,8 @@
                                 <input type="file" name="file" id="file" class="form-control">
                                 @if($restaurant['file'])
                                     <div class="mt-2">
-                                        <img src="{{ Storage::disk('s3')->url($restaurant['file']) }}" alt="image" class="img-thumbnail" width="140" height="140">
+{{--                                        <img src="{{ Storage::disk('s3')->url($restaurant->file) }}" alt="image" class="img-thumbnail" width="140" height="140">--}}
+                                        <img src="{{ $restaurant['file'] }}" alt="image" class="img-thumbnail" width="140" height="140">
                                     </div>
                                 @else
                                     <p class="text-muted small">No logo uploaded</p>

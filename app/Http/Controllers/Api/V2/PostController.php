@@ -9,6 +9,7 @@ use App\Ingredient;
 use App\Instruction;
 use App\PostLike;
 use App\PostThumbnail;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,6 @@ use App\Post;
 use App\Http\Controllers\Api\ResponseController;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -37,6 +37,8 @@ class PostController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+
         $sortOrder = request()->get('sort', 'desc');
         $validSortOrders = ['asc', 'desc'];
 
@@ -70,10 +72,12 @@ class PostController extends Controller
 
         $posts = $postsQuery->orderBy('created_at', $sortOrder)->get();
 
-        $posts = $posts->map(function ($post) {
-            $postData = method_exists($this, 'addExtraFields')
-                ? $this->addExtraFields($post, null)
-                : $post->toArray();
+        $posts = $posts->map(function ($post) use ($user) {
+            $postWithExtras = method_exists($this, 'addExtraFields')
+                ? $this->addExtraFields($post, $user?->id)
+                : $post;
+
+            $postData = $postWithExtras->toArray();
 
             $postData['tags'] = $post->tags instanceof \Illuminate\Support\Collection
                 ? $post->tags->pluck('name')->toArray()
@@ -93,7 +97,7 @@ class PostController extends Controller
                         'thumbnail' => $thumbnail->thumbnail,
                         'type' => $thumbnail->type
                     ];
-                })
+                })->toArray()
                 : [];
 
             return $postData;
@@ -194,49 +198,38 @@ class PostController extends Controller
             ], 201);
         }
 
-        /**
-         * Display the specified post.
-         *
-         * @param  int  $id
-         * @return JsonResponse
-         */
         public function show($id)
         {
-            $post = Post::with(['user', 'instructions', 'ingredients', 'comment', 'postlike', 'report_statuses', 'tags', 'dietaries', 'cuisines', 'thumbnails'])->find($id);
 
-            if (!$post) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Post not found'
-                ], 404);
-            }
+            $post = Post::with(['tags', 'dietaries', 'cuisines'])->find($id);
 
-            if ($post->tags && $post->tags instanceof Collection) {
-                $post->tags = $post->tags->pluck('name');
-            }
+            $post = $this->addExtraFields($post, Auth::id());
+            $postData = $post->toArray();
 
-            if ($post->dietaries && $post->dietaries instanceof Collection) {
-                $post->dietaries = $post->dietaries->pluck('name');
-            }
+            $postData['tags'] = $post->tags instanceof Collection
+                ? $post->tags->pluck('name')->toArray()
+                : [];
 
-            if ($post->cuisines && $post->cuisines instanceof Collection) {
-                $post->cuisines = $post->cuisines->pluck('name');
-            }
+            $postData['dietaries'] = $post->dietaries instanceof Collection
+                ? $post->dietaries->pluck('name')->toArray()
+                : [];
 
-            if ($post->thumbnails && $post->thumbnails instanceof Collection) {
-                $post->thumbnails = $post->thumbnails->map(function ($thumbnail) {
+            $postData['cuisines'] = $post->cuisines instanceof Collection
+                ? $post->cuisines->pluck('name')->toArray()
+                : [];
+
+            $postData['thumbnails'] = $post->thumbnails instanceof Collection
+                ? $post->thumbnails->map(function ($thumbnail) {
                     return [
                         'thumbnail' => $thumbnail->thumbnail,
                         'type' => $thumbnail->type
                     ];
-                });
-            }
-
-            $post = $this->addExtraFields($post);
+                })->toArray()
+                : [];
 
             return response()->json([
                 'status' => 'success',
-                'data' => $post,
+                'data' => $postData
             ]);
         }
 

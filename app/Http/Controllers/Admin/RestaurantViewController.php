@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Restaurant;
 use App\Http\Requests\RestaurantRequest;
 use App\Services\RestaurantService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class RestaurantViewController extends Controller
@@ -60,10 +61,10 @@ class RestaurantViewController extends Controller
 
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                $path = $file->storeAs("uploads/restaurants/$restaurantId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                //Storage::disk('s3')->setVisibility($path, 'public');
-                $validatedData[$field] = $path;
+                $relativePath = Storage::disk('s3')->putFile("uploads/restaurants/$restaurantId", $request->file($field), 'public');
+                Log::info("File uploaded to S3: $relativePath");
+                Log::info("File rest_id: $restaurantId");
+                $validatedData[$field] = $relativePath;
             }
         }
 
@@ -78,24 +79,19 @@ class RestaurantViewController extends Controller
         $validatedData = $request->validated();
         $restaurantId = $restaurant->id;
 
-        // Convert status to boolean and then to an integer (0 or 1)
         $validatedData['status'] = isset($validatedData['status']) ? (int) filter_var($validatedData['status'], FILTER_VALIDATE_BOOLEAN) : 0;
 
-        // Array to update file fields
         $fileFields = ['file'];
 
         foreach ($fileFields as $field) {
             if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                $path = $file->storeAs("uploads/restaurants/$restaurantId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-                //Storage::disk('s3')->setVisibility($path, 'public');
+                $path = Storage::disk('s3')->putFile("uploads/restaurants/$restaurantId", $request->file($field), 'public');
                 $validatedData[$field] = $path;
             } else {
                 $validatedData[$field] = $restaurant->getRawOriginal($field);
             }
         }
 
-        // Convert status to boolean
         $validatedData['status'] = filter_var($validatedData['status'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {

@@ -11,6 +11,30 @@ class Post extends Model
     public $table = "posts";
     protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','not_interested','status','created_at','verified'];
 
+    public function getTagsAttribute($value)
+    {
+        if ($this->relationLoaded('tags')) {
+            return $this->getRelation('tags');
+        }
+        return $value;
+    }
+
+    public function getCuisinesAttribute($value)
+    {
+        if ($this->relationLoaded('cuisines')) {
+            return $this->getRelation('cuisines');
+        }
+        return $value;
+    }
+
+    public function getDietariesAttribute($value)
+    {
+        if ($this->relationLoaded('dietaries')) {
+            return $this->getRelation('dietaries');
+        }
+        return $value;
+    }
+
     public function thumbnails()
     {
         return $this->hasMany(PostThumbnail::class);

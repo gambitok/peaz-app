@@ -16,6 +16,7 @@ class RestaurantResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'title' => $this->title,
             'file' => $this->file,
             'link' => $this->link,
             'user' => $this->user ? $this->user->only(['id', 'name', 'username', 'email', 'verified', 'membership_level', 'status']) : null,

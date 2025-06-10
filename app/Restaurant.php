@@ -23,9 +23,10 @@ class Restaurant extends Model
 
     public function getFileAttribute($val)
     {
-        if(!empty($val)){
+        if (!empty($val) && !preg_match('#^https?://#', $val)) {
             return Storage::disk('s3')->url($val);
         }
-        return '';
+
+        return $val;
     }
 }

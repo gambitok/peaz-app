@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use Aws\Credentials\Credentials;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -142,15 +143,19 @@ class ConvertVideo implements ShouldQueue
 
         $s3Client = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_DEFAULT_REGION'),
-            'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            ],
+            'region' => 'us-east-1',
+            'endpoint' => env('AWS_ENDPOINT', 'https://s3.eu-central-003.backblazeb2.com'),
+            'use_path_style_endpoint' => true,
+            'signature_version' => 'v4',
+            'credentials' => new Credentials(
+                env('AWS_ACCESS_KEY_ID', '0037259dc1d2ab10000000001'),
+                env('AWS_SECRET_ACCESS_KEY', 'K003dHlGPBcyyZuo3A1CdmrJHbOjyMk')
+            ),
+            'http' => ['verify' => false],
         ]);
 
         $result = $s3Client->putObject([
-            'Bucket' => env('AWS_BUCKET'),
+            'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
             'Key' => 'uploads/multipart/' . basename($outputFullPath),
             'SourceFile' => $outputFullPath,
             'ContentType' => 'video/' . $this->outputExtension,

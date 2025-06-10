@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Aws\S3\S3Client;
+use Aws\Credentials\Credentials;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -58,27 +59,33 @@ class S3Controller extends Controller
 
         $s3Client = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_DEFAULT_REGION'),
-            'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+            'endpoint' => env('AWS_ENDPOINT', 'https://s3.eu-central-003.backblazeb2.com'),
+            'use_path_style_endpoint' => true,
+            'signature_version' => 'v4',
+            'credentials' => new Credentials(
+                env('AWS_ACCESS_KEY_ID', '0037259dc1d2ab10000000001'),
+                env('AWS_SECRET_ACCESS_KEY', 'K003dHlGPBcyyZuo3A1CdmrJHbOjyMk')
+            ),
+            'http' => [
+                'verify' => false,
             ],
         ]);
 
         try {
             if ($operation === 'PUT') {
                 $command = $s3Client->getCommand('PutObject', [
-                    'Bucket' => env('AWS_BUCKET'),
+                    'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
                     'Key' => $filePath,
                 ]);
             } elseif ($operation === 'GET') {
                 $command = $s3Client->getCommand('GetObject', [
-                    'Bucket' => env('AWS_BUCKET'),
+                    'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
                     'Key' => $filePath,
                 ]);
             } elseif ($operation === 'DELETE') {
                 $command = $s3Client->getCommand('DeleteObject', [
-                    'Bucket' => env('AWS_BUCKET'),
+                    'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
                     'Key' => $filePath,
                 ]);
             } else {
@@ -125,16 +132,22 @@ class S3Controller extends Controller
 
         $s3Client = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_DEFAULT_REGION'),
-            'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+            'endpoint' => env('AWS_ENDPOINT', 'https://s3.eu-central-003.backblazeb2.com'),
+            'use_path_style_endpoint' => true,
+            'signature_version' => 'v4',
+            'credentials' => new Credentials(
+                env('AWS_ACCESS_KEY_ID', '0037259dc1d2ab10000000001'),
+                env('AWS_SECRET_ACCESS_KEY', 'K003dHlGPBcyyZuo3A1CdmrJHbOjyMk')
+            ),
+            'http' => [
+                'verify' => false,
             ],
         ]);
 
         try {
             $result = $s3Client->createMultipartUpload([
-                'Bucket' => env('AWS_BUCKET'),
+                'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
                 'Key' => $path . $newFileName,
                 'ContentType' => $mimeType,
             ]);
@@ -156,40 +169,40 @@ class S3Controller extends Controller
         $uploadId = $request->upload_id;
         $path = $request->path;
 
-        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+
         if (!in_array($extension, $videoExtensions)) {
-            return response()->json(['error' => 'Invalid file extension. Allowed types are: videos (mp4, mov, etc.).'], 400);
+            return response()->json(['error' => 'Invalid file extension.'], 400);
         }
 
-        $filePath = $path . $fileName;
+        $key = $path . $fileName;
 
         $s3Client = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_DEFAULT_REGION'),
-            'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            ],
+            'region' => 'us-east-1',
+            'endpoint' => 'https://s3.eu-central-003.backblazeb2.com',
+            'use_path_style_endpoint' => true,
+            'signature_version' => 'v4',
+            'credentials' => new Credentials(
+                env('AWS_ACCESS_KEY_ID', '0037259dc1d2ab10000000001'),
+                env('AWS_SECRET_ACCESS_KEY', 'K003dHlGPBcyyZuo3A1CdmrJHbOjyMk')
+            ),
+            'http' => ['verify' => false],
         ]);
 
         try {
             $command = $s3Client->getCommand('UploadPart', [
-                'Bucket' => env('AWS_BUCKET'),
-                'Key' => $filePath,
-                'PartNumber' => $partNumber,
+                'Bucket' => 'peaz-bucket',
+                'Key' => $key,
                 'UploadId' => $uploadId,
+                'PartNumber' => (int) $partNumber,
             ]);
 
             $presignedRequest = $s3Client->createPresignedRequest($command, '+10 minutes');
-            $presignedUrl = (string)$presignedRequest->getUri();
 
             return response()->json([
-                'url' => $presignedUrl,
-                'file_name' => $fileName,
-                'upload_id' => $uploadId,
-                'part_number' => $partNumber,
-                'path' => $path,
+                'url' => (string) $presignedRequest->getUri(),
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -205,16 +218,20 @@ class S3Controller extends Controller
 
         $s3Client = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_DEFAULT_REGION'),
-            'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            ],
+            'region' => 'us-east-1',
+            'endpoint' => env('AWS_ENDPOINT', 'https://s3.eu-central-003.backblazeb2.com'),
+            'use_path_style_endpoint' => true,
+            'signature_version' => 'v4',
+            'credentials' => new Credentials(
+                env('AWS_ACCESS_KEY_ID', '0037259dc1d2ab10000000001'),
+                env('AWS_SECRET_ACCESS_KEY', 'K003dHlGPBcyyZuo3A1CdmrJHbOjyMk')
+            ),
+            'http' => ['verify' => false],
         ]);
 
         try {
             $result = $s3Client->completeMultipartUpload([
-                'Bucket' => env('AWS_BUCKET'),
+                'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
                 'Key' => $path . $originalFileName,
                 'UploadId' => $uploadId,
                 'MultipartUpload' => [
@@ -222,9 +239,16 @@ class S3Controller extends Controller
                 ],
             ]);
 
-            $inputFullPath = public_path('uploads/tmp/' . $originalFileName);
+            $uploadDir = public_path('uploads/tmp');
+
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $inputFullPath = $uploadDir . '/' . $originalFileName;
+
             $s3Client->getObject([
-                'Bucket' => env('AWS_BUCKET'),
+                'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
                 'Key' => $path . $originalFileName,
                 'SaveAs' => $inputFullPath,
             ]);
@@ -232,11 +256,10 @@ class S3Controller extends Controller
             $outputExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
 
             if (in_array($outputExtension, $this->supportedFormats)) {
-                // originalFileName = $request->input('file_name') = 4131833-hd_1920_1080_24fps.mp4
                 Log::info('Dispatching ConvertVideo job', [
-                    'inputFullPath' => $inputFullPath, // /var/www/html/public/uploads/tmp/4131833-hd_1920_1080_24fps.mp4"
+                    'inputFullPath' => $inputFullPath,
                     'outputExtension' => $outputExtension,
-                    'outputFileName' => $originalFileName, // aadac8e4-fffd-42a8-b8d1-6e359a343c81.mp4 (generated by Str::uuid())
+                    'outputFileName' => $originalFileName,
                 ]);
                 ConvertVideo::dispatch($inputFullPath, $outputExtension, $originalFileName);
                 $compressionStatus = 'Compression started';
@@ -250,7 +273,7 @@ class S3Controller extends Controller
                 'compression_status' => $compressionStatus,
                 'result' => [
                     'Location' => $s3Client->getObjectUrl(env('AWS_BUCKET'), $path . $originalFileName),
-                    'Bucket' => env('AWS_BUCKET'),
+                    'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
                     'Key' => $path . $originalFileName,
                     'ETag' => $result['ETag'],
                     'file_name' => $originalFileName,

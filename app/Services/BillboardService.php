@@ -56,17 +56,24 @@ class BillboardService
 
     public function delete(Billboard $billboard)
     {
-        Storage::disk('s3')->delete($billboard->file);
-        Storage::disk('s3')->delete($billboard->logo_file);
-        Storage::disk('s3')->delete($billboard->horizontal_file);
-        Storage::disk('s3')->delete($billboard->video_file);
+        if (isset($data['file'])) {
+            Storage::disk('s3')->delete($billboard->file);
+        }
+        if (isset($data['logo_file'])) {
+            Storage::disk('s3')->delete($billboard->logo_file);
+        }
+        if (isset($data['horizontal_file'])) {
+            Storage::disk('s3')->delete($billboard->horizontal_file);
+        }
+        if (isset($data['video_file'])) {
+            Storage::disk('s3')->delete($billboard->video_file);
+        }
         $billboard->delete();
     }
 
     private function uploadFile($file, $billboardId)
     {
-        $path = $file->storeAs("uploads/billboards/$billboardId", time() . '.' . $file->getClientOriginalExtension(), 's3');
-        //Storage::disk('s3')->setVisibility($path, 'public');
+        $path = Storage::disk('s3')->putFile("uploads/billboards/$billboardId", $file, 'public');
 
         return $path;
     }
