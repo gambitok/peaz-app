@@ -13,4 +13,9 @@ class Dietary extends Model
     {
         return $this->belongsToMany(Post::class, 'post_dietary', 'dietary_id', 'post_id');
     }
+
+    public function filters()
+    {
+        return $this->belongsToMany(Filter::class, 'filter_dietary');
+    }
 }

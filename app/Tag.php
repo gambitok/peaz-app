@@ -16,6 +16,6 @@ class Tag extends Model
 
     public function filters()
     {
-        return $this->belongsToMany(Filter::class);
+        return $this->belongsToMany(Filter::class, 'filter_tags');
     }
 }

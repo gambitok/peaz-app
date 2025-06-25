@@ -11,7 +11,7 @@ class FilterController extends Controller
 {
     public function index()
     {
-        $filters = Filter::with('tags')->get();
+        $filters = Filter::with(['tags', 'dietaries', 'cuisines'])->get();
         return FilterResource::collection($filters);
     }
 
@@ -19,14 +19,17 @@ class FilterController extends Controller
     {
         $data = $request->only('name');
         $filter = Filter::create($data);
-        $filter->tags()->sync($request->tag_ids);
 
-        return response(new FilterResource($filter->load('tags')), 201);
+        $filter->tags()->sync($request->tag_ids);
+        $filter->dietaries()->sync($request->dietary_ids);
+        $filter->cuisines()->sync($request->cuisine_ids);
+
+        return response(new FilterResource($filter->load(['tags', 'dietaries', 'cuisines'])), 201);
     }
 
     public function show(Filter $filter)
     {
-        $filter->load('tags');
+        $filter->load(['tags', 'dietaries', 'cuisines']);
         return new FilterResource($filter);
     }
 
@@ -42,12 +45,23 @@ class FilterController extends Controller
             $filter->tags()->sync($request->tag_ids);
         }
 
-        return new FilterResource($filter->load('tags'));
+        if ($request->has('dietary_ids')) {
+            $filter->dietaries()->sync($request->dietary_ids);
+        }
+
+        if ($request->has('cuisine_ids')) {
+            $filter->cuisines()->sync($request->cuisine_ids);
+        }
+
+        return new FilterResource($filter->load(['tags', 'dietaries', 'cuisines']));
     }
 
     public function destroy(Filter $filter)
     {
         $filter->tags()->detach();
+        $filter->dietaries()->detach();
+        $filter->cuisines()->detach();
+
         $filter->delete();
 
         return response()->noContent();

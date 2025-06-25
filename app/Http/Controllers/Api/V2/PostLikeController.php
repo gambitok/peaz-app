@@ -59,12 +59,13 @@ class PostLikeController extends Controller
             foreach ($likesGrouped as $group) {
                 $posts = DB::table('posts')
                     ->whereIn('id', explode(',', $group->post_ids))
-                    ->select('id', 'title', 'type', 'hours', 'minutes', 'file', 'status', 'verified', 'created_at')
+                    ->select('id', 'title', 'type', 'hours', 'minutes', 'file', 'thumbnail', 'status', 'verified', 'created_at')
                     ->limit(3)
                     ->get();
 
                 foreach ($posts as $post) {
                     $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($post->file, '/');
+                    $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($post->thumbnail, '/');
 
                     $thumbnails = DB::table('post_thumbnails')
                         ->where('post_id', $post->id)

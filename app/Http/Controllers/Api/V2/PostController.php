@@ -80,15 +80,30 @@ class PostController extends Controller
             $postData = $postWithExtras->toArray();
 
             $postData['tags'] = $post->tags instanceof \Illuminate\Support\Collection
-                ? $post->tags->pluck('name')->toArray()
+                ? $post->tags->map(function ($tag) {
+                    return [
+                        'id' => $tag->id,
+                        'name' => $tag->name,
+                    ];
+                })->toArray()
                 : [];
 
             $postData['dietaries'] = $post->dietaries instanceof \Illuminate\Support\Collection
-                ? $post->dietaries->pluck('name')->toArray()
+                ? $post->dietaries->map(function ($dietary) {
+                    return [
+                        'id' => $dietary->id,
+                        'name' => $dietary->name,
+                    ];
+                })->toArray()
                 : [];
 
             $postData['cuisines'] = $post->cuisines instanceof \Illuminate\Support\Collection
-                ? $post->cuisines->pluck('name')->toArray()
+                ? $post->cuisines->map(function ($cuisine) {
+                    return [
+                        'id' => $cuisine->id,
+                        'name' => $cuisine->name,
+                    ];
+                })->toArray()
                 : [];
 
             $postData['thumbnails'] = $post->thumbnails instanceof \Illuminate\Support\Collection
@@ -198,42 +213,63 @@ class PostController extends Controller
             ], 201);
         }
 
-        public function show($id)
-        {
+    public function show($id)
+    {
+        $post = Post::with(['tags', 'dietaries', 'cuisines', 'thumbnails'])->find($id);
 
-            $post = Post::with(['tags', 'dietaries', 'cuisines'])->find($id);
-
-            $post = $this->addExtraFields($post, Auth::id());
-            $postData = $post->toArray();
-
-            $postData['tags'] = $post->tags instanceof Collection
-                ? $post->tags->pluck('name')->toArray()
-                : [];
-
-            $postData['dietaries'] = $post->dietaries instanceof Collection
-                ? $post->dietaries->pluck('name')->toArray()
-                : [];
-
-            $postData['cuisines'] = $post->cuisines instanceof Collection
-                ? $post->cuisines->pluck('name')->toArray()
-                : [];
-
-            $postData['thumbnails'] = $post->thumbnails instanceof Collection
-                ? $post->thumbnails->map(function ($thumbnail) {
-                    return [
-                        'thumbnail' => $thumbnail->thumbnail,
-                        'type' => $thumbnail->type
-                    ];
-                })->toArray()
-                : [];
-
+        if (!$post) {
             return response()->json([
-                'status' => 'success',
-                'data' => $postData
-            ]);
+                'status' => 'error',
+                'message' => 'Post not found',
+            ], 404);
         }
 
-        protected function addExtraFields($post, $user_id = null)
+        $post = $this->addExtraFields($post, Auth::id());
+        $postData = $post->toArray();
+
+        $postData['tags'] = $post->tags instanceof Collection
+            ? $post->tags->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'name' => $tag->name,
+                ];
+            })->toArray()
+            : [];
+
+        $postData['dietaries'] = $post->dietaries instanceof Collection
+            ? $post->dietaries->map(function ($dietary) {
+                return [
+                    'id' => $dietary->id,
+                    'name' => $dietary->name,
+                ];
+            })->toArray()
+            : [];
+
+        $postData['cuisines'] = $post->cuisines instanceof Collection
+            ? $post->cuisines->map(function ($cuisine) {
+                return [
+                    'id' => $cuisine->id,
+                    'name' => $cuisine->name,
+                ];
+            })->toArray()
+            : [];
+
+        $postData['thumbnails'] = $post->thumbnails instanceof Collection
+            ? $post->thumbnails->map(function ($thumbnail) {
+                return [
+                    'thumbnail' => $thumbnail->thumbnail,
+                    'type' => $thumbnail->type
+                ];
+            })->toArray()
+            : [];
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $postData
+        ]);
+    }
+
+    protected function addExtraFields($post, $user_id = null)
         {
             $post->comment_count = $post->comment->count();
             $post->postlike_count = $post->postlike->count();
@@ -364,7 +400,6 @@ class PostController extends Controller
             $post->dietaries()->sync($validated['dietaries'] ?? []);
             $post->cuisines()->sync($validated['cuisines'] ?? []);
 
-            // Обновлюємо thumbnails
             if (isset($validated['thumbnails'])) {
                 $post->thumbnails()->delete();
 
@@ -482,8 +517,7 @@ class PostController extends Controller
                 'posts.user_id',
                 'posts.status',
                 'posts.verified'
-            )
-            ->where('posts.user_id', '=', $user_id);
+            );
 
         if ($request->filled('title')) {
             $query->where('posts.title', 'LIKE', '%' . $request->input('title') . '%');
@@ -1198,36 +1232,43 @@ class PostController extends Controller
             ->pluck('tag_id')
             ->toArray();
 
-        if (empty($tagIds)) {
+        $dietaryIds = DB::table('filter_dietary')
+            ->where('filter_id', $filter_id)
+            ->pluck('dietary_id')
+            ->toArray();
+
+        $cuisineIds = DB::table('filter_cuisine')
+            ->where('filter_id', $filter_id)
+            ->pluck('cuisine_id')
+            ->toArray();
+
+        if (empty($tagIds) && empty($dietaryIds) && empty($cuisineIds)) {
             return response()->json([]);
         }
 
-        $posts = Post::with(['tags', 'dietaries', 'cuisines', 'thumbnails'])
-            ->whereHas('tags', function ($q) use ($tagIds) {
-                $q->whereIn('tags.id', $tagIds);
-            }, '=', count($tagIds))
+        $posts = Post::with(['tags:id,name', 'dietaries:id,name', 'cuisines:id,name', 'thumbnails'])
+            ->when(!empty($tagIds), function ($query) use ($tagIds) {
+                foreach ($tagIds as $tagId) {
+                    $query->whereHas('tags', function ($q) use ($tagId) {
+                        $q->where('tags.id', $tagId);
+                    });
+                }
+            })
+            ->when(!empty($dietaryIds), function ($query) use ($dietaryIds) {
+                foreach ($dietaryIds as $dietaryId) {
+                    $query->whereHas('dietaries', function ($q) use ($dietaryId) {
+                        $q->where('dietaries.id', $dietaryId);
+                    });
+                }
+            })
+            ->when(!empty($cuisineIds), function ($query) use ($cuisineIds) {
+                foreach ($cuisineIds as $cuisineId) {
+                    $query->whereHas('cuisines', function ($q) use ($cuisineId) {
+                        $q->where('cuisines.id', $cuisineId);
+                    });
+                }
+            })
             ->get();
-
-        foreach ($posts as $post) {
-            if ($post->tags instanceof Collection) {
-                $post->tags = $post->tags->mapWithKeys(fn($tag) => [$tag->id => $tag->name]);
-            }
-
-            if ($post->dietaries instanceof Collection) {
-                $post->dietaries = $post->dietaries->mapWithKeys(fn($d) => [$d->id => $d->name]);
-            }
-
-            if ($post->cuisines instanceof Collection) {
-                $post->cuisines = $post->cuisines->mapWithKeys(fn($c) => [$c->id => $c->name]);
-            }
-
-            if ($post->thumbnails instanceof Collection) {
-                $post->thumbnails = $post->thumbnails->map(fn($thumb) => [
-                    'thumbnail' => $thumb->thumbnail,
-                    'type' => $thumb->type,
-                ]);
-            }
-        }
 
         return response()->json($posts);
     }

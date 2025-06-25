@@ -63,7 +63,7 @@
                             <div class="w-50">
                                 <select name="tags[]" id="tags" class="select2" multiple>
                                     @foreach($tags as $tag)
-                                        <option value="{{ $tag->id }}" {{ in_array($tag->id, $data->tags) ? 'selected' : '' }}>{{ $tag->name }}</option>
+                                        <option value="{{ $tag->id }}" {{ in_array($tag->id, $selectedTagIds ?? []) ? 'selected' : '' }}>{{ $tag->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -74,7 +74,7 @@
                             <div class="w-50">
                                 <select name="dietaries[]" id="dietaries" class="select2" multiple>
                                     @foreach($dietaries as $dietary)
-                                        <option value="{{ $dietary->id }}" {{ in_array($dietary->id, $data->dietaries) ? 'selected' : '' }}>{{ $dietary->name }}</option>
+                                        <option value="{{ $dietary->id }}" {{ in_array($dietary->id, $selectedDietaryIds ?? []) ? 'selected' : '' }}>{{ $dietary->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -85,7 +85,7 @@
                             <div class="w-50">
                                 <select name="cuisines[]" id="cuisines" class="form-control select2 w-50" multiple>
                                     @foreach($cuisines as $cuisine)
-                                        <option value="{{ $cuisine->id }}" {{ in_array($cuisine->id, $data->cuisines) ? 'selected' : '' }}>{{ $cuisine->name }}</option>
+                                        <option value="{{ $cuisine->id }}" {{ in_array($cuisine->id, $selectedCuisineIds ?? []) ? 'selected' : '' }}>{{ $cuisine->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -141,43 +141,56 @@
                             $thumbnail = $data->thumbnails[$i] ?? null;
                         @endphp
 
-                        <div class="mb-6 border p-4 rounded-md shadow-sm">
-                            <input type="hidden" name="thumbnails[{{ $i }}][id]" value="{{ $thumbnail->id ?? '' }}">
-
-                            <div class="mb-4">
-                                @if($thumbnail)
-                                    <div class="relative">
-                                        @if($thumbnail->type === 'image')
-                                            <img src="{{ $thumbnail->thumbnail }}" alt="thumb" class="h-32 object-cover rounded mb-2">
-                                        @else
-                                            <video controls src="{{ $thumbnail->thumbnail }}" class="h-32 rounded mb-2"></video>
-                                        @endif
-                                    </div>
-                                @endif
-
-                                <input type="file" name="thumbnails[{{ $i }}][file]" class="form-control mt-2">
-                            </div>
-
-                            <div class="mb-2">
-                                <label class="block text-sm font-semibold">Title</label>
-                                <input type="text" name="thumbnails[{{ $i }}][title]" value="{{ old("thumbnails.$i.title", $thumbnail->title ?? '') }}" class="form-control">
-                            </div>
-
-                            <div class="mb-2">
-                                <label class="block text-sm font-semibold">Description</label>
-                                <textarea name="thumbnails[{{ $i }}][description]" class="form-control">{{ old("thumbnails.$i.description", $thumbnail->description ?? '') }}</textarea>
-                            </div>
-
-                            <div class="flex justify-between mt-4">
-                                @if($thumbnail)
-                                    <button type="submit" name="thumbnails[{{ $i }}][action]" value="delete" class="btn btn-danger btn-sm">Delete</button>
-                                    <button type="submit" name="thumbnails[{{ $i }}][action]" value="update" class="btn btn-warning btn-sm">Update</button>
-                                @else
-                                    <button type="submit" name="thumbnails[{{ $i }}][action]" value="add" class="btn btn-info btn-sm">Add</button>
+                        <div class="thumbnail-upload mb-4 border p-4 rounded">
+                            {{-- === Preview (image/video or empty) === --}}
+                            <div class="mb-2" id="preview-section-{{ $i }}">
+                                @if ($thumbnail)
+                                    @if ($thumbnail->type === 'image')
+                                        <img src="{{ $thumbnail->thumbnail }}" class="img-thumbnail" width="100">
+                                    @else
+                                        <video width="100" controls>
+                                            <source src="{{ $thumbnail->thumbnail }}" type="video/mp4">
+                                        </video>
+                                    @endif
                                 @endif
                             </div>
+
+                            {{-- === Main Form (store or update) === --}}
+                            <form
+                                method="POST"
+                                action="{{ $thumbnail ? route('admin.post_thumbnail.update', $thumbnail->id) : route('admin.post_thumbnail.store') }}"
+                                enctype="multipart/form-data"
+                            >
+                                @csrf
+                                @if($thumbnail)
+                                    @method('PUT')
+                                @endif
+
+                                <input type="hidden" name="post_id" value="{{ $data->id }}">
+                                <input type="file" name="file" class="form-control thumbnail-input" accept="image/*,video/*" data-index="{{ $i }}">
+
+                                <div class="form-group mb-2 mt-2">
+                                    <input type="text" name="title" value="{{ old("thumbnails.$i.title", $thumbnail->title ?? '') }}" class="form-control" placeholder="Thumbnail title">
+                                </div>
+
+                                <div class="form-group mb-2">
+                                    <textarea name="description" class="form-control" rows="2" placeholder="Thumbnail description">{{ old("thumbnails.$i.description", $thumbnail->description ?? '') }}</textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-{{ $thumbnail ? 'warning' : 'info' }} btn-sm">
+                                    {{ $thumbnail ? 'Update' : 'Add' }}
+                                </button>
+                            </form>
+
+                            {{-- === Separate Delete Form (only if existing thumbnail) === --}}
+                            @if ($thumbnail)
+                                <form method="POST" action="{{ route('admin.post_thumbnail.delete', $thumbnail->id) }}" class="inline-block mt-2">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            @endif
                         </div>
-                        <br>
                     @endfor
 
                 </div>
@@ -194,6 +207,29 @@
     <script>
         $(document).ready(function() {
             $('.select2').select2();
+
+            $('.thumbnail-input').on('change', function (e) {
+                const file = e.target.files[0];
+                const index = $(this).data('index');
+                const previewSection = $('#preview-section-' + index);
+
+                if (file) {
+                    const reader = new FileReader();
+
+                    if (file.type.startsWith('image/')) {
+                        reader.onload = function (e) {
+                            previewSection.html('<img src="' + e.target.result + '" class="img-thumbnail" width="100">');
+                        };
+                        reader.readAsDataURL(file);
+                    } else if (file.type.startsWith('video/')) {
+                        reader.onload = function (e) {
+                            previewSection.html('<video width="100" controls><source src="' + e.target.result + '" type="' + file.type + '"></video>');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
         });
+
     </script>
 @endsection

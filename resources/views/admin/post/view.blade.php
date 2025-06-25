@@ -73,11 +73,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @if(count($data->tags) > 0)
-                        @foreach($data->tags as $key => $value)
+                    @if($data->tags->count() > 0)
+                        @foreach($data->tags as $key => $tag)
                             <tr>
-                                <td>{{$key+1}}</td>
-                                <td>{{$value}}</td>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $tag->name }}</td>
                             </tr>
                         @endforeach
                     @endif
@@ -99,11 +99,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @if(count($data->dietaries) > 0)
-                        @foreach($data->dietaries as $key => $value)
+                    @if($data->dietaries->count() > 0)
+                        @foreach($data->dietaries as $key => $dietary)
                             <tr>
-                                <td>{{$key+1}}</td>
-                                <td>{{$value}}</td>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $dietary->name }}</td>
                             </tr>
                         @endforeach
                     @endif
@@ -125,11 +125,11 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @if(count($data->cuisines) > 0)
-                        @foreach($data->cuisines as $key => $value)
+                    @if($data->cuisines->count() > 0)
+                        @foreach($data->cuisines as $key => $cuisine)
                             <tr>
-                                <td>{{$key+1}}</td>
-                                <td>{{$value}}</td>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $cuisine->name }}</td>
                             </tr>
                         @endforeach
                     @endif

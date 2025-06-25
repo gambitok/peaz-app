@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V2;
 
 use App\Http\Controllers\Controller;
 use App\InterestedList;
+use App\UserRelationship;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
@@ -32,7 +33,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $user = User::find($id);
         if (!$user) {
@@ -42,9 +43,41 @@ class UserController extends Controller
             ], 404);
         }
 
+        $currentUser = $request->user();
+
+        $isFollowing = false;
+        if ($currentUser && $currentUser->id !== $user->id) {
+            $isFollowing = UserRelationship::where('follower_id', $currentUser->id)
+                ->where('following_id', $user->id)
+                ->exists();
+        }
+        $user->is_following = $isFollowing ? 1 : 0;
+
+        $followerIds = UserRelationship::where('following_id', $user->id)
+            ->pluck('follower_id')
+            ->toArray();
+
+        $followers = User::whereIn('id', $followerIds)
+            ->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified')
+            ->get();
+
+        if ($currentUser) {
+            $currentUserFollowing = UserRelationship::where('follower_id', $currentUser->id)
+                ->pluck('following_id')
+                ->toArray();
+
+            $followers->transform(function ($follower) use ($currentUserFollowing) {
+                $follower->is_following = in_array($follower->id, $currentUserFollowing) ? 1 : 0;
+                return $follower;
+            });
+        }
+
         return response()->json([
             'status' => 'success',
-            'data' => new UserResource($user)
+            'data' => [
+                'user' => new UserResource($user),
+                'followers' => $followers
+            ]
         ]);
     }
 

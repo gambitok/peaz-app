@@ -13,4 +13,9 @@ class Cuisine extends Model
     {
         return $this->belongsToMany(Post::class, 'post_cuisine', 'cuisine_id', 'post_id');
     }
+
+    public function filters()
+    {
+        return $this->belongsToMany(Filter::class, 'filter_cuisine');
+    }
 }

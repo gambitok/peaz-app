@@ -42,6 +42,8 @@
                             <th>ID</th>
                             <th>Title</th>
                             <th>Tags</th>
+                            <th>Dietaries</th>
+                            <th>Cuisines</th>
                             <th>Actions</th>
                         </tr>
                         </thead>
@@ -57,6 +59,12 @@
                                     </td>
                                     <td>
                                         {{ $filter['tags']->pluck('name')->implode(', ') }}
+                                    </td>
+                                    <td>
+                                        {{ $filter['dietaries']->pluck('name')->implode(', ') }}
+                                    </td>
+                                    <td>
+                                        {{ $filter['cuisines']->pluck('name')->implode(', ') }}
                                     </td>
                                     <td>
                                         <form action="{{ route('admin.filter.destroy', $filter['id']) }}" method="POST" style="display:inline;">

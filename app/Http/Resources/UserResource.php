@@ -28,6 +28,7 @@ class UserResource extends JsonResource
             'verified' => $this->verified,
             'status' => $this->status,
             'created_at' => $this->created_at,
+            'is_following' => $this->is_following ?? 0,
         ];
     }
 

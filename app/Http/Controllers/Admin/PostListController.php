@@ -280,10 +280,9 @@ class PostListController extends WebController
         $tags = Tag::all();
         $dietaries = Dietary::all();
         $cuisines = Cuisine::all();
-        $post->tags = $post->tags()->pluck('tags.id')->toArray();
-        $post->dietaries = $post->dietaries()->pluck('dietaries.id')->toArray();
-        $post->cuisines = $post->cuisines()->pluck('cuisines.id')->toArray();
-
+        $selectedTagIds = $post->tags()->pluck('tags.id')->toArray();
+        $selectedDietaryIds = $post->dietaries()->pluck('dietaries.id')->toArray();
+        $selectedCuisineIds = $post->cuisines()->pluck('cuisines.id')->toArray();
         return view('admin.post.edit', [
             'title' => 'Edit post',
             'data' => $post,
@@ -291,6 +290,9 @@ class PostListController extends WebController
             'tags' => $tags,
             'dietaries' => $dietaries,
             'cuisines' => $cuisines,
+            'selectedTagIds' => $selectedTagIds,
+            'selectedDietaryIds' => $selectedDietaryIds,
+            'selectedCuisineIds' => $selectedCuisineIds,
             'breadcrumb' => breadcrumb([
                 'post' => route('admin.post.index'),
                 'edit' => route('admin.post.edit', $id)

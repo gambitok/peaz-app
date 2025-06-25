@@ -76,6 +76,7 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::post('user/post-comment-review', [PostController::class, 'postCommentReview']);
 
     Route::get('comments', [PostCommentController::class, 'getCommentsByUserId']);
+    Route::get('post-comments', [PostCommentController::class, 'getCommentsByPostId']);
     Route::get('likes', [PostLikeController::class, 'getLikes']);
     Route::get('likes-grouped-by-cuisines', [PostLikeController::class, 'getLikesGroupedByCuisines']);
     Route::get('post-details/{id}', [PostController::class, 'details'])->name('posts.details');

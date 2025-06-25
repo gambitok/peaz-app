@@ -93,8 +93,11 @@
                             </div>
                         </div>
 
+                        <hr>
+
+                        <h3 class="text-lg font-bold mt-6 mb-2">Instructions</h3>
+
                         <div class="form-group">
-                            <label class="col-form-label">Thumbnails</label>
                             <div id="thumbnail-container">
                                 @for($i = 0; $i < 4; $i++)
                                     <div class="thumbnail-upload mb-4 border p-3 rounded">
@@ -116,7 +119,6 @@
                                 @endfor
                             </div>
                         </div>
-
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
@@ -148,7 +150,6 @@
             $('.thumbnail-input').on('change', function(e) {
                 var file = e.target.files[0];
                 var index = $(this).closest('.thumbnail-upload').find('.remove-thumbnail').data('index');
-                var previewContainer = $('#preview-' + index);
                 var previewSection = $('#preview-section-' + index);
                 var removeButton = $(this).siblings('.remove-thumbnail');
 

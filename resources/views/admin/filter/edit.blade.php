@@ -26,7 +26,28 @@
                                     {{ $tag->name }}
                                 </option>
                             @endforeach
-
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dietary_ids" class="col-form-label">Dietaries</label>
+                        <select name="dietary_ids[]" id="dietary_ids" class="select2" multiple>
+                            @foreach($dietaries as $dietary)
+                                <option value="{{ $dietary->id }}"
+                                    {{ $filter->dietaries->pluck('id')->contains($dietary->id) ? 'selected' : '' }}>
+                                    {{ $dietary->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cuisine_ids" class="col-form-label">Cuisines</label>
+                        <select name="cuisine_ids[]" id="cuisine_ids" class="select2" multiple>
+                            @foreach($cuisines as $cuisine)
+                                <option value="{{ $cuisine->id }}"
+                                    {{ $filter->cuisines->pluck('id')->contains($cuisine->id) ? 'selected' : '' }}>
+                                    {{ $cuisine->name }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                     <br>
