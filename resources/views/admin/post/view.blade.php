@@ -144,8 +144,8 @@
             <div class="card-body">
                 <div class="card-title">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span>Ingredient</span>
-                        <a href="{{ route('admin.post.post_details_create', $data->id) }}" class="btn btn-primary btn-sm">Add Ingredient</a>
+                        <span>Ingredients</span>
+{{--                        <a href="{{ route('admin.post.post_details_create', $data->id) }}" class="btn btn-primary btn-sm">Add Ingredient</a>--}}
                     </div>
                 </div>
                 <div>
@@ -159,7 +159,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                    Instruction
+                    Instructions
                 </div>
                 <div>
                     <table id="instruction" class="table dt-responsive mb-4 nowrap w-100">

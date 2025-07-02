@@ -60,6 +60,8 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::get('instruction','PostListController@instruction')->name('post.instruction');
 
         Route::resource('post','PostListController');
+        Route::resource('ingredient','IngredientListController');
+        Route::get('ingredientlist/listing','IngredientListController@listing')->name('ingredient.listing');
 
         Route::post('/post-thumbnails', [PostThumbnailController::class, 'store'])->name('post_thumbnail.store');
         Route::put('/post-thumbnails/{id}', [PostThumbnailController::class, 'update'])->name('post_thumbnail.update');

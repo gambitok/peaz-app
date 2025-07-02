@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V2;
 use App\Comment;
 use App\CommentLike;
 use App\Http\Controllers\Controller;
-use App\Ingredient;
+use App\PostIngredient;
 use App\Instruction;
 use App\PostLike;
 use App\PostThumbnail;
@@ -26,7 +26,7 @@ class PostController extends Controller
     public function  __construct()
     {
         $this->post_obj = new Post();
-        $this->ingredient_obj = new Ingredient();
+        $this->ingredient_obj = new PostIngredient();
         $this->instruction_obj = new Instruction();
     }
 

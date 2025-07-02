@@ -4,21 +4,14 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Ingredient extends Model
+class PostIngredient extends Model
 {
-    public $table = "ingredients";
-    protected $fillable = ['id','name','type','weight'];
+    public $table = "post_ingredient";
+    protected $fillable = ['id','user_id','post_id','name','type','measurement', 'ingredient_id'];
 
     public function post()
     {
         return $this->belongsTo(Post::class, 'post_id');
-    }
-
-    public function posts()
-    {
-        return $this->belongsToMany(Post::class, 'post_ingredient')
-            ->withPivot('measurement')
-            ->withTimestamps();
     }
 
     public function saveIngredient($data = [], $object_id = 0, $object = null)
@@ -30,7 +23,7 @@ class Ingredient extends Model
             $object = $this->find($object_id);
         }
         else{
-            $object = new Ingredient();
+            $object = new PostIngredient();
         }
         $object->fill($data);
         $object->save();

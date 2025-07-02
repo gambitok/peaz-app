@@ -248,6 +248,16 @@ function admin_modules()
                 'admin.post.show',
                 'admin.post.add',
             ]
+        ],        [
+            'route' => route('admin.ingredient.index'),
+            'name' => __('Ingredients'),
+            'icon' => 'kt-menu__link-icon fas fa-image',
+            'child' => [],
+            'all_routes' => [
+                'admin.ingredient.index',
+                'admin.ingredient.show',
+                'admin.ingredient.add',
+            ]
         ],
         [
             'route' => route('admin.tag.index'),

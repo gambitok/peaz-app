@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Cuisine;
 use App\Dietary;
+use App\Ingredient;
 use App\Tag;
 use App\PostThumbnail;
 use App\User;
@@ -11,7 +12,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\WebController;
 use App\Post;
 use DataTables;
-use App\Ingredient;
+use App\PostIngredient;
 use App\Instruction;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -23,7 +24,7 @@ class PostListController extends WebController
 
     public function __construct()
     {
-        $this->ingredient_obj = new Ingredient();
+        $this->ingredient_obj = new PostIngredient();
     }
 
     public function index()
@@ -116,6 +117,7 @@ class PostListController extends WebController
         $dietaries = Dietary::all();
         $cuisines = Cuisine::all();
         $users = User::all();
+        $ingredients = Ingredient::all();
 
         return view('admin.post.create', [
             'title' => 'Create Post',
@@ -123,6 +125,7 @@ class PostListController extends WebController
             'tags' => $tags,
             'dietaries' => $dietaries,
             'cuisines' => $cuisines,
+            'ingredients' => $ingredients,
             'breadcrumb' => breadcrumb([
                 'post' => route('admin.post.index'),
                 'create' => route('admin.post.create')
@@ -236,6 +239,23 @@ class PostListController extends WebController
             $post->cuisines()->sync($request->cuisines);
         }
 
+        PostIngredient::where('post_id', $post->id)->delete();
+
+        if ($request->has('ingredients') && is_array($request->ingredients)) {
+            foreach ($request->ingredients as $ingredient) {
+                $ingredientModel = Ingredient::find($ingredient['id']);
+
+                PostIngredient::create([
+                    'post_id' => $post->id,
+                    'ingredient_id' => $ingredient['id'],
+                    'measurement' => $ingredient['measurement'],
+                    'user_id' => auth()->id(),
+                    'name' => $ingredientModel->name ?? '',
+                    'type' => $ingredientModel->type ?? '',
+                ]);
+            }
+        }
+
         return redirect()->route('admin.post.index')->with('success', 'Post created successfully.');
     }
 
@@ -248,7 +268,7 @@ class PostListController extends WebController
             return redirect()->route('admin.post.index');
         }
 
-        $ingredients = Ingredient::where('post_id', $id)->get();
+        $ingredients = PostIngredient::where('post_id', $id)->get();
 
         $instructions = Instruction::where('post_id', $id)->orderBy('id', 'ASC')->get();
 
@@ -280,25 +300,28 @@ class PostListController extends WebController
         $tags = Tag::all();
         $dietaries = Dietary::all();
         $cuisines = Cuisine::all();
-        $selectedTagIds = $post->tags()->pluck('tags.id')->toArray();
-        $selectedDietaryIds = $post->dietaries()->pluck('dietaries.id')->toArray();
-        $selectedCuisineIds = $post->cuisines()->pluck('cuisines.id')->toArray();
+        $ingredients = Ingredient::all();
+        $postIngredients = PostIngredient::where('post_id', $post->id)->get();
+
         return view('admin.post.edit', [
             'title' => 'Edit post',
             'data' => $post,
-            'urlPath' => parse_url($post->file, PHP_URL_PATH),
             'tags' => $tags,
             'dietaries' => $dietaries,
             'cuisines' => $cuisines,
-            'selectedTagIds' => $selectedTagIds,
-            'selectedDietaryIds' => $selectedDietaryIds,
-            'selectedCuisineIds' => $selectedCuisineIds,
+            'ingredients' => $ingredients,
+            'postIngredients' => $postIngredients,
+            'selectedTagIds' => $post->tags->pluck('id')->toArray(),
+            'selectedDietaryIds' => $post->dietaries->pluck('id')->toArray(),
+            'selectedCuisineIds' => $post->cuisines->pluck('id')->toArray(),
             'breadcrumb' => breadcrumb([
                 'post' => route('admin.post.index'),
                 'edit' => route('admin.post.edit', $id)
             ]),
+            'urlPath' => parse_url($post->file, PHP_URL_PATH),
         ]);
     }
+
 
     public function update(Request $request, int $id)
     {
@@ -414,6 +437,23 @@ class PostListController extends WebController
                 $post->cuisines()->detach();
             }
 
+            PostIngredient::where('post_id', $post->id)->delete();
+
+            if ($request->has('ingredients') && is_array($request->ingredients)) {
+                foreach ($request->ingredients as $ingredient) {
+                    $ingredientModel = Ingredient::find($ingredient['id']);
+
+                    PostIngredient::create([
+                        'post_id' => $post->id,
+                        'ingredient_id' => $ingredient['id'],
+                        'measurement' => $ingredient['measurement'],
+                        'user_id' => auth()->id(),
+                        'name' => $ingredientModel->name ?? '',
+                        'type' => $ingredientModel->type ?? '',
+                    ]);
+                }
+            }
+
             return redirect()->route('admin.post.show', $post->id)
                 ->with('success', 'Post updated successfully');
         } else {
@@ -436,7 +476,7 @@ class PostListController extends WebController
 
     public function postDetails(Request $request)
     {
-        $data = Ingredient::where('post_id',$request->id)->get();
+        $data = PostIngredient::where('post_id',$request->id)->get();
 
         return Datatables::of($data)
             ->addIndexColumn()
@@ -474,7 +514,7 @@ class PostListController extends WebController
             'measurement' => 'nullable|string|max:255',
         ]);
 
-        $ingredient = new Ingredient();
+        $ingredient = new PostIngredient();
         $ingredient->post_id = $post_id;
         $ingredient->user_id = auth()->id();
         $ingredient->name = $validated['name'];
@@ -521,7 +561,7 @@ class PostListController extends WebController
 
     public function postDetailsDestroy($id)
     {
-        $data = Ingredient::where('id', $id)->first();
+        $data = PostIngredient::where('id', $id)->first();
 
         if ($data) {
             $data->delete();

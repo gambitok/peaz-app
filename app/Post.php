@@ -75,10 +75,19 @@ class Post extends Model
         return $this->hasMany(Instruction::class, 'post_id');
     }
 
+    public function postIngredients()
+    {
+        return $this->hasMany(PostIngredient::class, 'post_id');
+    }
     public function ingredients()
     {
-        return $this->hasMany(Ingredient::class, 'post_id');
+        return $this->hasMany(PostIngredient::class, 'post_id');
     }
+//
+//    public function ingredient()
+//    {
+//        return $this->hasMany(Ingredient::class,'post_id','id');
+//    }
 
     public function getFileAttribute($val)
     {
@@ -101,11 +110,6 @@ class Post extends Model
     public function user()
     {
         return $this->belongsTo(User::class,'user_id');
-    }
-
-    public function ingredient()
-    {
-        return $this->hasMany(Ingredient::class,'post_id','id');
     }
 
     public function instruction()

@@ -95,6 +95,24 @@
 
                         <hr>
 
+                        <h3 class="text-lg font-bold mt-6 mb-2">Ingredients</h3>
+                        <div class="form-group">
+                            <div id="ingredients-container"></div>
+
+                            <div class="d-flex gap-2 align-items-center mt-3">
+                                <select id="ingredient-selector" class="form-control select2" style="width: 300px;">
+                                    <option value="" disabled selected>Select ingredient</option>
+                                    @foreach($ingredients as $ingredient)
+                                        <option value="{{ $ingredient->id }}">{{ $ingredient->name }}</option>
+                                    @endforeach
+                                </select>
+                                <input type="text" id="ingredient-measurement" class="form-control" placeholder="Measurement (e.g. 200g)">
+                                <button type="button" id="add-ingredient" class="btn btn-primary btn-sm">Add</button>
+                            </div>
+                        </div>
+
+                        <hr>
+
                         <h3 class="text-lg font-bold mt-6 mb-2">Instructions</h3>
 
                         <div class="form-group">
@@ -179,6 +197,42 @@
                 inputField.val('');
                 $('#preview-section-' + index).html('');
                 $(this).hide();
+            });
+
+            ////
+
+            let ingredientIndex = 0;
+
+            $('#add-ingredient').on('click', function () {
+                const ingredientId = $('#ingredient-selector').val();
+                const ingredientName = $('#ingredient-selector option:selected').text();
+                const measurement = $('#ingredient-measurement').val().trim();
+
+                if (!ingredientId || !measurement) {
+                    alert('Please select an ingredient and enter measurement.');
+                    return;
+                }
+
+                const ingredientHtml = `
+                <div class="d-flex align-items-center gap-2 mb-2 ingredient-item" data-index="${ingredientIndex}">
+                    <input type="hidden" name="ingredients[${ingredientIndex}][id]" value="${ingredientId}">
+                    <input type="hidden" name="ingredients[${ingredientIndex}][measurement]" value="${measurement}">
+                    <span class="badge bg-secondary">${ingredientName}</span>
+                    <span class="text-muted">${measurement}</span>
+                    <button type="button" class="btn btn-sm btn-danger remove-ingredient">Remove</button>
+                </div>
+            `;
+
+                $('#ingredients-container').append(ingredientHtml);
+
+                // Очистити поле після додавання
+                $('#ingredient-selector').val(null).trigger('change');
+                $('#ingredient-measurement').val('');
+                ingredientIndex++;
+            });
+
+            $('#ingredients-container').on('click', '.remove-ingredient', function () {
+                $(this).closest('.ingredient-item').remove();
             });
         });
 
