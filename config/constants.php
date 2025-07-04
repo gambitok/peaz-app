@@ -7,8 +7,8 @@ return [
     'upload_type' => 'local',
     'default' => [
         'image' => 'uploads/user/user.png',
-        'user_image' => 'assets/general/images/no_image.jpg',
-        'no_image_available' => 'assets/general/images/no_image.jpg',
+        'user_image' => 'assets/general/images/no-profile.png',
+        'no_image_available' => 'assets/general/images/no-profile.png',
     ],
     'upload_paths' => [
         'exception_upload' => 'uploads/exception',

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\UserController as UserV1Controller;
 
 use App\Http\Controllers\Api\V2\PostController;
 use App\Http\Controllers\Api\V2\IngredientController;
+use App\Http\Controllers\Api\V2\PostIngredientController;
 use App\Http\Controllers\Api\V2\PostThumbnailController;
 use App\Http\Controllers\Api\V1\PostController as PostV1Controller;
 use App\Http\Controllers\Api\V2\PostLikeController;
@@ -84,10 +85,12 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::get('posts/by-filter/{filter_id}', [PostController::class, 'byFilter']);
 
     Route::get('ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
-    Route::get('ingredients/{id}', [IngredientController::class, 'show'])->name('ingredients.show');
-    Route::post('ingredients/', [IngredientController::class, 'store'])->name('ingredients.store');
-    Route::put('ingredients/{id}', [IngredientController::class, 'update'])->name('ingredients.update');
-    Route::delete('ingredients/{id}', [IngredientController::class, 'destroy'])->name('ingredients.destroy');
+
+    Route::get('post-ingredients', [PostIngredientController::class, 'index'])->name('posts.ingredients.index');
+    Route::get('post-ingredients/{id}', [PostIngredientController::class, 'show'])->name('posts.ingredients.show');
+    Route::post('post-ingredients/', [PostIngredientController::class, 'store'])->name('posts.ingredients.store');
+    Route::put('post-ingredients/{id}', [PostIngredientController::class, 'update'])->name('posts.ingredients.update');
+    Route::delete('post-ingredients/{id}', [PostIngredientController::class, 'destroy'])->name('posts.ingredients.destroy');
 
     Route::get('instructions', [PostThumbnailController::class, 'index'])->name('instructions.index');
     Route::get('instructions/{id}', [PostThumbnailController::class, 'show'])->name('instructions.show');

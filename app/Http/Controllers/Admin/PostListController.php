@@ -140,7 +140,7 @@ class PostListController extends WebController
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'nullable|file',
+            'file' => 'nullable|file|mimetypes:video/mp4,video/x-msvideo,video/quicktime|max:51200',
             'thumbnails' => 'nullable|array|max:4',
             'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
             'thumbnails_files' => 'nullable|array|max:4',
