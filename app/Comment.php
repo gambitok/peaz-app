@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Comment extends Model
 {
@@ -17,6 +18,17 @@ class Comment extends Model
     public function averageRating()
     {
         return $this->ratings()->avg('rating');
+    }
+
+    public function scopeWithAvgRating($query)
+    {
+        return $query->addSelect([
+            'avg_rating' => DB::table('comments')
+                ->selectRaw('AVG(rating)')
+                ->whereColumn('post_id', 'posts.id')
+                ->whereNotNull('rating')
+                ->where('rating', '>', 0)
+        ]);
     }
 
     public function post()

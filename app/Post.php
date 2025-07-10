@@ -11,6 +11,10 @@ class Post extends Model
     public $table = "posts";
     protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','not_interested','status','created_at','verified'];
 
+    protected $attributes = [
+        'status' => 1,
+    ];
+
     public function getTagsAttribute($value)
     {
         if ($this->relationLoaded('tags')) {
@@ -142,22 +146,17 @@ class Post extends Model
 
     public function getAvgRatingAttribute($val)
     {
-        if(!empty($val) || $val > 0){
-            return number_format((float)$val, 1, '.', '');
-        }
-        else{
-            return "0";
-        }
+        return number_format($val ?? 0, 1);
     }
 
     public function scopeAvgRating($query)
     {
-        return $query->addSelect(DB::raw('(SELECT AVG(rating) FROM   comments WHERE posts.id=post_id AND type=1) as avg_rating'));
+        return $query->addSelect(DB::raw('(SELECT AVG(rating) FROM comments WHERE posts.id = post_id AND rating IS NOT NULL AND rating > 0) as avg_rating'));
     }
 
     public function scopeIsRating($query,$user_id)
     {
-        return $query->selectRaw("CASE WHEN EXISTS (SELECT * FROM comments WHERE posts.id = post_id AND type = 1 AND user_id = ?) THEN 'true' ELSE 'false' END as is_rating",[$user_id]);
+        return $query->selectRaw("CASE WHEN EXISTS (SELECT * FROM comments WHERE posts.id = post_id AND AND user_id = ? AND rating IS NOT NULL AND rating > 0) THEN 'true' ELSE 'false' END as is_rating",[$user_id]);
     }
 
     public function savePost($data=[],$object_id=0,$object = null)

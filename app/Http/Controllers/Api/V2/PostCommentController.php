@@ -133,10 +133,20 @@ class PostCommentController extends Controller
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage   = $request->input('per_page', 10);
         $status    = $request->input('status');
+        $hasRating = $request->input('has_rating'); // new filter
 
         $commentsQuery = DB::table('comments')
             ->where('post_id', $postId)
             ->orderBy($sortField, $sortOrder);
+
+        // 🔍 apply filter for rating presence
+        if ($hasRating !== null) {
+            if ((int)$hasRating === 1) {
+                $commentsQuery->whereNotNull('rating');
+            } elseif ((int)$hasRating === 0) {
+                $commentsQuery->whereNull('rating');
+            }
+        }
 
         $comments = $commentsQuery
             ->paginate($perPage)
@@ -234,5 +244,6 @@ class PostCommentController extends Controller
             ],
         ], 200);
     }
+
 
 }
