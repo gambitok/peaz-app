@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 class WebController extends Controller
 {
 
     function generate_switch($params = array())
     {
-        
+
     return "<label for='primary".$params['id']."' class='switch switch--primary'>
         <input class='switch__input switch-status' type='checkbox' data-id='" . $params['id'] . "'  data-url='" . $params['url']['status'] ."'   " . $params['checked'] . "  id='primary".$params['id']."' />
         <div class='switch__box'>
@@ -22,8 +20,8 @@ class WebController extends Controller
     function generate_custom_switch($id = 0, $url = "", $checked = "false")
     {
         return '<span class="kt-switch kt-switch--outline kt-switch--icon kt-switch--success"><label>
-                                                            <input type="checkbox" data-id="' . $id . '"  data-url="' . $url . '" ' . $checked . ' class="switch-status">
-                                                                <span></span></label></span>';
+        <input type="checkbox" data-id="' . $id . '"  data-url="' . $url . '" ' . $checked . ' class="switch-status">
+        <span></span></label></span>';
     }
 
     function generate_actions_buttons($params = array(), $extra = array(), $target = false)
@@ -33,6 +31,7 @@ class WebController extends Controller
         $isView = isset($params['url']['view']);
         $isDelete = isset($params['url']['delete']);
         $target = ($target) ? 'target="_blank"' : "";
+
         if ($isView) {
             $operation .= '<a title="View" ' . $target . ' href="' . $params['url']['view'] . '" data-type="view" data-id="' . $params['id'] . '" class="btn btn-sm btn-clean btn-icon btn-icon-md btnView"> <i class="fas fa-eye"></i> </a>';
         }
@@ -41,11 +40,12 @@ class WebController extends Controller
         }
         if ($isDelete) {
             $operation .= '<a ' . $target . ' title="Delete" href="' . $params['url']['delete'] . '" data-id="' . $params['id'] . '" class="btn btn-sm btn-clean btn-icon btn-icon-md btnDelete">
-<i class="fas fa-trash"></i>
-</a>';
+            <i class="fas fa-trash"></i>
+            </a>';
         }
+
         if (!empty($extra)) {
-            foreach ($extra as $key => $value) {
+            foreach ($extra as $value) {
                 $btn_id = "";
                 $onclick = "";
                 $data_type = "";
@@ -69,19 +69,17 @@ class WebController extends Controller
                         $operation .= '<button type="button" class="btn_space ' . $value['btn_class'] . ' btn-xs" data-toggle="modal" ' . $btn_id . ' ' . $onclick . ' data-target="#' . $value['modal_id'] . '">' . $value['btn_name'] . '</button>';
                 }else{
                     $operation .= '<a  title="' . $title . '" href="' .$value['url'] . '" data-id="' . $value['data_id'] . '" class="btn btn-sm btn-clean btn-icon btn-icon-md">
-               '.$value['btn_icon'].'
-            </a>';
+                       '.$value['btn_icon'].'
+                    </a>';
                 }
-                //with icon button
-
             }
         }
+
         return $operation;
     }
 
     public function upload_file($file_name = "", $path = "")
     {
-        $file = "";
         $request = \request();
         if ($request->hasFile($file_name) && $path) {
             $path = config('constants.upload_paths.' . $path);
@@ -92,6 +90,5 @@ class WebController extends Controller
         }
         return $file;
     }
-
 
 }

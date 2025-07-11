@@ -19,7 +19,6 @@ function readFileInput(input, functions) {
 function addOverlay() {
     $('#loader_display_d').show();
     //$(`<div id="overlayDocument"><img src="${loader_img}" /></div>`).appendTo(document.body);
-
 }
 
 function removeOverlay() {
@@ -91,8 +90,6 @@ function ajax_maker(data) {
     if (object_key_exits(data, 'processData')) {
         ajax_data.processData = false;
     }
-
-
     if (object_key_exits(data, 'token')) {
         ajax_data.headers = {
             _token: "{{ csrf_token() }}"
@@ -100,11 +97,6 @@ function ajax_maker(data) {
     }
     $.ajax(ajax_data);
 }
-
-
-    $(function () {
-       
-});
 
 function loadDate(){
     $(".date").datepicker({
@@ -122,7 +114,6 @@ function loadDate(){
 
     $(".input-mask").inputmask();
 }
-
 
 function phoneNumberMethod(){
     jQuery.validator.addMethod("phone", function (phone_number, element) {
@@ -144,7 +135,7 @@ function preview_image(event){
         output.src = reader.result;
     }
     reader.readAsDataURL(event.target.files[0]);
- };
+ }
 
  function totalCalculate(val,pecentage,unit=0){
      if(unit == 0 || unit == 'undefined'){
@@ -157,21 +148,112 @@ function preview_image(event){
  }
 
  function currencyFormate(values= 0){
-     
-     // Create our number formatter.
-var formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  
-    // These options are needed to round to whole numbers if that's what you want.
-    //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
-    //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
-  });
+    // Create our number formatter.
+    var formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        // These options are needed to round to whole numbers if that's what you want.
+        //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
+        //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+    });
 
-  return formatter.format(values); /* $2,500.00 */
-
+    return formatter.format(values); /* $2,500.00 */
  }
 
  function getTimezone(){
     return  Intl.DateTimeFormat().resolvedOptions().timeZone;
  }
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    function updateFileButton(fileInput, button, fileType) {
+        if (fileInput.files.length > 0) {
+            button.textContent = 'Change';
+        } else {
+            button.textContent = 'Add new';
+        }
+    }
+
+    document.querySelectorAll(".upload-file").forEach(input => {
+        const button = document.getElementById(`${input.id}-btn`);
+
+        input.addEventListener("change", function () {
+            let file = this.files[0];
+            let postId = this.dataset.id;
+            let fileType = this.dataset.type;
+
+            updateFileButton(input, button, fileType);
+
+            if (!file) return;
+
+            let formData = new FormData();
+            formData.append("file", file);
+            formData.append("type", fileType);
+            formData.append("_token", document.querySelector('meta[name="csrf-token"]').content);
+
+            fetch(`/admin/post/${postId}/upload-file`, {
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let previewContainer = document.getElementById(`${fileType}-preview-container`);
+                        previewContainer.innerHTML = `
+                            <div class="d-flex align-items-center mt-2">
+                                <a href="${data.file_url}" target="_blank" id="${fileType}-link">
+                                    <img src="${data.file_url}" alt="${fileType}" id="${fileType}-preview" style="max-width: 100px; max-height: 100px;">
+                                </a>
+                                <button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="${postId}" data-type="${fileType}">Delete</button>
+                            </div>
+                        `;
+                        updateFileButton(input, button, fileType);
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                })
+                .catch(error => console.error("Upload error:", error));
+        });
+    });
+
+    document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("delete-file-btn")) {
+            let postId = event.target.dataset.id;
+            let fileType = event.target.dataset.type;
+
+            if (confirm(`Are you sure you want to delete this ${fileType}?`)) {
+                fetch(`/admin/post/${postId}/delete-file?type=${fileType}`, {
+                    method: "DELETE",
+                    headers: {
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ type: fileType })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const previewContainer = document.getElementById(`${fileType}-preview-container`);
+                            previewContainer.innerHTML = `
+                                <p>No ${fileType} uploaded</p>
+                            `;
+                            const button = document.getElementById(`${fileType}-btn`);
+                            button.textContent = 'Add new';
+                        } else {
+                            alert(`Error: ${data.message}`);
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+            }
+        }
+    });
+
+    // Оновлення кнопки вибору файлу
+    document.querySelectorAll(".upload-file").forEach(input => {
+        const button = document.getElementById(`${input.id}-btn`);
+        button.addEventListener("click", function () {
+            input.click();
+        });
+    });
+
+});

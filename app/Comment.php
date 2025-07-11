@@ -3,12 +3,38 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Comment extends Model
 {
     public $table = "comments";
     protected $fillable = ['id','user_id','post_id','comment_id','comment_text','type','rating'];
 
+    public function ratings()
+    {
+        return $this->hasMany(CommentRating::class);
+    }
+
+    public function averageRating()
+    {
+        return $this->ratings()->avg('rating');
+    }
+
+    public function scopeWithAvgRating($query)
+    {
+        return $query->addSelect([
+            'avg_rating' => DB::table('comments')
+                ->selectRaw('AVG(rating)')
+                ->whereColumn('post_id', 'posts.id')
+                ->whereNotNull('rating')
+                ->where('rating', '>', 0)
+        ]);
+    }
+
+    public function post()
+    {
+        return $this->belongsTo(Post::class);
+    }
     public function reply()
     {
         return $this->hasMany(Comment::class,'comment_id','id');

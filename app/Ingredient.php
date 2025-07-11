@@ -7,9 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class Ingredient extends Model
 {
     public $table = "ingredients";
-    protected $fillable = ['id','user_id','post_id','name','type','measurement', 'order'];
-    
-    public function saveIngredient($data=[],$object_id=0,$object = null){
+    protected $fillable = ['id','name','type','weight'];
+
+    public function post()
+    {
+        return $this->belongsTo(Post::class, 'post_id');
+    }
+
+    public function posts()
+    {
+        return $this->belongsToMany(Post::class, 'post_ingredient')
+            ->withPivot('measurement')
+            ->withTimestamps();
+    }
+
+    public function saveIngredient($data = [], $object_id = 0, $object = null)
+    {
         if(!empty($object)){
             //
         }
@@ -24,8 +37,8 @@ class Ingredient extends Model
 
         return $object;
     }
-  
-    
+
+
     public function getNameAttribute($val)
     {
         if(!empty($val)){

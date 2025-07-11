@@ -24,7 +24,7 @@ if (!function_exists('register_user_authy')) {
             $sid = env("TWILIO_ACCOUNT_SID");
             $token = env("TWILIO_AUTH_TOKEN");
             $twilio = new Client($sid, $token);
-               
+
             $verification = $twilio->verify
                 ->v2
                 ->services(env("TWILIO_SERVICE_TOKEN"))
@@ -40,7 +40,7 @@ if (!function_exists('register_user_authy')) {
     }
 }
 
-      
+
 if (!function_exists('verify_token_authy')) {
 
     /**
@@ -56,7 +56,7 @@ if (!function_exists('verify_token_authy')) {
         try {
             $sid = getenv("TWILIO_ACCOUNT_SID");
             $token = getenv("TWILIO_AUTH_TOKEN");
-            $twilio = new Client($sid, $token);  
+            $twilio = new Client($sid, $token);
             $verification_check = $twilio->verify
                 ->v2
                 ->services(env("TWILIO_SERVICE_TOKEN"))
@@ -171,9 +171,9 @@ function get_asset($val = "", $file_exits_check = true, $no_image_available = nu
     } else {
         return asset($no_image_available);
     }
-} 
+}
 
-function print_title($title)
+function print_title($title): string
 {
     return ucfirst($title);
 }
@@ -229,7 +229,7 @@ function admin_modules()
         ],
         [
             'route' => route('admin.user.index'),
-            'name' => __('Users'),
+            'name' => __('Members'),
             'icon' => 'kt-menu__link-icon fas fa-users',
             'child' => [],
             'all_routes' => [
@@ -239,36 +239,121 @@ function admin_modules()
             ]
         ],
         [
-            'route' => route('admin.interestedlist.index'),
-            'name' => __('Interest'),
-            'icon' => 'kt-menu__link-icon fas fa-list',
-            'child' => [],
-            'all_routes' => [
-                'admin.interestedlist.index',
-                'admin.interestedlist.show',
-                'admin.interestedlist.add',
-            ]
-        ],
-        [
             'route' => route('admin.post.index'),
-            'name' => __('Post'),
+            'name' => __('Recipes'),
             'icon' => 'kt-menu__link-icon fas fa-image',
             'child' => [],
             'all_routes' => [
-                'admin.interestedlist.index',
-                'admin.interestedlist.show',
-                'admin.interestedlist.add',
+                'admin.post.index',
+                'admin.post.show',
+                'admin.post.add',
+            ]
+        ],        [
+            'route' => route('admin.ingredient.index'),
+            'name' => __('Ingredients'),
+            'icon' => 'kt-menu__link-icon fas fa-image',
+            'child' => [],
+            'all_routes' => [
+                'admin.ingredient.index',
+                'admin.ingredient.show',
+                'admin.ingredient.add',
             ]
         ],
         [
-            'route' => route('admin.user_report.index'),
-            'name' => __('User Report'),
-            'icon' => 'kt-menu__link-icon fas fa-file',
+            'route' => route('admin.tag.index'),
+            'name' => __('Recipe Tags'),
+            'icon' => 'kt-menu__link-icon fas fa-image',
+            'all_routes' => [
+                'admin.tag.index',
+                'admin.tag.show',
+                'admin.tag.add',
+            ],
+            'child' => [
+                [
+                    'route' => route('admin.tag.index'),
+                    'name' => 'Tags',
+                    'icon' => '',
+                    'all_routes' => [
+                        'admin.tag.index',
+                        'admin.tag.show',
+                        'admin.tag.add',
+                    ],
+                ],
+                [
+                    'route' => route('admin.dietary.index'),
+                    'name' => 'Dietaries',
+                    'icon' => '',
+                    'all_routes' => [
+                        'admin.dietary.index',
+                        'admin.dietary.show',
+                        'admin.dietary.add',
+                    ],
+                ],
+                [
+                    'route' => route('admin.cuisine.index'),
+                    'name' => 'Cuisines',
+                    'icon' => '',
+                    'all_routes' => [
+                        'admin.cuisine.index',
+                        'admin.cuisine.show',
+                        'admin.cuisine.add',
+                    ],
+                ],
+            ],
+        ],
+//        [
+//            'route' => route('admin.interestedlist.index'),
+//            'name' => __('Interests'),
+//            'icon' => 'kt-menu__link-icon fas fa-list',
+//            'child' => [],
+//            'all_routes' => [
+//                'admin.interestedlist.index',
+//                'admin.interestedlist.show',
+//                'admin.interestedlist.add',
+//            ]
+//        ],
+//        [
+//            'route' => route('admin.user_report.index'),
+//            'name' => __('User Report'),
+//            'icon' => 'kt-menu__link-icon fas fa-file',
+//            'child' => [],
+//            'all_routes' => [
+//                'admin.user_report.index',
+//                'admin.user_report.show',
+//                'admin.user_report.add',
+//            ]
+//        ],
+        [
+            'route' => route('admin.filter.index'),
+            'name' => "Inspiration sections",
+            'icon' => 'fas fa-users',
             'child' => [],
             'all_routes' => [
-                'admin.user_report.index',
-                'admin.user_report.show',
-                'admin.user_report.add',
+                'admin.filters.index',
+                'admin.filters.show',
+                'admin.filters.add',
+            ]
+        ],
+        [
+            'route' => route('admin.billboards.index'),
+            'name' => "Billboards",
+            'icon' => 'fas fa-users',
+            'child' => [],
+            'all_routes' => [
+                'admin.billboards.index',
+                'admin.billboards.show',
+                'admin.billboards.add',
+            ]
+        ],
+        [
+            'route' => route('admin.restaurants.index'),
+            'name' => "Restaurants",
+            'icon' => 'fas fa-users',
+            'child' => [],
+            'all_routes' => [
+                'admin.restaurants.index',
+                'admin.restaurants.show',
+                'admin.restaurants.add',
             ]
         ],
         [
@@ -295,16 +380,14 @@ function admin_modules()
                     'all_routes' => [
                         'admin.get_site_settings',
                     ],
-                ]
+                ],
+                [
+                    'route' => route('admin.content.index'),
+                    'name' => "Content",
+                    'icon' => 'fas fa-users',
+                    'all_routes' => []
+                ],
             ],
-        ],
-        [
-            'route' => route('admin.content.index'),
-            'name' => "Content",
-            'icon' => 'fas fa-users',
-            'child' => [],
-            'all_routes' => [
-           ]
         ],
         [
             'route' => route('front.logout'),
@@ -351,7 +434,7 @@ function breadcrumb($aBradcrumb = array())
 
             $content .=  '<li class="breadcrumb-item"> <a href="'.$link.'">'. ucfirst($key).'</a>';
 
-           
+
             // $content .= "<a href='" . $link . "' class='kt-subheader__breadcrumbs-link'>" . ucfirst($key) . "</a>";
             // if ($total_bread_crumbs != $i) {
             //     $content .= "<span class='kt-subheader__breadcrumbs-separator'></span>";
@@ -422,7 +505,7 @@ function send_push($user_id = 0, $data = [], $notification_entry = false)
     if ($push_data['user_id'] !== $push_data['from_user_id']) {
 //        $to_user_data = User::find($user_id);
 //        if ($to_user_data) {
-        $get_user_tokens = DeviceToken::get_user_tokens($user_id);        
+        $get_user_tokens = DeviceToken::get_user_tokens($user_id);
         $fire_base_header = ["Authorization: key=" . config('constants.firebase_server_key'), "Content-Type: application/json"];
         if (count($get_user_tokens)) {
             foreach ($get_user_tokens as $value) {
@@ -657,7 +740,7 @@ function upload_base_64_img($base64 = "", $path = "uploads/product/")
     if (preg_match('/^data:image\/(\w+);base64,/', $base64)) {
         $data = substr($base64, strpos($base64, ',') + 1);
         $up_file = rtrim($path, '/') . '/' . md5(uniqid()) . '.png';
-        $img = Storage::disk('s3')->put($up_file, base64_decode($data), 'public');
+        $img = Storage::disk('s3')->put($up_file, base64_decode($data));
         if ($img) {
             $file = $up_file;
         }
@@ -666,25 +749,24 @@ function upload_base_64_img($base64 = "", $path = "uploads/product/")
 }
 function upload_file($file_name = "", $path = null)
 {
-   try {
-    $file = "";
+    try {
     $request = \request();
     if ($request->hasFile($file_name) && $path) {
         $hash = Str::random(40);
         $extension = $request->file($file_name)->getClientOriginalExtension();
         $path = config('constants.upload_paths.' . $path);
-        $file = $request->file($file_name)->storeAs($path, $hash . '.' . $extension, ['disk' => 's3', 'visibility' => 'public']);
-        // $file = $request->file($file_name)->storeAs($path, config('constants.upload_type'));
+        $file = $request->file($file_name)->storeAs($path, $hash . '.' . $extension, ['disk' => 's3']);
     } else {
         echo 'Provide Valid Const from web controller';
         die();
     }
     return $file;
-   } catch (\Throwable $th) {
-     echo 'An error occured ' . $th->getMessage();
-     return null;
-   }
+    } catch (\Throwable $th) {
+        echo 'An error occured ' . $th->getMessage();
+        return null;
+    }
 }
+
 function get_fancy_box_html_new($path = "", $class = "img_75"): string
 {
     return '<a class="fancybox" href="' . $path . '"><img class="' . $class . '" src="' . $path . '" alt="image" width=40 height=40></a>';

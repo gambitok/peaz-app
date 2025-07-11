@@ -12,7 +12,6 @@ class InterestedList extends Model
     public $table = "interested_list";
     protected $fillable= ['id','category_id','image','type','title'];
 
-
     public function getImageAttribute($val)
     {
         if(!empty($val)){
@@ -25,5 +24,5 @@ class InterestedList extends Model
     {
         return $this->belongsTo(Category::class,'category_id','id');
     }
-    
+
 }

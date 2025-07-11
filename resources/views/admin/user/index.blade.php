@@ -13,27 +13,27 @@
 <div class="row">
     <div class="col-12">
         {!! success_error_view_generator() !!}
-
     </div>
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive ">
+            <div>
+                <a href="{{ route('admin.user.create') }}" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add Member</a>
+            </div>
+            <div class="table-responsive">
                 <table id="listResults" class="table dt-responsive mb-4  nowrap w-100 mb-">
                     <thead>
                         <tr>
-                            <th>No</th>
-                            <th>Profile Image</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Number</th>
-                            <th>BirthDate</th>
+                            <th>ID</th>
+                            <th>Membership level</th>
+                            <th>Profile name</th>
+                            <th>Verified</th>
+                            <th>Join date</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
-
             </div>
         </div>
     </div>
@@ -52,43 +52,35 @@
         oTable = $('#listResults').DataTable({
             "processing": true,
             "serverSide": true,
-            columnDefs: [
-                { className: 'text-center', targets: [1,2,3,4] },
-            ],
             "order": [
                 [0, "DESC"]
             ],
             "ajax": "{{route('admin.user.listing')}}",
-            "columns": [{
+            "columns": [
+                {
                     "data": "id",
                     searchable: true,
                     sortable: false
                 },
                 {
-                    "data": "profile_image",
-                    searchable: true,
-                    sortable: false
+                    "data": "membership_level",
+                    searchable: false,
+                    sortable: true
                 },
                 {
                     "data": "username",
                     searchable: true,
-                    sortable: false
-                },
-                // {"data": "username", sortable: false},
-                {
-                    "data": "email",
-                    searchable: true,
-                    sortable: false
+                    sortable: true
                 },
                 {
-                    "data": "mobile_number",
-                    searchable: true,
+                    "data": "verified",
+                    searchable: false,
                     sortable: false
                 },
                 {
-                    "data": "date_of_birth",
+                    "data": "created_at",
                     searchable: true,
-                    sortable: false
+                    sortable: true
                 },
                 {
                     "data": "status",
@@ -103,5 +95,51 @@
             ]
         });
     });
+</script>
+
+<script>
+    $(document).on('change', '.toggle-user-verified', function () {
+        let postId = $(this).data('id');
+
+        $.ajax({
+            url: "{{ route('admin.user.verified') }}",
+            type: "POST",
+            data: {
+                id: postId,
+                _token: "{{ csrf_token() }}"
+            }
+        });
+    });
+
+    $(document).on('change', '.status-dropdown', function () {
+        let postId = $(this).data('id');
+        let status = $(this).val();
+
+        $.ajax({
+            url: "{{ route('admin.user.status') }}",
+            type: "POST",
+            data: {
+                id: postId,
+                status: status,
+                _token: "{{ csrf_token() }}"
+            }
+        });
+    });
+
+    $(document).on('change', '.membership-dropdown', function () {
+        let postId = $(this).data('id');
+        let membership_level = $(this).val();
+
+        $.ajax({
+            url: "{{ route('admin.user.membership') }}",
+            type: "POST",
+            data: {
+                id: postId,
+                membership_level: membership_level,
+                _token: "{{ csrf_token() }}"
+            }
+        });
+    });
+
 </script>
 @endsection

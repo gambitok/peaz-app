@@ -49,7 +49,7 @@ return [
 //        ],
         'local' => [
             'driver' => 'local',
-            'root' => public_path(),
+            'root' => storage_path('app'),
         ],
 
         'public' => [
@@ -65,7 +65,9 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => true,
         ],
 
     ],
@@ -84,5 +86,13 @@ return [
     'links' => [
         public_path('storage') => storage_path('app/public'),
     ],
+
+//    'ffmpeg' => [
+//        'binaries' => env('FFMPEG_BINARIES', '/usr/bin/ffmpeg'),
+//        'threads'  => 12,
+//    ],
+//    'ffprobe' => [
+//        'binaries' => env('FFPROBE_BINARIES', '/usr/bin/ffprobe'),
+//    ],
 
 ];

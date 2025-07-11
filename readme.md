@@ -1,51 +1,78 @@
-# Admin Panel Template
+# SOFTWARE PORTAL - CYBER INTEL SYSTEMS
 
-## If You are going to add some Feature and or you are fixing a bug inside then you need to push inside panel another please Done push code inside a repo
+## Overview
 
-## Steps
+SOFTWARE PORTAL - CYBER INTEL SYSTEMS is a robust platform developed to support cybersecurity operations. This application is designed for local environments and provides a comprehensive suite of tools to manage and analyze cyber intelligence data.
 
-1. First Clone the Project
+## Table of Contents
 
-2. Install php version 7.2.34
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Scripts](#scripts)
+- [Environment Variables](#environment-variables)
+- [Dependencies](#dependencies)
 
-3. Migrate database you can use this command
+## Installation
 
+To set up the project locally, follow these steps:
+
+1. Clone the repository:
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
+
+2. Install the project dependencies:
+    ```bash
+    npm install
+    ```
+
+3. Copy the example environment file and configure the environment variables:
+    ```bash
+    cp .env.example .env
+    ```
+
+4. Generate the application key:
+    ```bash
+    php artisan key:generate
+    ```
+
+## Configuration
+
+The main configuration file for the project is the `.env` file. This file contains all the necessary environment variables to run the application. Ensure that you update this file with the appropriate values for your local environment.
+
+## Usage
+
+To run the application locally, use the following command:
+
+```bash
+npm run dev
 ```
-php artisan migrate:fresh --seed
-```
 
-4. Run this command also for installing all dependency
+This will start the application in development mode.
 
-```
-composer install
-```
+## Scripts
 
-5. Run the command below to serve the app
+The following scripts are available in the project:
 
-```
-php artisan serve
-```
+- **dev**: Run the application in development mode.
+- **development**: Run webpack in development mode.
+- **watch**: Watch for file changes and recompile.
+- **watch-poll**: Watch for file changes with polling and recompile.
+- **hot**: Run webpack-dev-server with hot module replacement.
+- **prod**: Run the application in production mode.
+- **production**: Run webpack in production mode.
 
-6. Make sure add logo and other info inside site setting
+## Dependencies
 
-8)To enable xDebug, do the following:
+The project relies on the following dependencies:
 
--   Inside index.php, add:
+- **axios**: Promise-based HTTP client for the browser and node.js.
+- **cross-env**: Run scripts that set and use environment variables across platforms.
+- **laravel-mix**: An elegant wrapper around Webpack for the 80% use case.
+- **lodash**: A modern JavaScript utility library delivering modularity, performance, and extras.
+- **resolve-url-loader**: Resolves relative paths in url() statements based on the original source file.
+- **sass**: CSS with superpowers.
+- **sass-loader**: Loads a Sass/SCSS file and compiles it to CSS.
 
-```
-phpinfo();
-exit;
-```
-
--   Serve the app via `php artisan serve`
-
--   Copy the PhpInfo text and paste into `https://xdebug.org/wizard`
-
--   Follow the instructions provided to setup debugger.
-
-Theme demo
-Need any change you can check theme
-https://themesbrand.com/skote/layouts/index.html
-
-Other Layouts
-https://preview.themeforest.net/item/skote-html-laravel-admin-dashboard-template/full_screen_preview/25548061?_ga=2.238064128.1839665091.1628076782-147820294.1628076782

@@ -6,10 +6,8 @@ use App\Content;
 use App\Http\Controllers\WebController;
 use Illuminate\Http\Request;
 
-
 class ContentController extends WebController
 {
-
 
     public function index()
     {
@@ -22,7 +20,7 @@ class ContentController extends WebController
         ]);
     }
 
-    public function listing()
+    public function listing(): array
     {
         $datatable_filter = datatable_filters();
         $offset = $datatable_filter['offset'];
@@ -34,6 +32,7 @@ class ContentController extends WebController
         );
         $main = Content::query();
         $return_data['recordsTotal'] = $main->count();
+
         if (!empty($search)) {
             $main->where(function ($query) use ($search) {
                 $query->where('title', 'like', "%$search%");
@@ -44,6 +43,7 @@ class ContentController extends WebController
             ->offset($offset)
             ->limit($datatable_filter['limit'])
             ->get();
+
         if (!empty($all_data)) {
             foreach ($all_data as $key => $value) {
                 $param = [
@@ -60,12 +60,14 @@ class ContentController extends WebController
                 );
             }
         }
+
         return $return_data;
     }
 
     public function edit($id)
     {
         $data = Content::find($id);
+
         if ($data) {
             $title = "edit Content";
             return view('admin.content.edit', [
@@ -78,13 +80,14 @@ class ContentController extends WebController
             ]);
         }
         error_session('Content not found');
+
         return redirect()->route('admin.content.index');
     }
 
     public function update(Request $request, $id)
     {
-
         $data = Content::find($id);
+
         if ($data) {
             $inputs = $request->validate([
                 'title' => ['required', "max:255"],
@@ -95,6 +98,7 @@ class ContentController extends WebController
         } else {
             error_session('content not found');
         }
+
         return redirect()->route('admin.content.index');
     }
 

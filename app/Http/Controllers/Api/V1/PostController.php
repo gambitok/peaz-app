@@ -10,28 +10,25 @@ use App\CommentLike;
 use App\DeviceToken;
 use App\Ingredient;
 use App\Instruction;
-use App\Http\Controllers\Controller;
-use App\Postlike;
+use App\PostLike;
 use App\ReportStatus;
 use App\User;
 use App\UserTag;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class PostController extends ResponseController
 {
     public $post_obj;
     public $ingredient_obj;
     public $instruction_obj;
-    
+
     public function  __construct()
     {
         $this->post_obj = new Post();
         $this->ingredient_obj = new Ingredient();
         $this->instruction_obj = new Instruction();
     }
+
     public function createPost(Request $request)
     {
         $user = $request->user();
@@ -48,7 +45,7 @@ class PostController extends ResponseController
             'thumbnail'=>['required_if:method,add'],
             'type'=>['required','in:video,image'],
             'post_id'=>['required_if:method,edit'],
-            
+
         ];
         $messages = [
             'file.required' => "The image field is required",
@@ -63,7 +60,7 @@ class PostController extends ResponseController
                 $up = $data->getRawOriginal('file');
             }
             $messages = __('api.suc_post_update');
-            
+
         }
         if ($request->hasfile('file')) {
             $up = upload_file('file', 'user_post_image');
@@ -83,7 +80,7 @@ class PostController extends ResponseController
         $request_data = $request->all();
         $request_data['thumbnail'] = $thumbnail ?? "";
         $request_data['file'] = $up ?? "";
-        $request_data['user_id'] = $user->id; 
+        $request_data['user_id'] = $user->id;
         $request_data['tags'] = implode(",", $tagItems);
         $request_data['hours'] = $request->hours ?? 0;
         unset($request_data['method']);
@@ -92,39 +89,48 @@ class PostController extends ResponseController
             $this->sendResponse(200, $messages , $post);
         }
         $this->sendError(__('api.err_something_went_wrong'), false);
-       
     }
 
     public function addIngredient(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => __('api.err_user_not_found')], 404);
+        }
+
         $rules = [
             'name' => ['required'],
             'measurement' => ['required'],
-            "post_id" => ['required', 'exists:posts,id'],
-            "method"=>['required'],
-            "ingredient_id"=>['required_if:method,edit'],           
+            'post_id' => ['required', 'exists:posts,id'],
+            'method' => ['required'],
+            'ingredient_id' => ['required_if:method,edit'],
         ];
         $this->directValidation($rules);
+
         $data = null;
         $messages = __('api.suc_ingredient_create', ['order' => $request->order]);
-        if($request->ingredient_id > 0){
+
+        if ($request->ingredient_id > 0) {
             $data = $this->ingredient_obj->find($request->ingredient_id);
+            if (!$data) {
+                return response()->json(['error' => __('api.err_ingredient_not_found')], 404);
+            }
             $messages = __('api.suc_ingredient_update');
         }
+
         $request_data = $request->all();
         $request_data['user_id'] = $user->id;
         $request_data['type'] = $request->type ?? '';
         $request_data['measurement'] = $request->measurement ?? '';
         $request_data['order'] = (int) ($request->order ?? 0);
         unset($request_data['method']);
-        $post = $this->ingredient_obj->saveIngredient($request_data,0,$data);
-        if($post){
-            $this->sendResponse(200, $messages , $post);
-        }else{
-            $this->sendError(__('api.err_something_went_wrong'), false);
+
+        $post = $this->ingredient_obj->saveIngredient($request_data, 0, $data);
+        if (!$post) {
+            return response()->json(['error' => __('api.err_something_went_wrong')], 500);
         }
-    
+
+        return response()->json(['message' => $messages, 'data' => $post], 200);
     }
 
     public function deleteComment(Request $request)
@@ -163,6 +169,7 @@ class PostController extends ResponseController
             $this->sendError(__('api.err_comment_update'), false);
         }
     }
+
     public function addInstruction(Request $request)
     {
         $user = $request->user();
@@ -201,7 +208,7 @@ class PostController extends ResponseController
         $request_data = $request->all();
         $request_data['thumbnail'] = $thumbnail ?? "";
         $request_data['file'] = $up ?? "";
-        $request_data['user_id'] = $user->id; 
+        $request_data['user_id'] = $user->id;
         $request_data['order'] = (int) ($order);
         $request_data['type'] = (strpos($request->file->getMimeType(), 'video') !== false) ? 'video' : 'image';
         unset($request_data['method']);
@@ -229,10 +236,10 @@ class PostController extends ResponseController
             $is_login = DeviceToken::where('token', $token)->with('user')->has('user')->first();
             if ($is_login) {
                 $user = $is_login->user;
-                $likes = Postlike::where('user_id', $user->id)->pluck('post_id')->toArray();
+                $likes = PostLike::where('user_id', $user->id)->pluck('post_id')->toArray();
                 $reported_post =  ReportStatus::where('user_id',$user->id)->pluck('post_id')->toArray();
             }
-        }       
+        }
         $p_instance = Post::with([
             'user' => function ($q) {
                 $q->select("id", "username", "profile_image");
@@ -256,7 +263,6 @@ class PostController extends ResponseController
             ->limit($limit)
             ->get();
 
-        $post_data = [];      
         foreach ($posts as $post) {
 
             $post->is_like = false;
@@ -271,7 +277,6 @@ class PostController extends ResponseController
                     $post->is_reported = true;
                 }
             }
-            $post_data[] = $post;
         }
 
         if (!empty($posts)) {
@@ -292,7 +297,7 @@ class PostController extends ResponseController
             $is_login = DeviceToken::where('token', $token)->with('user')->has('user')->first();
             if ($is_login) {
                 $user = $is_login->user;
-                $likes = Postlike::where('user_id', $user->id)->pluck('post_id')->toArray();
+                $likes = PostLike::where('user_id', $user->id)->pluck('post_id')->toArray();
                 $reported_post =  ReportStatus::where('user_id',$user->id)->pluck('post_id')->toArray();
             }
         }
@@ -301,10 +306,10 @@ class PostController extends ResponseController
                 $q->select("id", "username", "profile_image");
             },
             'ingredient' => function ($q) {
-                $q->select("id", "post_id", "name", "type", "measurement")->orderBy('order', 'ASC');
+                $q->select("id", "post_id", "name", "type", "measurement")->orderBy('name', 'ASC');
             },
             'instruction' => function ($q) {
-                $q->select("id", "post_id", "title", "description", "file", "thumbnail", "type")->orderBy('order', 'ASC');
+                $q->select("id", "post_id", "title", "description", "file", "thumbnail", "type")->orderBy('title', 'ASC');
             },
         ])
             ->withCount(["comment", 'postlike'])
@@ -318,7 +323,7 @@ class PostController extends ResponseController
             if (in_array($posts->id, $likes)) {
                 $posts->is_like = true;
             }
-        } 
+        }
         $posts->is_reported = false;
         if (isset($reported_post) && count($reported_post) > 0) {
             if (in_array($posts->id, $reported_post)) {
@@ -334,7 +339,7 @@ class PostController extends ResponseController
 
     public function getUserPosts(Request $request)
     {
-        
+
         try {
             $token = get_header_auth_token();
             if (!empty($token)) {
@@ -346,7 +351,7 @@ class PostController extends ResponseController
                         ->pluck('comment_id')->toArray();
                 }
             }
-    
+
             $posts = Post::with([
                 'user:id,username,profile_image',
                 'ingredient:id,post_id,name,type,measurement',
@@ -361,7 +366,7 @@ class PostController extends ResponseController
             ->where('user_id', $user->id)
             ->orderBy('id', 'DESC')
             ->get();
-    
+
             if (!empty($posts)) {
                 $this->sendResponse(200, __('api.suc_posts'), $posts);
             } else {
@@ -371,7 +376,6 @@ class PostController extends ResponseController
             $this->sendError(__('api.err_post'), false);
         }
     }
-
 
     public function getUserLikedPosts(Request $request)
     {
@@ -405,11 +409,10 @@ class PostController extends ResponseController
         }
     }
 
-
     public function getUserRecipesAndComments(Request $request)
     {
         $user = $request->user();
-        
+
         // Get user's recipes
         $recipes = Post::with([
             'user' => function ($q) {
@@ -458,6 +461,7 @@ class PostController extends ResponseController
 
         $this->sendResponse(200, __('api.suc_my_recipes_and_comments'), $data);
     }
+
     public function postCommentReview(Request $request)
     {
         try {
@@ -512,7 +516,7 @@ class PostController extends ResponseController
                         $comment->is_commentlike = true;
                     }
                 }
-    
+
                 $comment_data = [];
                 $rep_comments = $comment->reply;
                 foreach ($rep_comments as $replay) {
@@ -542,12 +546,12 @@ class PostController extends ResponseController
             'post_id' => ['required', 'exists:posts,id'],
         ];
         $this->directValidation($rules);
-        $postlike = Postlike::where('user_id', $user->id)->where('post_id', $request->post_id)->exists();
+        $postlike = PostLike::where('user_id', $user->id)->where('post_id', $request->post_id)->exists();
         if ($postlike == true) {
-            Postlike::where('user_id', $user->id)->where('post_id', $request->post_id)->delete();
+            PostLike::where('user_id', $user->id)->where('post_id', $request->post_id)->delete();
             $this->sendResponse(200, __('api.suc_dislike'));
         } else {
-            $like = Postlike::create([
+            $like = PostLike::create([
                 "user_id" => $user->id,
                 "post_id" => $request->post_id,
             ]);
@@ -558,6 +562,7 @@ class PostController extends ResponseController
             }
         }
     }
+
     public function commentLike(Request $request)
     {
         $user = $request->user();
@@ -593,6 +598,7 @@ class PostController extends ResponseController
             }
         }
     }
+
     public function commentList(Request $request)
     {
         $rules = [
@@ -671,7 +677,7 @@ class PostController extends ResponseController
     {
         $limit = $request->limit ?? 10;
         $offset = $request->offset ?? 0;
-        $post_like =  Postlike::with(['user' => function ($q) {
+        $post_like =  PostLike::with(['user' => function ($q) {
             $q->select("id", "username", "profile_image");
         }])->offset($offset)
             ->limit($limit)
@@ -739,4 +745,5 @@ class PostController extends ResponseController
             $this->sendError(__('api.err_usertag'), false);
         }
     }
+
 }

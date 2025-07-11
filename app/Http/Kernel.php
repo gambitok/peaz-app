@@ -15,7 +15,8 @@ class Kernel extends HttpKernel
      */
     protected $middleware = [
         \App\Http\Middleware\TrustProxies::class,
-        \Fruitcake\Cors\HandleCors::class,
+//        \Fruitcake\Cors\HandleCors::class,
+        \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
@@ -66,5 +67,8 @@ class Kernel extends HttpKernel
         'ApiTokenChecker' => \App\Http\Middleware\ApiTokenChecker::class,
         'Is_Admin' => \App\Http\Middleware\IsAdmin::class,
         "Message_Limit" => \App\Http\Middleware\CheckMessageLimits::class,
+        'auth.api' => \App\Http\Middleware\ApiAuthMiddleware::class,
+//        'auth:api' => \Laravel\Passport\Http\Middleware\CheckClientCredentials::class,
+        'log.passport.keys' => \App\Http\Middleware\LogPassportKeys::class,
     ];
 }

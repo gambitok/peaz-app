@@ -58,3 +58,5 @@ modules.xml
 *.ipr
 .idea/sonarlint
 .DS_Store
+/docker-compose.yml
+/Dockerfile

@@ -7,8 +7,8 @@ return [
     'upload_type' => 'local',
     'default' => [
         'image' => 'uploads/user/user.png',
-        'user_image' => 'uploads/user/user.png',
-        'no_image_available' => 'assets/general/image/no_image.jpg',
+        'user_image' => 'assets/general/images/no-profile.png',
+        'no_image_available' => 'assets/general/images/no-profile.png',
     ],
     'upload_paths' => [
         'exception_upload' => 'uploads/exception',
@@ -23,4 +23,3 @@ return [
     'push_log' => true,
     'firebase_server_key' => '',
 ];
- 

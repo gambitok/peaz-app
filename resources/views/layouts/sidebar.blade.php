@@ -16,8 +16,8 @@ $currentPath =  \Request::route()->getName();
         <div id="sidebar-menu">
             <!-- Left Menu Start -->
            <ul class="metismenu list-unstyled" id="side-menu">
-                <li class="menu-title" key="t-menu">@lang('translation.Menu')</li>
-               
+                <li class="menu-title" key="t-menu">Admin</li>
+
                 @foreach(admin_modules() as $key=>$value)
                 @php
                 $have_child=count($value['child']);

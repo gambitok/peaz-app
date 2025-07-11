@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers\General;
 
+use Carbon\Carbon;
 use App\GeneralSettings;
 use App\Http\Controllers\WebController;
 use App\Http\Requests\Admin\General\PasswordUpdateRequest;
 use App\User;
+use App\Post;
+use App\Billboard;
+use App\Feed;
+use App\SponsoredVideo;
 use App\InterestedList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -29,6 +34,7 @@ class GeneralController extends WebController
         $request->validate(['username' => 'required', 'password' => 'required']);
         $find_field = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? "email" : "username";
         $creds = [$find_field => $request->username, 'password' => $request->password, 'status' => 'active'];
+
         if (Auth::attempt($creds, $remember)) {
             return redirect()->route(getDashboardRouteName());
         } else {
@@ -38,6 +44,7 @@ class GeneralController extends WebController
                 flash_session('error', 'Please enter valid email or password');
             }
         }
+
         return redirect()->back();
     }
 
@@ -55,42 +62,38 @@ class GeneralController extends WebController
         return redirect()->back();
     }
 
-
-    public function totalusers(){
+    public function totalusers()
+    {
         $users = User::select(DB::raw('date(created_at) as userdate'),'created_at',DB::raw('count(id) as totaluser'))->where('type','user')->groupBy('userdate')->get();
-
         $maindata = [];
-        // echo $current_date_time = Carbon::now()->toDateTimeString();
-
-        // die;
-
-
-        if(count($users) > 0){
-             foreach( $users as $user) {
-
-                 $detail=  [];
-                  $detail[]= strtotime($user->userdate) * 1000;
-                  $detail[]= $user->totaluser;
+        if (count($users) > 0) {
+             foreach($users as $user) {
+                 $detail = [];
+                 $detail[] = strtotime($user->userdate) * 1000;
+                 $detail[] = $user->totaluser;
                  $maindata[] = $detail;
              }
         }
-         return $maindata;
+        return $maindata;
     }
-
 
     public function Admin_dashboard(Request $request)
     {
-        $user_data = $request->user();
-        $user_selected_country = $user_data->country;
         return view('admin.general.dashboard', [
             'title' => __('admin.lbl_dashboard'),
             'user_count' => User::where(['type' => 'user'])->count(),
             'cuisines_count'=> InterestedList::where('type',1)->count(),
             'food_and_drink_count'=> InterestedList::where('type',2)->count(),
             'diet_count'=> InterestedList::where('type',3)->count(),
+
+            'members_count' => User::where(['type' => 'user'])->count(),
+            'members_today_count' => User::where('type', 'user')->whereDate('created_at', Carbon::today())->count(),
+            'recipes_count' => Post::all()->count(),
+            'billboards_count' => Billboard::all()->count(),
+            'feeds_count' => Feed::all()->count(),
+            'sponsored_videos_count' => SponsoredVideo::all()->count(),
         ]);
     }
-
 
     public function get_update_password(Request $request)
     {
@@ -146,6 +149,7 @@ class GeneralController extends WebController
     {
         $user_data = $request->user();
         $view = ($user_data->type == "vendor") ? 'vendor.general.profile' : 'general.profile';
+
         return view($view, [
             'title' => 'Profile',
             'user' => $user_data,
@@ -168,9 +172,11 @@ class GeneralController extends WebController
         $type = $request->type;
         $val = $request->val;
         $user_id = Auth::id() ?? 0;
+
         if ($type == "username" || $type == "email") {
             $count = User::where($type, $val)->where('id', '!=', $user_id)->count();
         }
+
         return $count ? "false" : "true";
     }
 
@@ -178,6 +184,7 @@ class GeneralController extends WebController
     {
         $id = $request->id ?? 0;
         $query = User::where('id', '!=', $id);
+
         if ($request->username) {
             $query = $query->where('username', $request->username);
         } elseif ($request->email) {
@@ -195,46 +202,50 @@ class GeneralController extends WebController
     {
         $user_data = $request->user();
         $rules = [
-            'profile_image' => ['file', 'image'], 
+            'profile_image' => ['file', 'image'],
             'name' => ['required', 'max:255'],
             'username' => ['required', 'max:255', Rule::unique('users')->ignore($user_data->id)->whereNull('deleted_at')],
             'email' => ['required', 'max:255', Rule::unique('users')->ignore($user_data->id)->whereNull('deleted_at')],
         ];
-        $req = $request->validate($rules);
+        $request->validate($rules);
+
+        // Update user data
         $user_data->update([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
         ]);
-        $profile_image = $user_data->getRawOriginal('profile_image');
 
-        
+        // Handle profile image upload
         if ($request->hasFile('profile_image')) {
+            $profile_image = $user_data->getRawOriginal('profile_image');
             $up = upload_file('profile_image', 'user_profile_image');
             if ($up) {
+                // Delete old profile image
                 un_link_file($profile_image);
-                $profile_image = $up;
+                // Update user profile image
                 $user_data->update([
-                    'profile_image' => $profile_image,
+                    'profile_image' => $up,
                 ]);
+            } else {
+                // Handle failed image upload
+                error_session('Failed to upload profile image');
+                return redirect()->back();
             }
         }
+
         success_session('Profile Updated successfully');
+
         return redirect()->back();
     }
 
     public function forgot_password_view($token)
     {
-//        $user = User::where(['status' => 'active', 'reset_token' => $token])->first();
-//        if ($user) {
         return view('general.reset_password', [
             'token' => $token,
             'header_panel' => false,
             'title' => 'Password reset',
         ]);
-//        }
-//        error_session('Invalid password token');
-//        return redirect()->route('admin.login');
     }
 
     public function forgot_password_post(Request $request)
@@ -248,6 +259,7 @@ class GeneralController extends WebController
         $user = User::where('reset_token', $request->reset_token)->first();
         $user->update(['reset_token' => null, 'password' => $request->password]);
         success_session('Password updated successfully');
+
         return redirect()->back();
     }
 
@@ -256,7 +268,9 @@ class GeneralController extends WebController
         Artisan::call('optimize:clear');
         return "Cleared!";
     }
-    public function PhpInfo(){
+
+    public function PhpInfo()
+    {
         phpinfo();
     }
 

@@ -3,24 +3,24 @@
         <div class="d-flex">
             <!-- LOGO -->
             <div class="navbar-brand-box">
-                
-                <a href="{{route('admin.dashboard')}}" class="logo logo-dark">
-                    <span class="logo-sm">
-                        <img src="{{ small_site_logo }}" alt="">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{{site_logo}}" alt="">
-                    </span>
-                </a>
 
-                <a href="{{route('admin.dashboard')}}" class="logo logo-light">
-                    <span class="logo-sm">
-                        <img src="{{small_site_logo }}" alt="">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{{site_logo}}" alt="">
-                    </span>
-                </a>
+{{--                <a href="{{route('admin.dashboard')}}" class="logo logo-dark">--}}
+{{--                    <span class="logo-sm">--}}
+{{--                        <img src="{{small_site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                    <span class="logo-lg">--}}
+{{--                        <img src="{{site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                </a>--}}
+
+{{--                <a href="{{route('admin.dashboard')}}" class="logo logo-light">--}}
+{{--                    <span class="logo-sm">--}}
+{{--                        <img src="{{small_site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                    <span class="logo-lg">--}}
+{{--                        <img src="{{site_logo}}" alt="">--}}
+{{--                    </span>--}}
+{{--                </a>--}}
             </div>
 
             <button type="button" class="btn btn-sm px-3 font-size-16 header-item waves-effect" id="vertical-menu-btn">
@@ -38,7 +38,7 @@
         <div class="dropdown dropdown-mega d-none d-lg-block ms-2">
             <!-- <button type="button" class="btn header-item waves-effect" data-bs-toggle="dropdown" aria-haspopup="false" aria-expanded="false">
                 <span key="t-megamenu">@lang('translation.Mega_Menu')</span>
-                <i class="mdi mdi-chevron-down"></i> 
+                <i class="mdi mdi-chevron-down"></i>
             </button> -->
             <!-- <div class="dropdown-menu dropdown-megamenu">
                 <div class="row">
@@ -120,7 +120,7 @@
                                     <li>
                                         <a href="javascript:void(0);" key="t-faqs">@lang('translation.FAQs')</a>
                                     </li>
-                        
+
                                 </ul>
                             </div>
                         </div>
@@ -176,12 +176,12 @@
             </button> -->
             <!-- <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0"
                 aria-labelledby="page-header-search-dropdown">
-                
+
                 <form class="p-3">
                     <div class="form-group m-0">
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="@lang('translation.Search')" aria-label="Search input">
-                            
+
                             <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i></button>
                         </div>
                     </div>
@@ -376,7 +376,7 @@
                 </div>
                 <div class="p-2 border-top d-grid">
                     <a class="btn btn-sm btn-link font-size-14 text-center" href="javascript:void(0)">
-                        <i class="mdi mdi-arrow-right-circle me-1"></i> <span key="t-view-more">@lang('translation.View_More')</span> 
+                        <i class="mdi mdi-arrow-right-circle me-1"></i> <span key="t-view-more">@lang('translation.View_More')</span>
                     </a>
                 </div>
             </div>
@@ -386,7 +386,7 @@
             <button type="button" class="btn header-item waves-effect" id="page-header-user-dropdown"
                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <img class="rounded-circle header-profile-user" src="{{ isset(Auth::user()->profile_image) ? asset(Auth::user()->profile_image) : asset('/assets/images/users/avatar-1.jpg') }}"
-                    alt="Header Avatar">
+                    alt="{{Auth::user()->username}}">
                 <span class="d-none d-xl-inline-block ms-1" key="t-henry">{{ucfirst(@Auth::user()->first_name.' '.@Auth::user()->last_name )}}</span>
                 <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
             </button>
@@ -397,15 +397,15 @@
                 @else
                     <a class="dropdown-item" href="{{route('admin.profile')}}"><i class="bx bx-user font-size-16 align-middle me-1"></i> <span key="t-profile">@lang('translation.Profile')</span></a>
                 @endif
-                
+
 
                 <!-- <a class="dropdown-item d-block" href="#" data-bs-toggle="modal" data-bs-target=".change-password"><span class="badge bg-success float-end">11</span><i class="bx bx-wrench font-size-16 align-middle me-1"></i> <span key="t-settings">@lang('translation.Settings')</span></a> -->
-                
+
                 <div class="dropdown-divider"></div>
                 <!-- <a class="dropdown-item text-danger" href="javascript:void();" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bx bx-power-off font-size-16 align-middle me-1 text-danger"></i> <span key="t-logout">@lang('translation.Logout')</span></a> -->
 
                 <a class="dropdown-item text-danger" href="{{route('front.logout')}}"><i class="bx bx-power-off font-size-16 align-middle me-1 text-danger"></i> <span key="t-logout">@lang('translation.Logout')</span></a>
-                
+
             </div>
         </div>
 
@@ -414,7 +414,7 @@
                 <i class="bx bx-cog bx-spin"></i>
             </button> -->
         </div>
-        
+
     </div>
 </div>
 </header>

@@ -5,19 +5,68 @@ namespace App;
 use App\Mail\General\User_Password_Reset_Mail;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use SoftDeletes;
+    use HasApiTokens, Notifiable, SoftDeletes;
 
     protected $guarded = [];
     protected $hidden = ['password', 'remember_token'];
+    protected $fillable = ['id', 'name', 'username', 'profile_image', 'bio', 'website', 'email', 'password', 'type', 'membership', 'status', 'membership_level', 'verified', 'created_at'];
     protected $casts = [];
+
+    const STATUS_ACTIVE = 'active';
+    const STATUS_INACTIVE = 'inactive';
+    const STATUS_BANNED = 'banned';
+
+    const MEMBERSHIP_ADMIN = 'admin';
+    const MEMBERSHIP_INDIVIDUAL = 'individual';
+    const MEMBERSHIP_BUSINESS = 'business';
+
+    public static function getStatusOptions()
+    {
+        return [
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_INACTIVE => 'Inactive',
+            self::STATUS_BANNED => 'Banned',
+        ];
+    }
+
+    public static function getMembershipOptions()
+    {
+        return [
+            self::MEMBERSHIP_ADMIN => 'Admin',
+            self::MEMBERSHIP_INDIVIDUAL => 'Individual',
+            self::MEMBERSHIP_BUSINESS => 'Business',
+        ];
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'user_id');
+    }
+
+    public function posts()
+    {
+        return $this->hasMany(Post::class, 'user_id');
+    }
+
+    public function userInterested()
+    {
+        return $this->hasMany(UserInterested::class, 'user_id');
+    }
+
+    public function socialAccounts()
+    {
+        return $this->hasMany(SocialAccounts::class, 'user_id');
+    }
 
     public static function AddTokenToUser()
     {
@@ -38,6 +87,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(DeviceToken::class);
     }
+
     public function scopeGenerateResetToken($query, Request $request): string
     {
         $reset_token =  genUniqueStr('', 50, 'users', 'reset_token', true);
@@ -86,33 +136,32 @@ class User extends Authenticatable
 
     public function setPasswordAttribute($password)
     {
-        $this->attributes['password'] = bcrypt($password);
+        if (!is_null($password)) {
+            $this->attributes['password'] = bcrypt($password);
+        }
     }
-
-    
 
     public function getProfileImageAttribute($val)
     {
-        if(!empty($val)){
+        if (!empty($val)) {
+            if (filter_var($val, FILTER_VALIDATE_URL)) {
+                return $val;
+            }
+
             return Storage::disk('s3')->url($val);
         }
+
         return get_asset($val, false, get_constants('default.user_image'));
     }
 
     public function scopeAdminSearch($query, $search)
     {
-        // $query->where('mobile', 'like', "%$search%")
-        //     ->orWhere('country_code', 'like', "%$search%")
-        //     ->orWhere('email', 'like', "%$search%")
-        //     ->orWhere('name', 'like', "%$search%")
-        //     ->orWhere('username', 'like', "%$search%");
-            $query->Where('email', 'like', "%$search%")
+        $query->Where('email', 'like', "%$search%")
             ->orWhere('username', 'like', "%$search%")
             ->orWhere('country_code', 'like', "%$search%")
             ->orWhere('mobile', 'like', "%$search%")
             ->orWhereRaw("concat(country_code,'',mobile) like '%$search%'")
             ->orWhereRaw("concat(country_code,' ',mobile) like '%$search%'");
-           
     }
 
     public function scopeUpdatePassword($query, Request $request): bool
@@ -124,11 +173,19 @@ class User extends Authenticatable
         return TRUE;
     }
 
-
     public function social_logins(): HasOne
     {
         return $this->hasOne(SocialAccounts::class, "user_id", "id");
     }
-   
-   
+
+    public function followers()
+    {
+        return $this->hasMany(UserRelationship::class, 'following_id');
+    }
+
+    public function following()
+    {
+        return $this->hasMany(UserRelationship::class, 'follower_id');
+    }
+
 }

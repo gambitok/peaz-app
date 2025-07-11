@@ -1,170 +1,175 @@
 @extends('layouts.master')
-@section('css')
 
+@section('css')
 <!-- DataTables -->
 <link href="{{ URL::asset('/assets/admin/vendors/general/datatable/jquery.dataTables.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"/>
 @endsection
+
 @section('content')
 
 @include('components.breadcum')
 <div class="row">
     <div class="col-md-3">
-        <div class="card ">
-            <div class="card-body" style="font-size:14px;">
-            <div class="card-title">
-                    Post  Details
-                </div>
-                 <!-- <div class="card-title">
-                    <div class="kt-widget__media text-center w-100">
-                        {!! get_fancy_box_html(get_asset($data->getRawOriginal('file'))) !!}
+        <div class="card">
+            <div class="card p-3 m-0">
+                <div class="card-body" style="font-size:14px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="card-title font-weight-bold">Post Details</span>
+                        <a href="{{ route('admin.post.edit', $data->id) }}" class="btn btn-primary btn-sm">Edit Post</a>
                     </div>
-                </div>  -->
-                <!-- <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Name:</span>
-                    <a href="#">{{$data->title}}</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Email:</span>
-                    <a href="mailto:{{$data->email}}">{{$data->email}}</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Status:</span>
-                    <span class="kt-widget__data">{!! user_status($data->status,$data->deleted_at) !!}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Mobile:</span>
-                    <a href="mailto:{{$data->email}}">@if(!empty($data->mobile)) {{$data->mobile}}  @else -- @endif </a>
-                </div> -->
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Title:</span>
-                    <div>{{$data->title}}</div>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">File or Image:</span>
-                    <a href="{{$data->file}}"  target="_blank">Show File</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">Thumbnail:</span>
-                    <a href="{{$data->thumbnail}}"  target="_blank">Show File</a>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="font-weight-bold">hours: mint</span>
-                    <div>{{$data->hours}}h {{$data->minutes}}min</div>
+
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex" style="padding: 15px 0;">
+                            <span class="font-weight-bold" style="flex: 0 0 50%;">Title:</span>
+                            <span style="flex: 1; text-align: right">{{$data->title}}</span>
+                        </li>
+                        <li class="list-group-item d-flex" style="padding: 15px 0;">
+                            <span class="font-weight-bold" style="flex: 0 0 50%;">Time:</span>
+                            <span style="flex: 1; text-align: right">{{$data->hours}}h {{$data->minutes}}min</span>
+                        </li>
+
+                        @if($data->file)
+                            <li class="list-group-item d-flex" style="padding: 15px 0;">
+                                <span class="font-weight-bold" style="flex: 0 0 50%;">File:</span>
+                                <div class="text-right" style="flex: 1;">
+                                    @if(preg_match('/\.(jpg|jpeg|png|gif)$/i',  $data->file))
+                                        <img src="{{ $data->file }}" alt="File" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;">
+                                    @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->file))
+                                        <video src="{{ $data->file }}" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;" controls></video>
+                                    @endif
+                                </div>
+                            </li>
+                        @endif
+
+                        @if($data->thumbnail)
+                            <li class="list-group-item d-flex" style="padding: 15px 0;">
+                                <span class="font-weight-bold" style="flex: 0 0 50%;">Thumbnail:</span>
+                                <div class="text-right" style="flex: 1;">
+                                    @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $data->thumbnail))
+                                        <img src="{{ $data->thumbnail }}" alt="Thumbnail" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;">
+                                    @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->thumbnail))
+                                        <video src="{{ $data->thumbnail }}" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;" controls></video>
+                                    @endif
+                                </div>
+                            </li>
+                        @endif
+                    </ul>
                 </div>
             </div>
-            
+
         </div>
-      
-        <div class="card ">
+
+        <div class="card">
             <div class="card-body" style="font-size:14px;">
             <div class="card-title">
                 Tags
                 </div>
-                <table  class="table dt-responsive mb-4  nowrap w-100 mb-">
+                <table  class="table dt-responsive mb-4 nowrap w-100">
                     <thead>
                         <tr>
                             <th>Id</th>
-                            <th>Name</th>                            
+                            <th>Name</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if($data->tags)
-                        
-                            @foreach(explode(",",$data->tags) as $key => $value)
+                    @if($data->tags->count() > 0)
+                        @foreach($data->tags as $key => $tag)
                             <tr>
-                            <td>{{$key+1}}</td>
-                            <td>{{$value}}</td>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $tag->name }}</td>
                             </tr>
-                            @endforeach
-                            
-                        @endif
+                        @endforeach
+                    @endif
                     </tbody>
                 </table>
-                
             </div>
-            
         </div>
-        <div class="card ">
+
+        <div class="card">
             <div class="card-body" style="font-size:14px;">
             <div class="card-title">
-               Dietary
+                Dietaries
                 </div>
-                <table  class="table dt-responsive mb-4  nowrap w-100 mb-">
+                <table  class="table dt-responsive mb-4 nowrap w-100">
                     <thead>
                         <tr>
                             <th>Id</th>
-                            <th>Name</th>  
+                            <th>Name</th>
                         </tr>
                     </thead>
                     <tbody>
-
-                    @if($data->tags)
-                        
-                            @foreach(explode(",",$data->dietary) as $key => $value)
+                    @if($data->dietaries->count() > 0)
+                        @foreach($data->dietaries as $key => $dietary)
                             <tr>
-                            <td>{{$key+1}}</td>
-                            <td>{{$value}}</td>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $dietary->name }}</td>
                             </tr>
-                            @endforeach
-                            
-                        @endif
+                        @endforeach
+                    @endif
                     </tbody>
                 </table>
-                
             </div>
-            
+        </div>
+
+        <div class="card">
+            <div class="card-body" style="font-size:14px;">
+                <div class="card-title">
+                    Cuisines
+                </div>
+                <table  class="table dt-responsive mb-4 nowrap w-100">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @if($data->cuisines->count() > 0)
+                        @foreach($data->cuisines as $key => $cuisine)
+                            <tr>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $cuisine->name }}</td>
+                            </tr>
+                        @endforeach
+                    @endif
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
     <div class="col-md-9">
-        <div class="card ">
+        <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                   Ingredient 
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Ingredients</span>
+{{--                        <a href="{{ route('admin.post.post_details_create', $data->id) }}" class="btn btn-primary btn-sm">Add Ingredient</a>--}}
+                    </div>
                 </div>
                 <div>
-                <table id="listResults" class="table dt-responsive mb-4  nowrap w-100 mb-">
-                    <thead>
-                        <tr>
-                            
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <!-- <table id="instruction" class="table dt-responsive mb-4  nowrap w-100 mb-">
-                    <thead>
-                        <tr>
-                            
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table> -->
+                    <table id="listResults" class="table dt-responsive mb-4 nowrap w-100">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <div class="card ">
+        <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                Instruction 
+                    Instructions
                 </div>
                 <div>
-                
-                <table id="instruction" class="table dt-responsive mb-4  nowrap w-100 mb-">
-                    <thead>
-                        <tr>
-                            
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                    <table id="instruction" class="table dt-responsive mb-4 nowrap w-100">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-
-    
-
-
 </div>
 @endsection
 
@@ -181,13 +186,13 @@
             "order": [
                 [0, "DESC"]
             ],
-            "ajax": 
+            "ajax":
             {
                 'url':"{{route('admin.post.post_details')}}",
                 'data': {
                     id:'{{ $data->id}}',
                 },
-                
+
              },
             "columns": [
                     {
@@ -206,24 +211,24 @@
                     {
                         "data": "type",
                         "title": "Type"
-                    }, 
+                    },
                     {
                         "data": "action",
                         "title": "Action"
-                    }, 
-                                     
+                    },
+
                 ],
         });
 
         Table = $('#instruction').DataTable({
             "processing": true,
             "serverSide": true,
-            "ajax": 
+            "ajax":
             {
                 'url':"{{route('admin.post.instruction')}}",
                 'data': {
                     id:'{{ $data->id}}',
-                },  
+                },
              },
             "columns": [
                     {
@@ -250,14 +255,16 @@
                     {
                         "data": "description",
                         "title": "Description"
-                    },                 
+                    },
                 ],
         });
 
         Table = $('#taglist').DataTable();
 
-        Table = $('#dietary').DataTable();
+        Table = $('#dietaries').DataTable();
+
+        Table = $('#cuisines').DataTable();
     });
-            
+
 </script>
 @endsection

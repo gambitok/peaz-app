@@ -40,20 +40,20 @@
 </div>
 <script>
     function delete_record(event) {
-                event.preventDefault();
-                let el = this;
-                swal({
-                    // title: "Are you sure you want to delete this?",
-                    text: "Are you sure you want to delete this?",
-                    icon: "warning",
-                    buttons: true,
-                    dangerMode: true,
-                }).then((willDelete) => {
-                    if (willDelete) {
-                        $('#sent_to_grave form').attr('action', $(el).attr('href')).submit();
-                    }
-                });
+        event.preventDefault();
+        let el = this;
+        swal({
+            text: "Are you sure you want to delete this?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $('#sent_to_grave form').attr('action', $(el).attr('href')).submit();
             }
+        });
+    }
+
     $(document).ready(function(){
         $('#loader_display_d').hide();
         $(".input-mask").inputmask();
@@ -78,7 +78,6 @@
                 }
             });
         });
-
     });
 
     $('#change-password').on('submit',function(event){
@@ -132,8 +131,6 @@
     @endif
 
 </script>
-
-
 
 @yield('script')
 

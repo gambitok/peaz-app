@@ -16,8 +16,20 @@
                     <a href="#">{{$data->name}}</a>
                 </div>
                 <div class="d-flex justify-content-between">
+                    <span class="font-weight-bold">Username:</span>
+                    <a href="#">{{$data->username}}</a>
+                </div>
+                <div class="d-flex justify-content-between">
                     <span class="font-weight-bold">Email:</span>
                     <a href="mailto:{{$data->email}}">{{$data->email}}</a>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="font-weight-bold">Website:</span>
+                    <a href="{{$data->website}}">{{$data->website}}</a>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="font-weight-bold">Biography:</span>
+                    <label>{{$data->bio}}</label>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="font-weight-bold">Status:</span>
@@ -44,6 +56,5 @@
 @section('script')
 <script type="text/javascript">
     $(document).ready(function () {});
-
 </script>
 @endsection
