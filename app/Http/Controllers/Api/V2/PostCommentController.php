@@ -221,6 +221,15 @@ class PostCommentController extends Controller
                 ->where('id', $comment->user_id)
                 ->first();
 
+            if ($user) {
+                $awsUrl = env('AWS_URL'); // https://s3.eu-central-003.backblazeb2.com
+                $awsBucket = env('AWS_BUCKET'); // peaz-bucket
+
+                if (!str_starts_with($user->profile_image, $awsUrl)) {
+                    $user->profile_image = $awsUrl . '/' . $awsBucket . '/' . ltrim($user->profile_image, '/');
+                }
+            }
+
             $comment->user = $user;
             unset($comment->user_id);
 

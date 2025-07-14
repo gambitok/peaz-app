@@ -197,22 +197,35 @@ class UserController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
             'password' => 'required|min:4',
+            // ❗ Принаймні одне з: email або mobile
+            'email' => 'nullable|email',
+            'mobile' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
 
-        $user = User::where('email', $request->email)->first();
+        if (!$request->filled('email') && !$request->filled('mobile')) {
+            return response()->json(['error' => 'Email or mobile is required'], 400);
+        }
+
+        // 🔍 Пошук користувача за email або mobile
+        $user = null;
+        if ($request->filled('email')) {
+            $user = User::where('email', $request->email)->first();
+        } elseif ($request->filled('mobile')) {
+            $user = User::where('mobile', $request->mobile)->first();
+        }
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'Invalid email or password'], 401);
+            return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
         $token = $user->createToken('YourAppName')->accessToken;
 
+        // якщо ти дійсно зберігаєш token у колонку `api_token` (не обов'язково)
         $user->api_token = $token;
         $user->save();
 

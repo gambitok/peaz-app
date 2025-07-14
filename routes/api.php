@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\GuestController;
+use App\Http\Controllers\Api\V2\OTPController;
 use App\Http\Controllers\Api\V2\ReportController;
 
 use Illuminate\Support\Facades\Route;
@@ -23,7 +24,8 @@ use App\Http\Controllers\Api\V2\CuisineController;
 use App\Http\Controllers\Api\V2\CommentRatingController;
 
 Route::post('login', [UserController::class, 'login']);
-Route::put('register', [UserController::class, 'register']);
+Route::post('register', [UserController::class, 'register']);
+Route::post('signup', [UserController::class, 'register']);
 Route::post('logout', [UserController::class, 'logout'])->middleware('auth:api');
 
 Route::post('comments/{comment}/rate', [CommentRatingController::class, 'rate'])->middleware('auth:api');
@@ -36,6 +38,11 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
 });
 
 Route::prefix('v2')->middleware('auth:api')->group(function () {
+
+    Route::post('/send-OTP-mobile', [OTPController::class, 'sendOtpMobile']);
+    Route::post('/verify-OTP-mobile', [OTPController::class, 'verifyOtpMobile']);
+    Route::post('/send-otp-email', [OTPController::class, 'sendOtpEmail']);
+    Route::post('/verify-OTP-email', [OTPController::class, 'verifyOtpEmail']);
 
     Route::apiResource('billboards', BillboardController::class);
     Route::apiResource('restaurants', RestaurantController::class);

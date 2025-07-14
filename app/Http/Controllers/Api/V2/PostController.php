@@ -288,7 +288,11 @@ class PostController extends Controller
             '.',
             ''
         );
-        $post->is_rating = false;
+        $post->is_rating = $post->comment()
+            ->where('user_id', $user_id)
+            ->whereNotNull('rating')
+            ->where('rating', '>', 0)
+            ->exists();
         $post->is_like = false;
         $post->is_reported = false;
 
