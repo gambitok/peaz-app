@@ -389,7 +389,7 @@ class UserController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Current password is incorrect'
-            ], 401);
+            ], 403);
         }
 
         $user->password = $request->input('new_password');

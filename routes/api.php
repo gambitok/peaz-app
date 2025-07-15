@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V2\TagController;
 use App\Http\Controllers\Api\V2\DietaryController;
 use App\Http\Controllers\Api\V2\CuisineController;
 use App\Http\Controllers\Api\V2\CommentRatingController;
+use App\Http\Controllers\Api\UserInterestController;
 
 Route::post('login', [UserController::class, 'login']);
 Route::post('register', [UserController::class, 'register']);
@@ -50,6 +51,8 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::apiResource('restaurants', RestaurantController::class);
 
     Route::apiResource('filters', FilterController::class);
+
+    Route::get('user-interests/by-user', [UserInterestController::class, 'byUser']);
 
     Route::resource('user-interests', UserInterestController::class);
 

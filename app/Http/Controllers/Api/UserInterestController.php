@@ -18,6 +18,23 @@ class UserInterestController extends Controller
         return UserInterest::with(['tags', 'dietaries', 'cuisines'])->findOrFail($id);
     }
 
+    public function byUser(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $interest = \App\UserInterest::with(['tags', 'dietaries', 'cuisines'])
+            ->where('user_id', $request->query('user_id'))
+            ->first();
+
+        if (!$interest) {
+            return response()->json(['message' => 'No interests found for this user.'], 404);
+        }
+
+        return response()->json($interest);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
