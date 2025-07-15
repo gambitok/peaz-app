@@ -25,7 +25,7 @@ use App\Http\Controllers\Api\V2\CommentRatingController;
 
 Route::post('login', [UserController::class, 'login']);
 Route::post('register', [UserController::class, 'register']);
-Route::post('signup', [UserController::class, 'register']);
+//Route::post('signup', [UserController::class, 'register']);
 Route::post('logout', [UserController::class, 'logout'])->middleware('auth:api');
 
 Route::post('comments/{comment}/rate', [CommentRatingController::class, 'rate'])->middleware('auth:api');
@@ -38,6 +38,8 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
 });
 
 Route::prefix('v2')->middleware('auth:api')->group(function () {
+
+    Route::post('update-password', [UserController::class, 'updatePassword']);
 
     Route::post('/send-OTP-mobile', [OTPController::class, 'sendOtpMobile']);
     Route::post('/verify-OTP-mobile', [OTPController::class, 'verifyOtpMobile']);

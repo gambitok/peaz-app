@@ -25,7 +25,7 @@ class OTPController extends Controller
 
         // TODO: Відправити SMS тут
 
-        return response()->json(['message' => 'OTP sent to mobile']);
+        return response()->json(['message' => 'OTP sent to mobile', 'otp' => $otp]);
     }
 
     public function verifyOtpMobile(Request $request)
@@ -66,7 +66,7 @@ class OTPController extends Controller
             $message->to($email)->subject('Your OTP Code');
         });
 
-        return response()->json(['message' => 'OTP sent to email']);
+        return response()->json(['message' => 'OTP sent to email', 'otp' => $otp]);
     }
 
     public function verifyOtpEmail(Request $request)
