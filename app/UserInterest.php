@@ -24,4 +24,19 @@ class UserInterest extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class);
+    }
+
+    public function dietaries()
+    {
+        return $this->belongsToMany(Dietary::class);
+    }
+
+    public function cuisines()
+    {
+        return $this->belongsToMany(Cuisine::class);
+    }
 }

@@ -10,57 +10,77 @@ class UserInterestController extends Controller
 {
     public function index()
     {
-        return UserInterest::all();
+        return UserInterest::with(['tags', 'dietaries', 'cuisines'])->get();
     }
 
     public function show($id)
     {
-        return UserInterest::findOrFail($id);
+        return UserInterest::with(['tags', 'dietaries', 'cuisines'])->findOrFail($id);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
             'dietaries' => 'nullable|array',
+            'dietaries.*' => 'exists:dietaries,id',
             'cuisines' => 'nullable|array',
+            'cuisines.*' => 'exists:cuisines,id',
         ]);
 
         $userId = $request->user()->id;
 
-        // Check if the user's interests already exist
         $existingInterest = UserInterest::where('user_id', $userId)->first();
-
         if ($existingInterest) {
             return response()->json([
                 'error' => 'User interests are already recorded.'
             ], 409);
         }
 
-        $validated['user_id'] = $userId;
+        $userInterest = UserInterest::create([
+            'user_id' => $userId,
+        ]);
 
-        return UserInterest::create($validated);
+        $userInterest->tags()->attach($validated['tags'] ?? []);
+        $userInterest->dietaries()->attach($validated['dietaries'] ?? []);
+        $userInterest->cuisines()->attach($validated['cuisines'] ?? []);
+
+        return response()->json($userInterest->load(['tags', 'dietaries', 'cuisines']), 201);
     }
 
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
             'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
             'dietaries' => 'nullable|array',
+            'dietaries.*' => 'exists:dietaries,id',
             'cuisines' => 'nullable|array',
+            'cuisines.*' => 'exists:cuisines,id',
         ]);
 
-        $validated['user_id'] = $request->user()->id;
-
         $userInterest = UserInterest::findOrFail($id);
-        $userInterest->update($validated);
 
-        return $userInterest;
+        // Перевірка, що це інтереси саме поточного користувача
+        if ($userInterest->user_id !== $request->user()->id) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        // Тут не треба змінювати user_id
+        $userInterest->tags()->sync($validated['tags'] ?? []);
+        $userInterest->dietaries()->sync($validated['dietaries'] ?? []);
+        $userInterest->cuisines()->sync($validated['cuisines'] ?? []);
+
+        return $userInterest->load(['tags', 'dietaries', 'cuisines']);
     }
 
     public function destroy($id)
     {
         $userInterest = UserInterest::findOrFail($id);
+        $userInterest->tags()->detach();
+        $userInterest->dietaries()->detach();
+        $userInterest->cuisines()->detach();
         $userInterest->delete();
 
         return response()->noContent();
