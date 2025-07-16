@@ -44,6 +44,8 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::resource('content', 'ContentController')->except(['show', 'create', 'store', 'destroy']);
         Route::get('content/listing', 'ContentController@listing')->name('content.listing');
 
+        Route::resource('pages', \App\Http\Controllers\Admin\PageController::class);
+
         Route::get('interestedlist/listing', 'InterestedListController@listing')->name('interestedlist.listing');
         Route::resource('interestedlist','InterestedListController');
 

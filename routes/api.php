@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V2\DietaryController;
 use App\Http\Controllers\Api\V2\CuisineController;
 use App\Http\Controllers\Api\V2\CommentRatingController;
 use App\Http\Controllers\Api\UserInterestController;
+use App\Http\Controllers\Api\PageController;
 
 Route::post('login', [UserController::class, 'login']);
 Route::post('register', [UserController::class, 'register']);
@@ -39,6 +40,10 @@ Route::prefix('profile')->middleware('auth:api')->group(function () {
 });
 
 Route::prefix('v2')->middleware('auth:api')->group(function () {
+
+    Route::post('pages', [PageController::class, 'store']);
+
+    Route::get('pages/{slug}', [PageController::class, 'show']);
 
     Route::post('update-password', [UserController::class, 'updatePassword']);
 

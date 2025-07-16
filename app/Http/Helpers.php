@@ -382,6 +382,14 @@ function admin_modules()
                     ],
                 ],
                 [
+                    'route' => route('admin.pages.index'),
+                    'name' => 'Site Pages',
+                    'icon' => '',
+                    'all_routes' => [
+                        'admin.pages.index',
+                    ],
+                ],
+                [
                     'route' => route('admin.content.index'),
                     'name' => "Content",
                     'icon' => 'fas fa-users',
