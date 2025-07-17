@@ -339,7 +339,6 @@ class PostController extends ResponseController
 
     public function getUserPosts(Request $request)
     {
-
         try {
             $token = get_header_auth_token();
             if (!empty($token)) {
@@ -413,7 +412,6 @@ class PostController extends ResponseController
     {
         $user = $request->user();
 
-        // Get user's recipes
         $recipes = Post::with([
             'user' => function ($q) {
                 $q->select("id", "username", "profile_image");
@@ -436,7 +434,6 @@ class PostController extends ResponseController
         ->orderBy('id', 'DESC')
         ->get();
 
-        // Get comments left for the user
         $comments = Comment::with([
             'reply' => function ($query) use ($request) {
                 $query->withCount(["replylike"]);
@@ -499,14 +496,10 @@ class PostController extends ResponseController
             ])->where(function ($q) use ($request, $comment_details) {
                 $q->where('id', $comment_details->id)->orwhere('id', $request->comment_id);
             })->whereNull("comment_id")
-                // ->when(!is_null($request->type) && $request->type != "", function ($q) use ($request) {
-                //     $q->where('type', $request->type);
-                // })
                 ->get();
                 $commentlikes = CommentLike::where('user_id', $user->id)
                 ->where('post_id', $request->post_id)
                 ->pluck('comment_id')->toArray();
-            $comment_data = [];
             foreach ($comments as $comment) {
                 $comment->is_commentlike = false;
                 $comment->is_replylike = false;
@@ -646,8 +639,6 @@ class PostController extends ResponseController
             ->limit($limit)
             ->get();
 
-        $comment_data = [];
-        // dd($comments);
         foreach ($comments as $comment) {
             $comment->is_commentlike = false;
             $comment->is_replylike = false;
@@ -691,7 +682,7 @@ class PostController extends ResponseController
             'post_id' => ['required', 'exists:posts,id'],
         ];
         $this->directValidation($rules);
-        $bank_account = Post::destroy($request->post_id);
+        Post::destroy($request->post_id);
         $this->sendResponse(200, __('api.suc_post_delete'), false);
     }
 
@@ -701,7 +692,7 @@ class PostController extends ResponseController
             'post_id' => ['required', 'exists:posts,id'],
         ];
         $this->directValidation($rules);
-        $post = Post::where('id', $request->post_id)->update([
+        Post::where('id', $request->post_id)->update([
             'not_interested' => 1,
         ]);
         $this->sendResponse(200, __('api.suc_not_interested'), false);
@@ -719,7 +710,6 @@ class PostController extends ResponseController
         $rules = [
             'post_id' => ['required', 'exists:posts,id'],
             'comment_id' => ['required', 'exists:comments,id'],
-            // 'tag_user_id' => ['required', 'string'],
         ];
         $this->directValidation($rules);
         $user = $request->user();

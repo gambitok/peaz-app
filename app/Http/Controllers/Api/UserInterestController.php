@@ -79,12 +79,10 @@ class UserInterestController extends Controller
 
         $userInterest = UserInterest::findOrFail($id);
 
-        // Перевірка, що це інтереси саме поточного користувача
         if ($userInterest->user_id !== $request->user()->id) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
-        // Тут не треба змінювати user_id
         $userInterest->tags()->sync($validated['tags'] ?? []);
         $userInterest->dietaries()->sync($validated['dietaries'] ?? []);
         $userInterest->cuisines()->sync($validated['cuisines'] ?? []);

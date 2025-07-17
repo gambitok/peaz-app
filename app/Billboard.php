@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Storage;
 
 class Billboard extends Model
 {
-
     protected $fillable = [
         'file',
         'logo_file',

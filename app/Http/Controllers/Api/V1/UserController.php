@@ -24,7 +24,7 @@ class UserController extends ResponseController
         $this->sendResponse(200, __('api.succ_logout'), false);
     }
 
-    public function update_name(Request $request)
+    public function updateName(Request $request)
     {
         $user_data = $request->user();
         $this->directValidation([
@@ -39,7 +39,7 @@ class UserController extends ResponseController
         $this->sendResponse(200, __('api.succ_name_update'), $this->get_user_data());
     }
 
-    public function update_email(Request $request)
+    public function updateEmail(Request $request)
     {
         $user_data = $request->user();
         $this->directValidation([
@@ -51,7 +51,7 @@ class UserController extends ResponseController
         $this->sendResponse(200, __('api.succ_email_update'), $this->get_user_data());
     }
 
-    public function update_mobile_number(Request $request)
+    public function updateMobileNumber(Request $request)
     {
         $user_data = $request->user();
         $this->directValidation([
@@ -67,7 +67,7 @@ class UserController extends ResponseController
         $this->sendResponse(200, __('api.succ_number_update'), $this->get_user_data());
     }
 
-    public function update_profile_image(Request $request)
+    public function updateProfileImage(Request $request)
     {
         $user_data = $request->user();
         $this->directValidation([

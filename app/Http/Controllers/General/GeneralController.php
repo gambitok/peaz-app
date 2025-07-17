@@ -20,7 +20,7 @@ use Illuminate\Validation\Rule;
 
 class GeneralController extends WebController
 {
-    public function Panel_Login()
+    public function panelLogin()
     {
         return view('general.login', [
             'header_panel' => false,
@@ -33,9 +33,9 @@ class GeneralController extends WebController
         $remember = ($request->remember) ? true : false;
         $request->validate(['username' => 'required', 'password' => 'required']);
         $find_field = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? "email" : "username";
-        $creds = [$find_field => $request->username, 'password' => $request->password, 'status' => 'active'];
+        $credits = [$find_field => $request->username, 'password' => $request->password, 'status' => 'active'];
 
-        if (Auth::attempt($creds, $remember)) {
+        if (Auth::attempt($credits, $remember)) {
             return redirect()->route(getDashboardRouteName());
         } else {
             if ($find_field == "username") {
@@ -48,7 +48,7 @@ class GeneralController extends WebController
         return redirect()->back();
     }
 
-    public function Panel_Pass_Forget()
+    public function panelPassForget()
     {
         return view('general.password_reset', [
             'header_panel' => false,
@@ -56,7 +56,7 @@ class GeneralController extends WebController
         ]);
     }
 
-    public function ForgetPassword(Request $request)
+    public function forgetPassword(Request $request)
     {
         User::password_reset($request->email);
         return redirect()->back();
@@ -77,7 +77,7 @@ class GeneralController extends WebController
         return $maindata;
     }
 
-    public function Admin_dashboard(Request $request)
+    public function adminDashboard(Request $request)
     {
         return view('admin.general.dashboard', [
             'title' => __('admin.lbl_dashboard'),
@@ -95,7 +95,7 @@ class GeneralController extends WebController
         ]);
     }
 
-    public function get_update_password(Request $request)
+    public function getUpdatePassword(Request $request)
     {
         $title = 'Change Password';
         $user_data = $request->user();
@@ -108,7 +108,7 @@ class GeneralController extends WebController
         ]);
     }
 
-    public function get_site_settings()
+    public function getSiteSettings()
     {
         $title = 'Site setting';
         return view('admin.general.site_settings', [
@@ -120,7 +120,7 @@ class GeneralController extends WebController
         ]);
     }
 
-    public function site_settings(Request $request)
+    public function siteSettings(Request $request)
     {
         $all_req = $request->except('_token');
         foreach ($all_req as $key => $value) {
@@ -139,13 +139,13 @@ class GeneralController extends WebController
         return redirect()->route('admin.get_site_settings');
     }
 
-    public function update_password(PasswordUpdateRequest $request)
+    public function updatePassword(PasswordUpdateRequest $request)
     {
         $request->update_pass();
         return redirect()->back();
     }
 
-    public function get_profile(Request $request)
+    public function getProfile(Request $request)
     {
         $user_data = $request->user();
         $view = ($user_data->type == "vendor") ? 'vendor.general.profile' : 'general.profile';
@@ -180,7 +180,7 @@ class GeneralController extends WebController
         return $count ? "false" : "true";
     }
 
-    public function user_availability_checker(Request $request)
+    public function userAvailabilityChecker(Request $request)
     {
         $id = $request->id ?? 0;
         $query = User::where('id', '!=', $id);
@@ -198,7 +198,7 @@ class GeneralController extends WebController
         return $query->count() ? "false" : "true";
     }
 
-    public function post_profile(Request $request)
+    public function postProfile(Request $request)
     {
         $user_data = $request->user();
         $rules = [
@@ -209,26 +209,21 @@ class GeneralController extends WebController
         ];
         $request->validate($rules);
 
-        // Update user data
         $user_data->update([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
         ]);
 
-        // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $profile_image = $user_data->getRawOriginal('profile_image');
             $up = upload_file('profile_image', 'user_profile_image');
             if ($up) {
-                // Delete old profile image
                 un_link_file($profile_image);
-                // Update user profile image
                 $user_data->update([
                     'profile_image' => $up,
                 ]);
             } else {
-                // Handle failed image upload
                 error_session('Failed to upload profile image');
                 return redirect()->back();
             }
@@ -239,7 +234,7 @@ class GeneralController extends WebController
         return redirect()->back();
     }
 
-    public function forgot_password_view($token)
+    public function forgotPasswordView($token)
     {
         return view('general.reset_password', [
             'token' => $token,
@@ -248,7 +243,7 @@ class GeneralController extends WebController
         ]);
     }
 
-    public function forgot_password_post(Request $request)
+    public function forgotPasswordPost(Request $request)
     {
         $request->validate([
             'reset_token' => ['required', Rule::exists('users', 'reset_token')->whereNull('deleted_at')],
@@ -263,13 +258,13 @@ class GeneralController extends WebController
         return redirect()->back();
     }
 
-    public function ClearCache()
+    public function clearCache()
     {
         Artisan::call('optimize:clear');
         return "Cleared!";
     }
 
-    public function PhpInfo()
+    public function phpInfo()
     {
         phpinfo();
     }

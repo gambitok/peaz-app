@@ -87,11 +87,6 @@ class Post extends Model
     {
         return $this->hasMany(PostIngredient::class, 'post_id');
     }
-//
-//    public function ingredient()
-//    {
-//        return $this->hasMany(Ingredient::class,'post_id','id');
-//    }
 
     public function getFileAttribute($val)
     {

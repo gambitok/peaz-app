@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class GeneralSettings extends Model
 {
-
     protected $guarded = [];
 
     public static function define_const()
@@ -28,6 +27,5 @@ class GeneralSettings extends Model
     {
         return ($this->type == "file") ? asset($val) : $val;
     }
-
 
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Content;
+use App\DeviceToken;
 use App\Http\Controllers\Api\ResponseController;
 use App\User;
 use App\Otpverify;
@@ -22,7 +23,6 @@ class GuestController extends ResponseController
     public function login(Request $request)
     {
         $rules = [
-           // 'mobile' => ['required','integer'],
             'email' => ['required'],
             'country_code' => ['required_if:type,mobile'],
             'password' => ['required'],
@@ -66,12 +66,7 @@ class GuestController extends ResponseController
             'email.unique' => __('api.err_email_is_exits'),
         ]);
         $user= User::create([
-           // 'password' => $request->password,
-             'email' => $request->email,
-           // 'name' => $request->first_name . ' ' . $request->last_name,
-           // 'first_name' => $request->first_name,
-           // 'last_name' => $request->last_name,
-           //  'username' => $request->username,
+            'email' => $request->email,
             'country_code' => $request->country_code,
             'mobile' => $request->mobile ? $request->mobile : "",
             'date_of_birth' => $request->date_of_birth,
@@ -98,9 +93,6 @@ class GuestController extends ResponseController
 
     public function forgot_password(Request $request)
     {
-        // $data = User::password_reset($request->email, false);
-        // $status = $data['status'] ? 200 : 412;
-        // $this->sendResponse($status, $data['message']);
         $rules = [
             'email'=>['required','email',Rule::exists("users")->whereNull("deleted_at")],
         ];
@@ -111,7 +103,7 @@ class GuestController extends ResponseController
             ['email' => $request->email],
             ['otp' => $otp]
         );
-         $data = user::where('email',$request->email)->update(['otp' => $otp]);
+        $data = user::where('email',$request->email)->update(['otp' => $otp]);
         $user = user::where('email',$request->email)->first();
         Mail::to($request->email)->send(new User_Rest_Password($user));
         return ['status' => 200, 'message' => 'Email send successfully','reset_token'=>$user->reset_token];
@@ -125,9 +117,7 @@ class GuestController extends ResponseController
 
     public function check_ability(Request $request)
     {
-        $otp = "";
         $type = $request->type;
-        $is_sms_need = $request->is_sms_need;
         $rules = [
             'type' => ['required', 'in:username,email,mobile_number'],
             'value' => ['required'],
@@ -205,7 +195,6 @@ class GuestController extends ResponseController
             'device_type'=>['required'],
             'device_id'=>['required'],
         ]);
-      //  if (verify_token_authy($request->country_code . $request->mobile, $request->otp)) {
             $where = ['mobile' => $request->mobile,'country_code' => $request->country_code,'type' => 'user', 'status' => 'active'];
             $user = User::where($where)->first();
             if($user){
@@ -217,8 +206,6 @@ class GuestController extends ResponseController
                 $this->sendResponse(201, __('api.otp_verfiy_succ'));
             }
            $this->sendError(__('api.err_fail_to_auth'), false);
-     //  }
-      //  $this->sendError(__("api.err_invalid_api"));
     }
 
     public function sendOTPEmail(Request $request)
@@ -242,7 +229,6 @@ class GuestController extends ResponseController
                 print("Mail sent \n " . $mail . "\n");
 
             }
-
         }
         else{
             $this->sendError(__("api.err_something_went_wrong"));
@@ -285,10 +271,7 @@ class GuestController extends ResponseController
             else{
                 $this->sendResponse(201, __('api.otp_verfiy_succ'));
             }
-          $this->sendError(__('api.err_fail_to_auth'), false);
-
-        // $reset_token = User::GenerateResetToken($request);
-        // $this->sendResponse(200, __('Email Successfully Verfiy'), ["token" => $reset_token]);
+        $this->sendError(__('api.err_fail_to_auth'), false);
     }
 
     public function resetPassword(Request $request)
@@ -348,7 +331,6 @@ class GuestController extends ResponseController
         if (!$user_id) {
             $user = User::create([
                 'email' => $email,
-                // 'name' => ($request->name) ?? "",
             ]);
             $user_id = $user->id;
         }

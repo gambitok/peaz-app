@@ -745,7 +745,6 @@ class PostController extends Controller
             ->groupBy('posts.id', 'posts.title', 'posts.caption', 'posts.serving_size', 'posts.minutes', 'posts.hours', 'posts.type', 'posts.file', 'posts.thumbnail', 'posts.user_id')
             ->where('posts.user_id', '=', $user_id);
 
-        // Applying filters based on request parameters
         if ($request->filled('title')) {
             $query->where('posts.title', 'LIKE', '%' . $request->input('title') . '%');
         }
@@ -779,13 +778,12 @@ class PostController extends Controller
             $query->where('posts.user_id', '=', $user_id);
         }
 
-        // Sorting logic
         $sortField = 'posts.' . $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage = $request->input('per_page', 10);
 
         if ($sortField === 'posts.users_interests') {
-            // Fetch user interests
+
             $userInterests = DB::table('users_interests')->where('user_id', $user_id)->first();
             if ($userInterests) {
                 $userTags = json_decode($userInterests->tags, true) ?? [];
@@ -808,7 +806,6 @@ class PostController extends Controller
 
                 $posts = $posts->sortByDesc('match_score')->values();
 
-                // Paginate manually since we are using a collection
                 $currentPage = LengthAwarePaginator::resolveCurrentPage();
                 $paginatedPosts = new LengthAwarePaginator(
                     $posts->forPage($currentPage, $perPage),
@@ -908,13 +905,7 @@ class PostController extends Controller
                 }]);
             },
             'postlike'
-        ])
-//            ->AvgRating()
-//            ->IsRating($user->id ?? 0)
-//            ->where('user_id', $user->id)
-//            ->orderBy('id', 'DESC')
-//            ->get()
-        ;
+        ]);
 
         $comments = Comment::with([
             'reply' => function ($query) use ($request) {

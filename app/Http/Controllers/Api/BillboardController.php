@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BillboardRequest;
 use App\Http\Resources\BillboardResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class BillboardController extends Controller
@@ -35,18 +34,16 @@ class BillboardController extends Controller
 
     public function update(BillboardRequest $request, Billboard $billboard)
     {
-        Log::error('Updating billboard ID');
         $data = $request->validated();
-        Log::info('Updating billboard ID: ' . $billboard->id);
-        Log::info('Incoming file: ', [$request->file('file')]);
+
         if ($request->hasFile('file')) {
             if ($billboard->file) {
                 Storage::disk('s3')->delete($billboard->file);
             }
             $data['file'] = $this->uploadFile($request, $billboard->id);
-            Log::info('New file uploaded: ' . $data['file']);
         }
         $billboard->update($data);
+
         return new BillboardResource($billboard);
     }
 

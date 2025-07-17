@@ -198,7 +198,6 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'password' => 'required|min:4',
-            // ❗ Принаймні одне з: email або mobile
             'email' => 'nullable|email',
             'mobile' => 'nullable|string',
         ]);
@@ -211,7 +210,6 @@ class UserController extends Controller
             return response()->json(['error' => 'Email or mobile is required'], 400);
         }
 
-        // 🔍 Пошук користувача за email або mobile
         $user = null;
         if ($request->filled('email')) {
             $user = User::where('email', $request->email)->first();
@@ -225,7 +223,6 @@ class UserController extends Controller
 
         $token = $user->createToken('YourAppName')->accessToken;
 
-        // якщо ти дійсно зберігаєш token у колонку `api_token` (не обов'язково)
         $user->api_token = $token;
         $user->save();
 

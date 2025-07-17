@@ -7,14 +7,12 @@ class WebController extends Controller
 
     function generate_switch($params = array())
     {
-
-    return "<label for='primary".$params['id']."' class='switch switch--primary'>
-        <input class='switch__input switch-status' type='checkbox' data-id='" . $params['id'] . "'  data-url='" . $params['url']['status'] ."'   " . $params['checked'] . "  id='primary".$params['id']."' />
-        <div class='switch__box'>
-            <span class='switch__box-inner'></span>
-        </div>
-    </label>";
-
+        return "<label for='primary".$params['id']."' class='switch switch--primary'>
+            <input class='switch__input switch-status' type='checkbox' data-id='" . $params['id'] . "'  data-url='" . $params['url']['status'] ."'   " . $params['checked'] . "  id='primary".$params['id']."' />
+            <div class='switch__box'>
+                <span class='switch__box-inner'></span>
+            </div>
+        </label>";
     }
 
     function generate_custom_switch($id = 0, $url = "", $checked = "false")

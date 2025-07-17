@@ -35,26 +35,32 @@ class Comment extends Model
     {
         return $this->belongsTo(Post::class);
     }
+
     public function reply()
     {
         return $this->hasMany(Comment::class,'comment_id','id');
     }
+
     public function comment()
     {
         return $this->hasMany(Comment::class,'post_id','id')->whereNull('comment_id');
     }
+
     public function user()
     {
         return $this->belongsTo(User::class,'user_id');
     }
+
     public function commentlike()
     {
         return $this->hasMany(CommentLike::class,'comment_id','id');
     }
+
     public function replylike()
     {
         return $this->hasMany(CommentLike::class,'comment_id','id');
     }
+
     public function getRatingAttribute($val)
     {
         if(!empty($val) || $val > 0){
@@ -63,6 +69,5 @@ class Comment extends Model
         else{
             return "0";
         }
-
     }
 }

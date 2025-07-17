@@ -25,7 +25,7 @@ class PageController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        $page = \App\Page::create($validated);
+        $page = Page::create($validated);
 
         return response()->json($page, 201);
     }

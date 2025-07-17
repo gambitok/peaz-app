@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Validator;
 
 class ResponseController extends Controller
 {
-
     public $errors;
 
     public function __construct()

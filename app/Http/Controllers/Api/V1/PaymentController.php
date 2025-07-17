@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\ResponseController;
 use Illuminate\Validation\Rule;
 use Stripe\Stripe;
 
-
 class PaymentController extends ResponseController
 {
     public function add_amount(Request $request)
@@ -138,17 +137,8 @@ class PaymentController extends ResponseController
         $this->sendResponse(200, __('api.succ'), $data);
     }
 
-
     public function test(Request $request)
     {
-//        $user = $request->user();
-//        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
-////        $account = \Stripe\Account::create([
-////            'email' => $user->email,
-////            'type' => 'standard',
-////        ]);
-//        dd(\Stripe\Account::retrieve('acct_1IIWbaLhmBtAU29d'));
-
         $account_links = \Stripe\AccountLink::create([
             'account' => 'acct_1IIWbaLhmBtAU29d',
             'refresh_url' => "http://127.0.0.1:8000/api/V1/payment/test",
@@ -157,6 +147,5 @@ class PaymentController extends ResponseController
         ]);
         dd($account_links);
     }
-
 
 }

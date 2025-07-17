@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V2;
 
 use App\Http\Controllers\Controller;
+use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 
@@ -19,11 +19,6 @@ class OTPController extends Controller
         $mobile = $request->input('mobile');
 
         Cache::put("otp_mobile_{$mobile}", $otp, now()->addMinutes(5));
-
-        // 🔽 Додай логування
-        Log::info("OTP for mobile {$mobile}: {$otp}");
-
-        // TODO: Відправити SMS тут
 
         return response()->json(['message' => 'OTP sent to mobile', 'otp' => $otp]);
     }
@@ -40,9 +35,9 @@ class OTPController extends Controller
         if ($cachedOtp && $cachedOtp == $request->otp) {
             Cache::forget("otp_mobile_{$request->mobile}");
 
-            $user = \App\User::where('mobile', $request->mobile)->first();
+            $user = User::where('mobile', $request->mobile)->first();
             if ($user) {
-                $user->verified = 1; // або $user->mobile_verified = 1;
+                $user->verified = 1;
                 $user->save();
             }
 
@@ -61,7 +56,6 @@ class OTPController extends Controller
 
         Cache::put("otp_email_{$email}", $otp, now()->addMinutes(5));
 
-        // Відправка через Mail
         Mail::raw("Your OTP is $otp", function ($message) use ($email) {
             $message->to($email)->subject('Your OTP Code');
         });
@@ -81,7 +75,6 @@ class OTPController extends Controller
         if ($cachedOtp && $cachedOtp == $request->otp) {
             Cache::forget("otp_email_{$request->email}");
 
-            // 🔽 оновити verified у базі
             $user = \App\User::where('email', $request->email)->first();
             if ($user) {
                 $user->verified = 1;

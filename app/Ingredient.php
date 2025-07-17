@@ -38,7 +38,6 @@ class Ingredient extends Model
         return $object;
     }
 
-
     public function getNameAttribute($val)
     {
         if(!empty($val)){

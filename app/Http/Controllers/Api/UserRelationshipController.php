@@ -55,7 +55,6 @@ class UserRelationshipController extends Controller
         return response()->json(null, 204);
     }
 
-
     public function follow(Request $request)
     {
         $validated = $request->validate([
@@ -68,7 +67,6 @@ class UserRelationshipController extends Controller
             ], 400);
         }
 
-        // Check if the relationship already exists
         $existingRelationship = UserRelationship::where('follower_id', $request->user()->id)
             ->where('following_id', $validated['following_id'])
             ->first();

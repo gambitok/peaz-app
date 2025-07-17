@@ -29,7 +29,7 @@ class FileUploadController extends Controller
         Log::info('Upload started');
 
         $request->validate([
-            'file' => 'required|file|max:10240', // max 10MB
+            'file' => 'required|file|max:10240',
         ]);
 
         $file = $request->file('file');
@@ -45,11 +45,9 @@ class FileUploadController extends Controller
                 return back()->withErrors('Failed to upload file');
             }
 
-            // Отримуємо URL до файлу
             $url = Storage::disk('s3')->url($path);
             Log::info('File URL generated', ['url' => $url]);
 
-            // Логуємо класи для дебагу
             $disk = Storage::disk('s3');
             Log::info('Disk class: ' . get_class($disk));
             Log::info('Driver class: ' . get_class($disk->getDriver()));
@@ -63,6 +61,5 @@ class FileUploadController extends Controller
             return back()->withErrors('Failed to upload file: ' . $e->getMessage());
         }
     }
-
 
 }

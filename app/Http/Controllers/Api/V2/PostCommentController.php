@@ -133,13 +133,12 @@ class PostCommentController extends Controller
         $sortOrder = $request->input('sort_order', 'desc');
         $perPage   = $request->input('per_page', 10);
         $status    = $request->input('status');
-        $hasRating = $request->input('has_rating'); // new filter
+        $hasRating = $request->input('has_rating');
 
         $commentsQuery = DB::table('comments')
             ->where('post_id', $postId)
             ->orderBy($sortField, $sortOrder);
 
-        // 🔍 apply filter for rating presence
         if ($hasRating !== null) {
             if ((int)$hasRating === 1) {
                 $commentsQuery->whereNotNull('rating');
@@ -222,8 +221,8 @@ class PostCommentController extends Controller
                 ->first();
 
             if ($user) {
-                $awsUrl = env('AWS_URL'); // https://s3.eu-central-003.backblazeb2.com
-                $awsBucket = env('AWS_BUCKET'); // peaz-bucket
+                $awsUrl = env('AWS_URL');
+                $awsBucket = env('AWS_BUCKET');
 
                 if (!str_starts_with($user->profile_image, $awsUrl)) {
                     $user->profile_image = $awsUrl . '/' . $awsBucket . '/' . ltrim($user->profile_image, '/');
