@@ -60,3 +60,4 @@ modules.xml
 .DS_Store
 /docker-compose.yml
 /Dockerfile
+storage/firebase/firebase_credentials.json
