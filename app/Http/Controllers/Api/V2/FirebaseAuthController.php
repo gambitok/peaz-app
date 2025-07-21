@@ -22,7 +22,8 @@ class FirebaseAuthController extends Controller
     {
         $request->validate([
             'uid' => 'required|string',
-            'email' => 'required|email',
+            'email' => 'nullable|email|required_without:mobile',
+            'mobile' => 'nullable|string|required_without:email',
             'name' => 'nullable|string',
         ]);
 
@@ -34,6 +35,7 @@ class FirebaseAuthController extends Controller
             $user = User::create([
                 'firebase_uid' => $request->uid,
                 'email' => $request->email,
+                'mobile' => $request->mobile,
                 'name' => $request->name,
                 'password' => Hash::make($randomPassword),
             ]);
