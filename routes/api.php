@@ -25,6 +25,8 @@ use App\Http\Controllers\Api\V2\CommentRatingController;
 use App\Http\Controllers\Api\UserInterestController;
 use App\Http\Controllers\Api\PageController;
 
+Route::post('v2/auth/firebase', [\App\Http\Controllers\Api\V2\FirebaseAuthController::class, 'loginWithFirebase']);
+
 Route::post('login', [UserController::class, 'login']);
 Route::post('register', [UserController::class, 'register']);
 //Route::post('signup', [UserController::class, 'register']);

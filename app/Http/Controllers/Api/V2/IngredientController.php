@@ -19,9 +19,20 @@ class IngredientController extends Controller
             $query->where('post_id', $request->input('post_id'));
         }
 
-        $ingredients = $query->get();
+        if ($request->has('name')) {
+            $query->where('name', 'like', '%' . $request->input('name') . '%');
+        }
 
-        return response()->json(IngredientResource::collection($ingredients), 200);
+        if ($request->has('limit')) {
+            $limit = intval($request->input('limit'));
+            $ingredients = $query->limit($limit)->get();
+            return response()->json(IngredientResource::collection($ingredients), 200);
+        }
+
+        $perPage = $request->input('per_page', 15);
+        $ingredients = $query->paginate($perPage);
+
+        return IngredientResource::collection($ingredients)->response();
     }
 
     public function show($id)
