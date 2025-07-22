@@ -26,6 +26,8 @@
                             <th>ID</th>
                             <th>Membership level</th>
                             <th>Profile name</th>
+                            <th>E-Mail</th>
+                            <th>Phone</th>
                             <th>Verified</th>
                             <th>Join date</th>
                             <th>Status</th>
@@ -69,6 +71,16 @@
                 },
                 {
                     "data": "username",
+                    searchable: true,
+                    sortable: true
+                },
+                {
+                    "data": "email",
+                    searchable: true,
+                    sortable: true
+                },
+                {
+                    "data": "mobile",
                     searchable: true,
                     sortable: true
                 },

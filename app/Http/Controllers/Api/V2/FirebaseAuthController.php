@@ -21,41 +21,47 @@ class FirebaseAuthController extends Controller
     public function loginWithFirebase(Request $request)
     {
         $request->validate([
-            'uid' => 'required|string',
-            'email' => 'nullable|email|required_without:mobile',
+            'firebase_token' => 'required|string',
             'mobile' => 'nullable|string|required_without:email',
-            'name' => 'nullable|string',
+            'email' => 'nullable|email|required_without:mobile',
         ]);
 
-        $user = User::where('firebase_uid', $request->uid)->first();
+        // Знайти користувача або за mobile, або за email
+        $user = User::when($request->mobile, function ($query) use ($request) {
+            return $query->where('mobile', $request->mobile);
+        })
+            ->when($request->email, function ($query) use ($request) {
+                return $query->orWhere('email', $request->email);
+            })
+            ->first();
 
         if (!$user) {
-            $randomPassword = Str::random(12);
+            $randomPassword = Str::random(8);
 
             $user = User::create([
-                'firebase_uid' => $request->uid,
-                'email' => $request->email,
                 'mobile' => $request->mobile,
-                'name' => $request->name,
+                'email' => $request->email,
                 'password' => Hash::make($randomPassword),
+                'firebase_token' => $request->firebase_token,
             ]);
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'User created successfully.',
-                'user' => $user,
-                'token' => $token,
-                'generated_password' => $randomPassword,
+        } else {
+            $user->update([
+                'firebase_token' => $request->firebase_token,
             ]);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $tokenResult = $user->createToken('Personal Access Token');
 
         return response()->json([
-            'message' => 'Login successful.',
-            'user' => $user,
-            'token' => $token,
+            'message' => 'Logged in successfully',
+            'user' => [
+                'id' => $user->id,
+                'mobile' => $user->mobile,
+                'email' => $user->email,
+                'name' => $user->name,
+            ],
+            'token' => $tokenResult->accessToken,
         ]);
     }
+
 }

@@ -23,6 +23,7 @@ class UserResource extends JsonResource
             'bio' => $this->bio,
             'website' => $this->website,
             'email' => $this->email,
+            'mobile' => $this->mobile,
             'type' => $this->type,
             'membership_level' => $this->membership_level,
             'verified' => $this->verified,

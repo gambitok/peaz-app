@@ -87,6 +87,8 @@ class UsersController extends WebController
                     'id' => $value->id,
                     'membership_level' => $membershipDropdown,
                     'username' => $value->username ?: " - ",
+                    'email' => $value->email ?: " - ",
+                    'mobile' => $value->mobile ?: " - ",
                     'verified' => $value->verified ? 1 : 0,
                     'created_at' => $value->created_at ? Carbon::parse($value->created_at)->format('d-m-Y') : ' - ',
                     'status' => $statusDropdown,
@@ -99,6 +101,12 @@ class UsersController extends WebController
             ->addIndexColumn()
             ->editColumn('username', function ($row) {
                 return "<span title='$row[username]'>{$row['username']}</span>";
+            })
+            ->editColumn('email', function ($row) {
+                return $row['email'];
+            })
+            ->editColumn('mobile', function ($row) {
+                return $row['mobile'];
             })
             ->editColumn('created_at', function ($row) {
                 return "<span title='$row[created_at]'>{$row['created_at']}</span>";

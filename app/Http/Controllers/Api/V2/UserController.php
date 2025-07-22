@@ -138,7 +138,8 @@ class UserController extends Controller
         try {
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255|unique:users,email,' . $id,
+                'email' => 'nullable|email|max:255|unique:users,email,' . $id,
+                'mobile' => 'nullable|string|max:20|unique:users,mobile,' . $id,
                 'username' => 'nullable|string|max:255',
                 'profile_image' => 'nullable|string|max:255',
                 'bio' => 'nullable|string',
@@ -162,7 +163,8 @@ class UserController extends Controller
         }
 
         $user->name = $validatedData['name'];
-        $user->email = $validatedData['email'];
+        $user->email = $validatedData['email'] ?? $user->email;
+        $user->mobile = $validatedData['mobile'] ?? $user->mobile;
         $user->username = $validatedData['username'] ?? $user->username;
         $user->profile_image = $validatedData['profile_image'] ?? $user->profile_image;
         $user->bio = $validatedData['bio'] ?? $user->bio;
