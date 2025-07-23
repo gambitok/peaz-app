@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Post;
+use App\PostThumbnail;
 use Aws\Credentials\Credentials;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,12 +22,17 @@ class ConvertVideo implements ShouldQueue
     private $inputFullPath;
     private $outputExtension;
     private $outputFileName;
+    private $postId;
+    private $postThumbnailId;
 
-    public function __construct($inputFullPath, $outputExtension, $outputFileName)
+
+    public function __construct($inputFullPath, $outputExtension, $outputFileName, $postId = null, $postThumbnailId = null)
     {
         $this->inputFullPath = $inputFullPath;
         $this->outputExtension = $outputExtension;
         $this->outputFileName = $outputFileName;
+        $this->postId = $postId;
+        $this->postThumbnailId = $postThumbnailId;
     }
 
     /**
@@ -154,9 +161,11 @@ class ConvertVideo implements ShouldQueue
             'http' => ['verify' => false],
         ]);
 
+        $key = 'uploads/multipart/' . basename($outputFullPath);
+
         $result = $s3Client->putObject([
             'Bucket' => env('AWS_BUCKET', 'peaz-bucket'),
-            'Key' => 'uploads/multipart/' . basename($outputFullPath),
+            'Key' => $key,
             'SourceFile' => $outputFullPath,
             'ContentType' => 'video/' . $this->outputExtension,
         ]);
@@ -170,6 +179,24 @@ class ConvertVideo implements ShouldQueue
             'stored_in' => 'uploads/multipart',
             'deleted' => $outputFullPath,
         ]);
+
+        $post = Post::find($this->postId);
+        if ($post) {
+            if ($this->postThumbnailId) {
+                // Оновлюємо PostThumbnail
+                $thumbnail = PostThumbnail::find($this->postThumbnailId);
+                if ($thumbnail) {
+                    $thumbnail->thumbnail = $key; // або інше поле, де зберігається шлях відео
+                    $thumbnail->save();
+                    Log::info("PostThumbnail ID {$this->postThumbnailId} updated with new thumbnail path: {$key}");
+                }
+            } else {
+                // Оновлюємо основний файл у пості
+                $post->file = $key;
+                $post->save();
+                Log::info("Post ID {$this->postId} updated with new file path: {$key}");
+            }
+        }
 
         if (file_exists($outputFullPath)) {
             unlink($outputFullPath);

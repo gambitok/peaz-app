@@ -17,6 +17,7 @@ use App\Instruction;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\ConvertVideo;
 
 class PostListController extends WebController
 {
@@ -25,6 +26,28 @@ class PostListController extends WebController
     public function __construct()
     {
         $this->ingredient_obj = new PostIngredient();
+    }
+
+    private function dispatchConvertJob($s3Key)
+    {
+        $localDir = storage_path('app/tmp');
+        if (!file_exists($localDir)) {
+            mkdir($localDir, 0755, true);
+        }
+
+        $fileName = basename($s3Key);
+        $localPath = $localDir . '/' . $fileName;
+
+        // Завантаження з S3
+        Storage::disk('s3')->getDriver()->getAdapter()->getClient()->getObject([
+            'Bucket' => env('AWS_BUCKET'),
+            'Key' => $s3Key,
+            'SaveAs' => $localPath,
+        ]);
+
+        $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+
+        ConvertVideo::dispatch($localPath, $extension, $fileName);
     }
 
     public function index()
@@ -140,7 +163,7 @@ class PostListController extends WebController
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'nullable|file|mimetypes:video/mp4,video/x-msvideo,video/quicktime|max:51200',
+            'file' => 'nullable|file|mimetypes:video/mp4,video/x-msvideo,video/quicktime,image/jpeg,image/png,image/gif|max:51200',
             'thumbnails' => 'nullable|array|max:4',
             'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
             'thumbnails_files' => 'nullable|array|max:4',
@@ -158,27 +181,11 @@ class PostListController extends WebController
             'cuisines' => 'nullable|array',
         ]);
 
-        $fileSrc = '';
-        $fileType = null;
-
-        if ($request->hasFile('file')) {
-            $extension = strtolower($request->file('file')->getClientOriginalExtension());
-            if (in_array($extension, $imageExtensions)) {
-                $path = Storage::disk('s3')->putFile('uploads/posts/images', $request->file('file'), 'public');
-                $fileType = 'image';
-            } elseif (in_array($extension, $videoExtensions)) {
-                $path = Storage::disk('s3')->putFile('uploads/posts/videos', $request->file('file'), 'public');
-                $fileType = 'video';
-            }
-            if (isset($path)) {
-                $fileSrc = $path;
-            }
-        }
-
+        // 1. Створюємо пост без файлу, щоб отримати ID
         $post = Post::create([
             'title' => $request->title,
-            'file' => $fileSrc,
-            'type' => $fileType,
+            'file' => '',
+            'type' => null,
             'hours' => $request->hours,
             'minutes' => $request->minutes,
             'serving_size' => $request->serving_size,
@@ -186,6 +193,36 @@ class PostListController extends WebController
             'user_id' => $request->user_id,
         ]);
 
+        $fileSrc = '';
+        $fileType = null;
+
+        // 2. Обробляємо основний файл
+        if ($request->hasFile('file')) {
+            $extension = strtolower($request->file('file')->getClientOriginalExtension());
+
+            if (in_array($extension, $videoExtensions)) {
+                $tempPath = $request->file('file')->store('uploads/tmp');
+                $localFullPath = storage_path('app/' . $tempPath);
+                $convertedFileName = pathinfo($tempPath, PATHINFO_FILENAME) . '.mp4';
+
+                // Диспатч відео-конвертації з id поста
+                ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
+
+                $fileType = 'video';
+                $fileSrc = 'uploads/posts/videos/' . $convertedFileName;
+            } else {
+                $fileSrc = Storage::disk('s3')->putFile('uploads/posts/images', $request->file('file'), 'public');
+                $fileType = 'image';
+            }
+
+            // Оновлюємо пост із шляхом і типом файлу
+            $post->update([
+                'file' => $fileSrc,
+                'type' => $fileType,
+            ]);
+        }
+
+        // 3. Обробляємо thumbnails
         if ($request->hasFile('thumbnails')) {
             foreach ($request->file('thumbnails') as $index => $thumbnailFile) {
                 $thumbPath = null;
@@ -194,14 +231,46 @@ class PostListController extends WebController
                 $fileType = null;
 
                 $thumbExt = strtolower($thumbnailFile->getClientOriginalExtension());
+
+                // Створюємо запис PostThumbnail ПЕРЕД конвертацією
+                $postThumbnail = PostThumbnail::create([
+                    'post_id' => $post->id,
+                    'file' => '',
+                    'thumbnail' => '',
+                    'type' => '',
+                    'file_type' => '',
+                    'title' => $request->thumbnail_titles[$index] ?? null,
+                    'description' => $request->thumbnail_descriptions[$index] ?? null,
+                ]);
+
                 if (in_array($thumbExt, $imageExtensions)) {
                     $thumbPath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $thumbnailFile, 'public');
                     $thumbType = 'image';
+
+                    // Оновлюємо запис із шляхом
+                    $postThumbnail->update([
+                        'thumbnail' => $thumbPath,
+                        'type' => $thumbType,
+                    ]);
                 } elseif (in_array($thumbExt, $videoExtensions)) {
-                    $thumbPath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/videos', $thumbnailFile, 'public');
+                    $tempThumbPath = $thumbnailFile->store('uploads/tmp');
+                    $localFullPath = storage_path('app/' . $tempThumbPath);
+                    $convertedFileName = pathinfo($tempThumbPath, PATHINFO_FILENAME) . '.mp4';
+
+                    // Диспатч відео-конвертації, передаємо також ID мініатюри для оновлення після конвертації
+                    ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id, $postThumbnail->id);
+
+                    // Тимчасово ставимо шлях до майбутнього конвертованого відео
+                    $thumbPath = 'uploads/posts/thumbnails/videos/' . $convertedFileName;
                     $thumbType = 'video';
+
+                    // Оновлюємо тип у записі (шлях оновить Job після завантаження)
+                    $postThumbnail->update([
+                        'type' => $thumbType,
+                    ]);
                 }
 
+                // Обробка thumbnails_files
                 if ($request->hasFile("thumbnails_files.$index")) {
                     $file = $request->file("thumbnails_files.$index");
                     $fileExt = strtolower($file->getClientOriginalExtension());
@@ -210,23 +279,24 @@ class PostListController extends WebController
                         $filePath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/files/images', $file, 'public');
                         $fileType = 'image';
                     } elseif (in_array($fileExt, $videoExtensions)) {
-                        $filePath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/files/videos', $file, 'public');
+                        $tempFilePath = $file->store('uploads/tmp');
+                        $localFullPath = storage_path('app/' . $tempFilePath);
+                        $convertedFileName = pathinfo($tempFilePath, PATHINFO_FILENAME) . '.mp4';
+
+                        ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id, $postThumbnail->id);
+                        $filePath = 'uploads/posts/thumbnails/files/videos/' . $convertedFileName;
                         $fileType = 'video';
                     }
-                }
 
-                PostThumbnail::create([
-                    'post_id' => $post->id,
-                    'file' => $filePath ?? '',
-                    'thumbnail' => $thumbPath,
-                    'type' => $thumbType,
-                    'file_type' => $fileType ?? '',
-                    'title' => $request->thumbnail_titles[$index] ?? null,
-                    'description' => $request->thumbnail_descriptions[$index] ?? null,
-                ]);
+                    $postThumbnail->update([
+                        'file' => $filePath,
+                        'file_type' => $fileType,
+                    ]);
+                }
             }
         }
 
+        // 4. Синхронізуємо теги, дієти, кухні
         if ($request->has('tags')) {
             $post->tags()->sync($request->tags);
         }
@@ -239,6 +309,7 @@ class PostListController extends WebController
             $post->cuisines()->sync($request->cuisines);
         }
 
+        // 5. Очищаємо інгредієнти та додаємо нові
         PostIngredient::where('post_id', $post->id)->delete();
 
         if ($request->has('ingredients') && is_array($request->ingredients)) {
@@ -322,7 +393,6 @@ class PostListController extends WebController
         ]);
     }
 
-
     public function update(Request $request, int $id)
     {
         $post = Post::find($id);
@@ -335,11 +405,11 @@ class PostListController extends WebController
 
         if ($post) {
             $request->validate([
-                'title' => 'required',
+                'title' => 'required|string|max:255',
                 'caption' => 'nullable|string',
                 'serving_size' => 'nullable|numeric',
-                'file' => 'nullable|file',
-                'thumbnail' => 'nullable|file',
+                'file' => 'nullable|file|mimetypes:video/mp4,video/x-msvideo,video/quicktime,image/jpeg,image/png,image/gif,image/webp|max:51200',
+                'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
                 'hours' => 'required|numeric',
                 'minutes' => 'required|numeric',
                 'tags' => 'nullable|array',
@@ -348,56 +418,35 @@ class PostListController extends WebController
             ]);
 
             if ($request->hasFile('file')) {
-
                 $extension = strtolower($request->file('file')->getClientOriginalExtension());
 
-                if (in_array($extension, $imageExtensions)) {
-                    $path = $request->file('file')->store('uploads/posts/images', 's3');
-
-                    if ($path) {
-
-                        //Storage::disk('s3')->setVisibility($path, 'public');
-
-                        $fileSrc = $path;
-                    }
-                }
-
                 if (in_array($extension, $videoExtensions)) {
-                    $path = $request->file('file')->store('uploads/posts/videos', 's3');
+                    // Зберігаємо тимчасово для конвертації
+                    $tempPath = $request->file('file')->store('uploads/tmp');
+                    $localFullPath = storage_path('app/' . $tempPath);
+                    $convertedFileName = pathinfo($tempPath, PATHINFO_FILENAME) . '.mp4';
 
-                    if ($path) {
+                    ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
 
-                        //Storage::disk('s3')->setVisibility($path, 'public');
-
-                        $fileSrc = $path;
-                    }
+                    $fileSrc = 'uploads/posts/videos/' . $convertedFileName;
+                } elseif (in_array($extension, $imageExtensions)) {
+                    $fileSrc = $request->file('file')->store('uploads/posts/images', 's3');
                 }
             }
 
             if ($request->hasFile('thumbnail')) {
-
                 $extension = strtolower($request->file('thumbnail')->getClientOriginalExtension());
 
-                if (in_array($extension, $imageExtensions)) {
-                    $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/images', 's3');
-
-                    if ($path) {
-
-                        //Storage::disk('s3')->setVisibility($path, 'public');
-
-                        $thumbnailSrc = $path;
-                    }
-                }
-
                 if (in_array($extension, $videoExtensions)) {
-                    $path = $request->file('thumbnail')->store('uploads/posts/thumbnails/videos', 's3');
+                    $tempPath = $request->file('thumbnail')->store('uploads/tmp');
+                    $localFullPath = storage_path('app/' . $tempPath);
+                    $convertedFileName = pathinfo($tempPath, PATHINFO_FILENAME) . '.mp4';
 
-                    if ($path) {
+                    ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
 
-                        //Storage::disk('s3')->setVisibility($path, 'public');
-
-                        $thumbnailSrc = $path;
-                    }
+                    $thumbnailSrc = 'uploads/posts/thumbnails/videos/' . $convertedFileName;
+                } elseif (in_array($extension, $imageExtensions)) {
+                    $thumbnailSrc = $request->file('thumbnail')->store('uploads/posts/thumbnails/images', 's3');
                 }
             }
 
