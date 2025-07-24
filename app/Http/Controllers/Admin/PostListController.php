@@ -757,4 +757,19 @@ class PostListController extends WebController
         return response()->json(['success' => true, 'message' => 'Verified updated!', 'verified' => $post->verified]);
     }
 
+    public function destroyFile(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+        if ($post->file && Storage::exists($post->file)) {
+            Storage::delete($post->file);
+        }
+
+        Storage::disk('s3')->delete($post->file);
+        $post->file = null;
+
+        $post->save();
+
+        return response()->json(['message' => 'File deleted successfully']);
+    }
+
 }

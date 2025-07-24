@@ -140,7 +140,7 @@
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
-                            <button type="submit" class="btn btn-success">Save</button>
+                            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
                         </div>
 
                     </form>

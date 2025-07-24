@@ -125,44 +125,46 @@
 
                         <hr>
 
-                        <div class="d-flex justify-content-end gap-2 mt-3">
-                            <button type="submit" class="btn btn-primary">Update</button>
-                            <button type="button" class="btn btn-danger">Delete</button>
-                        </div>
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="file" class="col-form-label">File</label>
+                            <div class="w-50">
+                                <input type="file" name="file" id="file" class="form-control d-none">
+                                <button type="button" class="btn btn-primary w-100" id="file-btn">
+                                    {{ $data->file ? 'Change file' : 'Add file' }}
+                                </button>
 
-                        <div class="d-flex justify-content-end mt-2">
-                            <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
-                        </div>
-                    </form>
-
-                    <hr>
-
-                    <div class="form-group d-flex justify-content-between">
-                        <label for="file" class="col-form-label">File</label>
-                        <div class="w-50">
-                            <input type="file" name="file" id="file" class="form-control upload-file" data-type="file" data-id="{{ $data->id }}" style="display:none;">
-                            <button type="button" id="file-btn" class="btn btn-primary w-100">
-                                {{ $data->file !== '' ? 'Change' : 'Add new' }}
-                            </button>
-
-                            <div id="file-preview-container" class="mt-2">
-                                @if($data->file)
-                                    <div class="d-flex align-items-center mt-2">
-                                        <a href="{{ $data->file }}" target="_blank" id="file-link">
-                                            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $urlPath))
-                                                <img src="{{ $data->file }}" alt="File" id="file-preview" style="max-width: 200px; max-height: 200px;">
-                                            @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv)$/i', $urlPath))
-                                                <video src="{{ $data->file }}" id="file-preview" style="max-width: 100%; max-height: 500px;" controls></video>
-                                            @endif
-                                        </a>
-                                        <button class="btn btn-sm btn-danger ms-3 delete-file-btn" data-id="{{ $data->id }}" data-type="file">Delete</button>
-                                    </div>
-                                @else
-                                    <p>No file uploaded</p>
-                                @endif
+                                <div id="file-preview-container" class="mt-3">
+                                    @if($data->file)
+                                        @php
+                                            $urlPath = parse_url($data->file, PHP_URL_PATH);
+                                        @endphp
+                                        <div class="file-preview-wrapper">
+                                            <div style="background: gray; margin: 5px 0">
+                                                <a href="{{ $data->file }}" target="_blank" id="file-link">
+                                                    @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $urlPath))
+                                                        <img src="{{ $data->file }}" alt="File" class="img-thumbnail" style="max-width: 200px; display: block; margin: 0 auto">
+                                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv)$/i', $urlPath))
+                                                        <video src="{{ $data->file }}" controls style="max-width: 100%; max-height: 300px; display: block; margin: 0 auto"></video>
+                                                    @else
+                                                        <span class="text-muted">Uploaded file</span>
+                                                    @endif
+                                                </a>
+                                            </div>
+                                            <button type="button" class="btn btn-danger mt-2 w-100" id="delete-file-btn" data-id="{{ $data->id }}">Delete file</button>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
+                            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+                            <button type="button" class="btn btn-danger">Delete</button>
+                        </div>
+                    </form>
 
                     <hr>
 
@@ -237,6 +239,39 @@
     <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js"></script>
     <script src="{{ asset('/assets/libs/select2/js/select2.full.min.js') }}"></script>
     <script>
+        $('#file-btn').on('click', function () {
+            $('#file').click();
+        });
+
+        $('#delete-file-btn').on('click', function () {
+            const postId = $(this).data('id');
+
+            if (!confirm('Are you sure you want to delete the file?')) return;
+
+            $.ajax({
+                url: `/admin/post/${postId}/file`,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function () {
+                    $('#file-preview-container').html('<p class="text-muted">File has been deleted.</p>');
+                    $('#file-btn').text('Add file');
+                },
+                error: function () {
+                    alert('Error deleting file.');
+                }
+            });
+        });
+
+        $('#file').on('change', function () {
+            const fileName = this.files[0]?.name;
+            if (fileName) {
+                $('#file-btn').text('File selected: ' + fileName);
+                $('#file-preview-container').html('<p class="text-muted">File selected. Preview will be available after processing.</p>');
+            }
+        });
+
         $(document).ready(function() {
             $('.select2').select2();
 
@@ -261,7 +296,6 @@
                     }
                 }
             });
-
 
             let ingredientIndex = $('#ingredients-container .ingredient-item').length;
             $('#add-ingredient').on('click', function () {
