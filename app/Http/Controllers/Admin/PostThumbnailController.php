@@ -28,7 +28,6 @@ class PostThumbnailController extends Controller
         $isImage = in_array($extension, $imageExtensions);
         $type = $isImage ? 'image' : 'video';
 
-        // Створюємо запис без шляху, щоб отримати ID
         $postThumbnail = PostThumbnail::create([
             'post_id' => $request->post_id,
             'title' => $request->title,
@@ -40,20 +39,17 @@ class PostThumbnailController extends Controller
         if ($isImage) {
             $path = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $file, 'public');
             $postThumbnail->thumbnail = Storage::disk('s3')->url($path);
-            $postThumbnail->save();
         } else {
             $tempPath = $file->store('uploads/tmp');
             $localFullPath = storage_path('app/' . $tempPath);
             $convertedFileName = Str::random(40) . '.mp4';
 
-            // Запускаємо компресію відео
             ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $request->post_id, $postThumbnail->id);
 
-            // Тимчасово зберігаємо майбутній шлях
             $futurePath = 'uploads/posts/thumbnails/videos/' . $convertedFileName;
             $postThumbnail->thumbnail = Storage::disk('s3')->url($futurePath);
-            $postThumbnail->save();
         }
+        $postThumbnail->save();
 
         return back()->with('success', 'Thumbnail added.');
     }
@@ -94,7 +90,6 @@ class PostThumbnailController extends Controller
                 $localFullPath = storage_path('app/' . $tempPath);
                 $convertedFileName = Str::random(40) . '.mp4';
 
-                // Запускаємо компресію відео
                 ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $thumbnail->post_id, $thumbnail->id);
 
                 $futurePath = 'uploads/posts/thumbnails/videos/' . $convertedFileName;

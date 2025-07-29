@@ -16,7 +16,6 @@ use App\PostIngredient;
 use App\Instruction;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 use App\Jobs\ConvertVideo;
 
 class PostListController extends WebController
@@ -38,7 +37,6 @@ class PostListController extends WebController
         $fileName = basename($s3Key);
         $localPath = $localDir . '/' . $fileName;
 
-        // Завантаження з S3
         Storage::disk('s3')->getDriver()->getAdapter()->getClient()->getObject([
             'Bucket' => env('AWS_BUCKET'),
             'Key' => $s3Key,
@@ -181,7 +179,6 @@ class PostListController extends WebController
             'cuisines' => 'nullable|array',
         ]);
 
-        // 1. Створюємо пост без файлу, щоб отримати ID
         $post = Post::create([
             'title' => $request->title,
             'file' => '',
@@ -193,10 +190,6 @@ class PostListController extends WebController
             'user_id' => $request->user_id,
         ]);
 
-        $fileSrc = '';
-        $fileType = null;
-
-        // 2. Обробляємо основний файл
         if ($request->hasFile('file')) {
             $extension = strtolower($request->file('file')->getClientOriginalExtension());
 
@@ -205,7 +198,6 @@ class PostListController extends WebController
                 $localFullPath = storage_path('app/' . $tempPath);
                 $convertedFileName = pathinfo($tempPath, PATHINFO_FILENAME) . '.mp4';
 
-                // Диспатч відео-конвертації з id поста
                 ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
 
                 $fileType = 'video';
@@ -215,24 +207,19 @@ class PostListController extends WebController
                 $fileType = 'image';
             }
 
-            // Оновлюємо пост із шляхом і типом файлу
             $post->update([
                 'file' => $fileSrc,
                 'type' => $fileType,
             ]);
         }
 
-        // 3. Обробляємо thumbnails
         if ($request->hasFile('thumbnails')) {
             foreach ($request->file('thumbnails') as $index => $thumbnailFile) {
-                $thumbPath = null;
                 $filePath = null;
-                $thumbType = null;
                 $fileType = null;
 
                 $thumbExt = strtolower($thumbnailFile->getClientOriginalExtension());
 
-                // Створюємо запис PostThumbnail ПЕРЕД конвертацією
                 $postThumbnail = PostThumbnail::create([
                     'post_id' => $post->id,
                     'file' => '',
@@ -247,7 +234,6 @@ class PostListController extends WebController
                     $thumbPath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $thumbnailFile, 'public');
                     $thumbType = 'image';
 
-                    // Оновлюємо запис із шляхом
                     $postThumbnail->update([
                         'thumbnail' => $thumbPath,
                         'type' => $thumbType,
@@ -257,20 +243,15 @@ class PostListController extends WebController
                     $localFullPath = storage_path('app/' . $tempThumbPath);
                     $convertedFileName = pathinfo($tempThumbPath, PATHINFO_FILENAME) . '.mp4';
 
-                    // Диспатч відео-конвертації, передаємо також ID мініатюри для оновлення після конвертації
                     ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id, $postThumbnail->id);
 
-                    // Тимчасово ставимо шлях до майбутнього конвертованого відео
-                    $thumbPath = 'uploads/posts/thumbnails/videos/' . $convertedFileName;
                     $thumbType = 'video';
 
-                    // Оновлюємо тип у записі (шлях оновить Job після завантаження)
                     $postThumbnail->update([
                         'type' => $thumbType,
                     ]);
                 }
 
-                // Обробка thumbnails_files
                 if ($request->hasFile("thumbnails_files.$index")) {
                     $file = $request->file("thumbnails_files.$index");
                     $fileExt = strtolower($file->getClientOriginalExtension());
@@ -296,7 +277,6 @@ class PostListController extends WebController
             }
         }
 
-        // 4. Синхронізуємо теги, дієти, кухні
         if ($request->has('tags')) {
             $post->tags()->sync($request->tags);
         }
@@ -309,7 +289,6 @@ class PostListController extends WebController
             $post->cuisines()->sync($request->cuisines);
         }
 
-        // 5. Очищаємо інгредієнти та додаємо нові
         PostIngredient::where('post_id', $post->id)->delete();
 
         if ($request->has('ingredients') && is_array($request->ingredients)) {
@@ -421,7 +400,6 @@ class PostListController extends WebController
                 $extension = strtolower($request->file('file')->getClientOriginalExtension());
 
                 if (in_array($extension, $videoExtensions)) {
-                    // Зберігаємо тимчасово для конвертації
                     $tempPath = $request->file('file')->store('uploads/tmp');
                     $localFullPath = storage_path('app/' . $tempPath);
                     $convertedFileName = pathinfo($tempPath, PATHINFO_FILENAME) . '.mp4';
@@ -686,29 +664,22 @@ class PostListController extends WebController
 
         $extension = strtolower($file->getClientOriginalExtension());
 
-        // Handle image files
         if (in_array($extension, $imageExtensions)) {
             $directory = ($type === 'file') ? 'uploads/posts/images' : 'uploads/posts/thumbnails/images'; // Handle file and thumbnail images
         }
-        // Handle video files
         elseif (in_array($extension, $videoExtensions)) {
             $directory = ($type === 'file') ? 'uploads/posts/videos' : 'uploads/posts/thumbnails/videos'; // Handle file and thumbnail videos
         } else {
-            return false; // Invalid file extension
+            return false;
         }
 
-        // Store the file on S3 in the appropriate directory
         $path = $file->store($directory, 's3');
 
         if ($path) {
-            // Set the file visibility to public on S3
-            //Storage::disk('s3')->setVisibility($path, 'public');
-
-            // Return only the relative path (without full URL)
-            return $path; // E.g., 'uploads/posts/images/thumb-88533FAC-...'
+            return $path;
         }
 
-        return false; // In case file upload fails
+        return false;
     }
 
     public function deleteFile(Request $request, $id)
