@@ -157,15 +157,15 @@ class PostListController extends WebController
     public function store(Request $request)
     {
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'];
+        $videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'm4v'];
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'nullable|file|mimetypes:video/mp4,video/x-msvideo,video/quicktime,image/jpeg,image/png,image/gif|max:51200',
+            'file' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
             'thumbnails' => 'nullable|array|max:4',
-            'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
+            'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:20480',
             'thumbnails_files' => 'nullable|array|max:4',
-            'thumbnails_files.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:51200',
+            'thumbnails_files.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
             'thumbnail_titles' => 'nullable|array|max:4',
             'thumbnail_titles.*' => 'nullable|string|max:255',
             'thumbnail_descriptions' => 'nullable|array|max:4',
@@ -388,7 +388,7 @@ class PostListController extends WebController
                 'caption' => 'nullable|string',
                 'serving_size' => 'nullable|numeric',
                 'file' => 'nullable|file|mimetypes:video/mp4,video/x-msvideo,video/quicktime,image/jpeg,image/png,image/gif,image/webp|max:51200',
-                'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:20480',
+                'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:20480',
                 'hours' => 'required|numeric',
                 'minutes' => 'required|numeric',
                 'tags' => 'nullable|array',
