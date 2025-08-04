@@ -67,6 +67,17 @@ class PostIngredientController extends Controller
             return response()->json(['status' => 'error', 'message' => 'User not authenticated'], 401);
         }
 
+        $exists = PostIngredient::where('post_id', $validated['post_id'])
+            ->where('name', $validated['name'])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Ingredient name must be unique for this post'
+            ], 422);
+        }
+
         $ingredient = PostIngredient::create([
             'user_id' => $userId,
             'post_id' => $validated['post_id'],
@@ -103,6 +114,18 @@ class PostIngredientController extends Controller
 
         if (!$userId) {
             return response()->json(['status' => 'error', 'message' => 'User not authenticated'], 401);
+        }
+
+        $exists = PostIngredient::where('post_id', $validated['post_id'])
+            ->where('name', $validated['name'])
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Ingredient name must be unique for this post'
+            ], 422);
         }
 
         $ingredient->fill([

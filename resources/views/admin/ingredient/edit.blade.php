@@ -12,6 +12,15 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-body" style="display: block; margin: 0 auto;">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <form action="{{ route('admin.ingredient.update', $data->id) }}" method="POST">
                         @csrf
                         @method('PUT')

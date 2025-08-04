@@ -124,7 +124,7 @@
                                 <select id="ingredient-selector" class="form-control select2" style="width: 300px;">
                                     <option value="" disabled selected>Select ingredient</option>
                                     @foreach($ingredients as $ingredient)
-                                        <option value="{{ $ingredient->id }}">{{ $ingredient->name }}</option>
+                                        <option value="{{ $ingredient->id }}" data-weight="{{ $ingredient->weight }}">{{ $ingredient->name }}</option>
                                     @endforeach
                                 </select>
                                 <input type="text" id="ingredient-measurement" class="form-control" placeholder="Measurement (e.g. 200g)">
@@ -282,6 +282,17 @@
         });
 
         $(document).ready(function() {
+            $('#ingredient-selector').on('change', function () {
+                const selectedOption = $(this).find('option:selected');
+                const weight = selectedOption.data('weight');
+
+                if (weight !== undefined && weight !== null) {
+                    $('#ingredient-measurement').val(weight);
+                } else {
+                    $('#ingredient-measurement').val('');
+                }
+            });
+
             $('.select2').select2();
 
             $('.thumbnail-input').on('change', function (e) {

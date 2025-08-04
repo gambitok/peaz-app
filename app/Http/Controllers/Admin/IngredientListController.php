@@ -74,7 +74,7 @@ class IngredientListController extends WebController
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:ingredients,name',
             'type' => 'required|string|max:255',
             'weight' => 'required|numeric',
         ]);
@@ -132,7 +132,7 @@ class IngredientListController extends WebController
 
         if ($ingredient) {
             $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|unique:ingredients,name,' . $id,
                 'type' => 'required|string|max:255',
                 'weight' => 'required|numeric',
             ]);
