@@ -221,8 +221,14 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-{{ $thumbnail ? 'warning' : 'info' }} btn-sm">
+                                    <i class="fa fa-save"></i>
                                     {{ $thumbnail ? 'Update' : 'Add' }}
                                 </button>
+
+                                <label class="badge badge-info">Press
+                                    `{{ $thumbnail ? 'Update' : 'Add' }}`
+                                    to save file!
+                                </label>
                             </form>
 
                             {{-- === Separate Delete Form (only if existing thumbnail) === --}}
