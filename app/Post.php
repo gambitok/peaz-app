@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class Post extends Model
 {
     public $table = "posts";
-    protected $fillable = ['id','title','user_id','type','file','thumbnail','caption','serving_size','hours','minutes','not_interested','status','created_at','verified'];
+    protected $fillable = ['id','title','user_id','type','conversion_status','file','thumbnail','caption','serving_size','hours','minutes','not_interested','status','created_at','verified'];
 
     protected $attributes = [
         'status' => 1,

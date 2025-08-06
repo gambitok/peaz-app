@@ -15,7 +15,7 @@ class PostThumbnailController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:51200',
+            'file' => 'required|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'post_id' => 'required|exists:posts,id',
@@ -59,7 +59,7 @@ class PostThumbnailController extends Controller
         $thumbnail = PostThumbnail::findOrFail($id);
 
         $request->validate([
-            'file' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv|max:51200',
+            'file' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
         ]);

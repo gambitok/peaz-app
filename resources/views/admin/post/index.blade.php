@@ -66,6 +66,7 @@
                             <th>Name</th>
                             <th>Profile name</th>
                             <th>Added</th>
+                            <th>Video status</th>
                             <th>Pending</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -127,6 +128,10 @@
                     },
                     {
                         "data": "created_at",
+                        searchable: true,
+                        sortable: false
+                    },                    {
+                        "data": "conversion_status",
                         searchable: true,
                         sortable: false
                     },

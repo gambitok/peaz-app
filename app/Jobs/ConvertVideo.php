@@ -33,6 +33,13 @@ class ConvertVideo implements ShouldQueue
         $this->outputFileName = $outputFileName;
         $this->postId = $postId;
         $this->postThumbnailId = $postThumbnailId;
+
+        if ($this->postId && !$this->postThumbnailId) {
+            $post = Post::find($this->postId);
+            if ($post) {
+                $post->update(['conversion_status' => 'processing']);
+            }
+        }
     }
 
     /**
@@ -51,12 +58,21 @@ class ConvertVideo implements ShouldQueue
             ]);
             $this->convertVideo($this->inputFullPath, $outputFullPath);
             $this->uploadConvertedFile($outputFullPath);
+
+            if ($this->postId && !$this->postThumbnailId) {
+                $post = Post::find($this->postId);
+                if ($post) {
+                    $post->update(['conversion_status' => 'completed']);
+                }
+            }
         } catch (ProcessFailedException $e) {
             Log::error('Video conversion failed: ' . $e->getMessage());
+            $this->updateStatusFailed();
             $this->cleanupFiles($outputFullPath);
             throw new \Exception('Video conversion failed: ' . $e->getMessage());
         } catch (\Exception $e) {
             Log::error('General error: ' . $e->getMessage());
+            $this->updateStatusFailed();
             $this->cleanupFiles($outputFullPath);
             throw new \Exception('General error: ' . $e->getMessage());
         }
@@ -203,6 +219,17 @@ class ConvertVideo implements ShouldQueue
             Log::info('Deleted output file after successful upload', [
                 'output' => $outputFullPath,
             ]);
+        }
+    }
+
+    private function updateStatusFailed()
+    {
+        if ($this->postId && !$this->postThumbnailId) {
+            $post = Post::find($this->postId);
+            if ($post) {
+                $post->update(['conversion_status' => 'failed']);
+                Log::warning("Post ID {$this->postId} updated with status: failed");
+            }
         }
     }
 
