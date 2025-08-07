@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api\V2;
 use App\Comment;
 use App\CommentLike;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\PostIngredient;
 use App\Instruction;
 use App\PostLike;
 use App\PostThumbnail;
+use App\UserRelationship;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -584,12 +586,24 @@ class PostController extends Controller
 
         $posts->getCollection()->transform(function ($post) use ($user_id) {
             $postData = $this->addExtraFields($post, $user_id);
+
             $postData['thumbnails'] = $post->thumbnails->map(function ($thumbnail) {
                 return [
                     'thumbnail' => $thumbnail->thumbnail,
                     'type' => $thumbnail->type
                 ];
             });
+
+            if ($post->relationLoaded('user') && $post->user) {
+                $isFollowing = UserRelationship::where('follower_id', $user_id)
+                    ->where('following_id', $post->user->id)
+                    ->exists();
+
+                $post->user->is_following = $isFollowing;
+
+                $postData['user'] = new UserResource($post->user);
+            }
+
             return $postData;
         });
 
@@ -1165,6 +1179,22 @@ class PostController extends Controller
                 ]);
             }
 
+            // If it's a rating (type = 1), check if user has already rated this post
+            if ((int)$request->type === 1) {
+                $alreadyRated = Comment::where('post_id', $request->post_id)
+                    ->where('user_id', $user->id)
+                    ->where('type', 1)
+                    ->exists();
+
+                if ($alreadyRated) {
+                    return response()->json([
+                        'status' => 409,
+                        'message' => 'You have already rated this post.',
+                        'data' => []
+                    ]);
+                }
+            }
+
             $comment_details = Comment::create([
                 "user_id" => $user->id,
                 "post_id" => $request->post_id,
@@ -1187,14 +1217,17 @@ class PostController extends Controller
                 'user' => function ($q) {
                     $q->select("id", "username", "profile_image");
                 }
-            ])->where(function ($q) use ($request, $comment_details) {
-                $q->where('id', $comment_details->id)->orWhere('id', $request->comment_id);
-            })->whereNull("comment_id")
+            ])
+                ->where(function ($q) use ($request, $comment_details) {
+                    $q->where('id', $comment_details->id)->orWhere('id', $request->comment_id);
+                })
+                ->whereNull("comment_id")
                 ->get();
 
             $commentlikes = CommentLike::where('user_id', $user->id)
                 ->where('post_id', $request->post_id)
-                ->pluck('comment_id')->toArray();
+                ->pluck('comment_id')
+                ->toArray();
 
             foreach ($comments as $comment) {
                 $comment->is_commentlike = in_array($comment->id, $commentlikes);

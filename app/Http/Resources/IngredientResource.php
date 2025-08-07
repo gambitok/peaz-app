@@ -19,7 +19,7 @@ class IngredientResource extends JsonResource
             'user_id' => $this->user_id,
             'type' => $this->type ?: null,
             'name' => $this->name,
-            'measurement' => $this->measurement,
+            'weight' => $this->weight,
             'created_at' => $this->created_at ? $this->created_at->format('d.m.Y') : null,
         ];
     }

@@ -120,7 +120,14 @@ class PostCommentController extends Controller
 
     public function getCommentsByPostId(Request $request)
     {
-        $postId = $request->input('post_id');
+        $postId     = $request->input('post_id');
+        $commentId  = $request->input('comment_id');
+        $sortField  = $request->input('sort_by', 'created_at');
+        $sortOrder  = $request->input('sort_order', 'desc');
+        $perPage    = $request->input('per_page', 10);
+        $status     = $request->input('status');
+        $hasRating  = $request->input('has_rating');
+        $userId     = $request->user()?->id;
 
         if (!$postId) {
             return response()->json([
@@ -129,16 +136,19 @@ class PostCommentController extends Controller
             ], 400);
         }
 
-        $sortField = $request->input('sort_by', 'created_at');
-        $sortOrder = $request->input('sort_order', 'desc');
-        $perPage   = $request->input('per_page', 10);
-        $status    = $request->input('status');
-        $hasRating = $request->input('has_rating');
-
+        // Коментарі
         $commentsQuery = DB::table('comments')
             ->where('post_id', $postId)
             ->orderBy($sortField, $sortOrder);
 
+        // Якщо передано comment_id — фільтруємо дочірні коментарі
+        if ($commentId !== null) {
+            $commentsQuery->where('comment_id', $commentId);
+        } else {
+            $commentsQuery->whereNull('comment_id'); // тільки верхній рівень
+        }
+
+        // Фільтрація по рейтингу
         if ($hasRating !== null) {
             if ((int)$hasRating === 1) {
                 $commentsQuery->whereNotNull('rating');
@@ -156,15 +166,15 @@ class PostCommentController extends Controller
                 'status'  => 'error',
                 'message' => 'No comments found for this post',
                 'data'    => [],
+                'pagination' => null
             ], 404);
         }
 
+        // Пост
         $postQuery = DB::table('posts')->where('id', $postId);
-
         if ($status !== null) {
             $postQuery->where('status', $status);
         }
-
         $post = $postQuery->first();
 
         if (!$post) {
@@ -174,9 +184,11 @@ class PostCommentController extends Controller
             ], 404);
         }
 
+        // AWS
         $awsUrl    = env('AWS_URL');
         $awsBucket = env('AWS_BUCKET');
 
+        // Постове зображення
         $thumbnails = DB::table('post_thumbnails')
             ->where('post_id', $post->id)
             ->get(['thumbnail', 'type']);
@@ -184,36 +196,30 @@ class PostCommentController extends Controller
         foreach ($thumbnails as $thumb) {
             $thumb->thumbnail = str_starts_with($thumb->thumbnail, $awsUrl)
                 ? $thumb->thumbnail
-                : $awsUrl . '/' . $awsBucket . $thumb->thumbnail;
+                : $awsUrl . '/' . $awsBucket . '/' . ltrim($thumb->thumbnail, '/');
         }
 
         $post->thumbnails = $thumbnails;
-
         $post->file = str_starts_with($post->file, $awsUrl)
             ? $post->file
-            : $awsUrl . '/' . $awsBucket . $post->file;
+            : $awsUrl . '/' . $awsBucket . '/' . ltrim($post->file, '/');
 
         $post->thumbnail = str_starts_with($post->thumbnail, $awsUrl)
             ? $post->thumbnail
-            : $awsUrl . '/' . $awsBucket . $post->thumbnail;
+            : $awsUrl . '/' . $awsBucket . '/' . ltrim($post->thumbnail, '/');
 
-        $currentUserId = $request->user()?->id;
-
+        // Обробка кожного коментаря
         foreach ($comments as $comment) {
-            $commentlikeCount = DB::table('commentlikes')
+            $comment->commentlike_count = DB::table('commentlikes')
                 ->where('comment_id', $comment->id)
                 ->count();
 
-            $isLiked = false;
-            if ($currentUserId) {
-                $isLiked = DB::table('commentlikes')
+            $comment->is_commentlike = $userId
+                ? (DB::table('commentlikes')
                     ->where('comment_id', $comment->id)
-                    ->where('user_id', $currentUserId)
-                    ->exists();
-            }
-
-            $comment->commentlike_count = $commentlikeCount;
-            $comment->is_commentlike = $isLiked ? 1 : 0;
+                    ->where('user_id', $userId)
+                    ->exists() ? 1 : 0)
+                : 0;
 
             $user = DB::table('users')
                 ->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified')
@@ -221,9 +227,6 @@ class PostCommentController extends Controller
                 ->first();
 
             if ($user) {
-                $awsUrl = env('AWS_URL');
-                $awsBucket = env('AWS_BUCKET');
-
                 if (!str_starts_with($user->profile_image, $awsUrl)) {
                     $user->profile_image = $awsUrl . '/' . $awsBucket . '/' . ltrim($user->profile_image, '/');
                 }
@@ -236,22 +239,21 @@ class PostCommentController extends Controller
         }
 
         return response()->json([
-            'status'     => 'success',
-            'message'    => 'Comments fetched successfully',
-            'data'       => $comments->items(),
+            'status'  => 'success',
+            'message' => 'Comments fetched successfully',
+            'data'    => $comments->items(),
             'pagination' => [
-                'total'         => $comments->total(),
-                'per_page'      => $comments->perPage(),
-                'current_page'  => $comments->currentPage(),
-                'last_page'     => $comments->lastPage(),
-                'from'          => $comments->firstItem(),
-                'to'            => $comments->lastItem(),
-                'path'          => $comments->path(),
+                'total' => $comments->total(),
+                'per_page' => $comments->perPage(),
+                'current_page' => $comments->currentPage(),
+                'last_page' => $comments->lastPage(),
+                'from' => $comments->firstItem(),
+                'to' => $comments->lastItem(),
+                'path' => $comments->path(),
                 'last_page_url' => $comments->url($comments->lastPage()),
                 'next_page_url' => $comments->nextPageUrl(),
-            ],
-        ], 200);
+            ]
+        ]);
     }
-
 
 }
