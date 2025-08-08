@@ -210,10 +210,12 @@ class PostCommentController extends Controller
 
         // Обробка кожного коментаря
         foreach ($comments as $comment) {
+            // Кількість лайків коментаря
             $comment->commentlike_count = DB::table('commentlikes')
                 ->where('comment_id', $comment->id)
                 ->count();
 
+            // Чи поставив лайк поточний користувач
             $comment->is_commentlike = $userId
                 ? (DB::table('commentlikes')
                     ->where('comment_id', $comment->id)
@@ -221,6 +223,7 @@ class PostCommentController extends Controller
                     ->exists() ? 1 : 0)
                 : 0;
 
+            // Інформація про користувача, який залишив коментар
             $user = DB::table('users')
                 ->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified')
                 ->where('id', $comment->user_id)
@@ -235,7 +238,36 @@ class PostCommentController extends Controller
             $comment->user = $user;
             unset($comment->user_id);
 
-            $comment->post = $post;
+            // Загальна кількість відповідей (дочірніх коментарів)
+            $comment->replies_count = DB::table('comments')
+                ->where('comment_id', $comment->id)
+                ->count();
+
+            // Перша відповідь (дочірній коментар) або null
+            $firstReply = DB::table('comments')
+                ->where('comment_id', $comment->id)
+                ->orderBy('created_at', 'asc')
+                ->first();
+
+            if ($firstReply) {
+                // Можна додати до відповіді також юзера, лайки і т.д., якщо потрібно
+                $replyUser = DB::table('users')
+                    ->select('id', 'name', 'username', 'profile_image', 'bio', 'website', 'verified')
+                    ->where('id', $firstReply->user_id)
+                    ->first();
+
+                if ($replyUser && !str_starts_with($replyUser->profile_image, $awsUrl)) {
+                    $replyUser->profile_image = $awsUrl . '/' . $awsBucket . '/' . ltrim($replyUser->profile_image, '/');
+                }
+
+                $firstReply->user = $replyUser;
+                unset($firstReply->user_id);
+            }
+
+            $comment->first_reply = $firstReply;
+
+            // Прибираємо інформацію про пост з коментаря
+            unset($comment->post);
         }
 
         return response()->json([

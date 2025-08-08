@@ -1167,7 +1167,7 @@ class PostController extends Controller
                 'comment_id' => ['required_if:type,0', 'numeric', 'exists:comments,id'],
                 'comment_text' => ['required_if:type,0'],
                 'type' => ['required'],
-                'rating' => ['required_if:type,1'],
+                // 'rating' => ['required_if:type,1'], // ⛔️ ВИМКНЕНО!
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -1179,17 +1179,18 @@ class PostController extends Controller
                 ]);
             }
 
-            // If it's a rating (type = 1), check if user has already rated this post
-            if ((int)$request->type === 1) {
+            // Якщо передано рейтинг — перевіряємо, чи ще немає коментаря з рейтингом
+            if ((int)$request->type === 1 && !is_null($request->rating)) {
                 $alreadyRated = Comment::where('post_id', $request->post_id)
                     ->where('user_id', $user->id)
                     ->where('type', 1)
+                    ->whereNotNull('rating')
                     ->exists();
 
                 if ($alreadyRated) {
                     return response()->json([
                         'status' => 409,
-                        'message' => 'You have already rated this post.',
+                        'message' => 'You have already left a comment with a rating for this post.',
                         'data' => []
                     ]);
                 }
