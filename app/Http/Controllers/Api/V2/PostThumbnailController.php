@@ -57,7 +57,8 @@ class PostThumbnailController extends Controller
 
         if (in_array($thumbnailExtension, ['jpg', 'jpeg', 'png', 'gif', 'svg'])) {
             $thumbnailType = 'image';
-        } elseif (in_array($thumbnailExtension, ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'])) {
+        } else
+        if (in_array($thumbnailExtension, ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv'])) {
             $thumbnailType = 'video';
         } else {
             return response()->json(['error' => 'Invalid file type for "thumbnail".'], 400);

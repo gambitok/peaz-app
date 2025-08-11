@@ -168,6 +168,40 @@
 
                         <hr>
 
+                        <div class="form-group d-flex justify-content-between mt-4 mb-4">
+                            <label for="thumbnail" class="col-form-label">Thumbnail</label>
+                            <div class="w-50">
+                                <input type="file" name="thumbnail" id="thumbnail" class="form-control d-none">
+                                <button type="button" class="btn btn-primary w-100" id="thumbnail-btn">
+                                    {{ $data->thumbnail ? 'Change thumbnail' : 'Add thumbnail' }}
+                                </button>
+
+                                <div id="thumbnail-preview-container" class="mt-3">
+                                    @if($data->thumbnail)
+                                        @php
+                                            $urlPath = parse_url($data->thumbnail, PHP_URL_PATH);
+                                        @endphp
+                                        <div class="thumbnail-preview-wrapper">
+                                            <div style="background: gray; margin: 5px 0">
+                                                <a href="{{ $data->thumbnail }}" target="_blank" id="thumbnail-link">
+                                                    @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $urlPath))
+                                                        <img src="{{ $data->thumbnail }}" alt="thumbnail" class="img-thumbnail" style="max-width: 200px; display: block; margin: 0 auto">
+                                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv)$/i', $urlPath))
+                                                        <video src="{{ $data->thumbnail }}" controls style="max-width: 100%; max-height: 300px; display: block; margin: 0 auto"></video>
+                                                    @else
+                                                        <span class="text-muted">Uploaded thumbnail</span>
+                                                    @endif
+                                                </a>
+                                            </div>
+                                            <button type="button" class="btn btn-danger mt-2 w-100" id="delete-thumbnail-btn" data-id="{{ $data->id }}">Delete thumbnail</button>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <a href="{{ route('admin.post.index') }}" class="btn btn-secondary">Back</a>
                             <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
@@ -254,6 +288,40 @@
     <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js"></script>
     <script src="{{ asset('/assets/libs/select2/js/select2.full.min.js') }}"></script>
     <script>
+
+        $('#thumbnail-btn').on('click', function () {
+            $('#thumbnail').click();
+        });
+
+        $('#delete-thumbnail-btn').on('click', function () {
+            const postId = $(this).data('id');
+
+            if (!confirm('Are you sure you want to delete the thumbnail?')) return;
+
+            $.ajax({
+                url: `/admin/post/${postId}/thumbnail`,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function () {
+                    $('#thumbnail-preview-container').html('<p class="text-muted">thumbnail has been deleted.</p>');
+                    $('#thumbnail-btn').text('Add thumbnail');
+                },
+                error: function () {
+                    alert('Error deleting thumbnail.');
+                }
+            });
+        });
+
+        $('#thumbnail').on('change', function () {
+            const fileName = this.files[0]?.name;
+            if (fileName) {
+                $('#thumbnail-btn').text('File selected: ' + fileName);
+                $('#thumbnail-preview-container').html('<p class="text-muted">thumbnail selected. Preview will be available after processing.</p>');
+            }
+        });
+
         $('#file-btn').on('click', function () {
             $('#file').click();
         });

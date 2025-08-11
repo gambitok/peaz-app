@@ -104,6 +104,16 @@
 
                         <hr>
 
+                        <div class="form-group d-flex justify-content-between">
+                            <label for="thumbnail" class="col-form-label">Thumbnail</label>
+                            <div class="w-50">
+                                <input type="file" name="thumbnail" id="thumbnail" class="form-control">
+                                <p>No thumbnail uploaded</p>
+                            </div>
+                        </div>
+
+                        <hr>
+
                         <h3 class="text-lg font-bold mt-6 mb-2">Ingredients</h3>
                         <div class="form-group">
                             <div id="ingredients-container"></div>

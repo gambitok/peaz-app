@@ -70,6 +70,7 @@ Route::group(['middleware' => 'Is_Admin'], function () {
         Route::delete('/post-thumbnails/{id}', [PostThumbnailController::class, 'delete'])->name('post_thumbnail.delete');
 
         Route::delete('/post/{id}/file', [PostListController::class, 'destroyFile'])->name('admin.posts.delete-file');
+        Route::delete('/post/{id}/thumbnail', [PostListController::class, 'destroyThumbnail'])->name('admin.posts.delete-thumbnail');
 
         Route::delete('/post/{id}/delete-file',
             [PostListController::class, 'deleteFile'])->name('admin.post.deleteFile');
