@@ -27,27 +27,6 @@ class PostListController extends WebController
         $this->ingredient_obj = new PostIngredient();
     }
 
-    private function dispatchConvertJob($s3Key)
-    {
-        $localDir = storage_path('app/tmp');
-        if (!file_exists($localDir)) {
-            mkdir($localDir, 0755, true);
-        }
-
-        $fileName = basename($s3Key);
-        $localPath = $localDir . '/' . $fileName;
-
-        Storage::disk('s3')->getDriver()->getAdapter()->getClient()->getObject([
-            'Bucket' => env('AWS_BUCKET'),
-            'Key' => $s3Key,
-            'SaveAs' => $localPath,
-        ]);
-
-        $extension = pathinfo($fileName, PATHINFO_EXTENSION);
-
-        ConvertVideo::dispatch($localPath, $extension, $fileName);
-    }
-
     public function index()
     {
         $tags = Tag::all();
@@ -165,12 +144,6 @@ class PostListController extends WebController
             'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
             'thumbnails' => 'nullable|array|max:4',
             'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:40960',
-            'thumbnails_files' => 'nullable|array|max:4',
-            'thumbnails_files.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
-            'thumbnail_titles' => 'nullable|array|max:4',
-            'thumbnail_titles.*' => 'nullable|string|max:255',
-            'thumbnail_descriptions' => 'nullable|array|max:4',
-            'thumbnail_descriptions.*' => 'nullable|string|max:1000',
             'hours' => 'required|numeric',
             'minutes' => 'required|numeric',
             'serving_size' => 'nullable|numeric',
@@ -197,33 +170,24 @@ class PostListController extends WebController
             $extension = strtolower($request->file('file')->getClientOriginalExtension());
 
             if (in_array($extension, $videoExtensions)) {
-                $originalFileName = uniqid('video_', true) . '.' . $extension;
-                $s3TempPath = 'uploads/tmp/' . $originalFileName;
+                $file = $request->file('file');
 
-                // Завантажуємо оригінальний файл на S3
-                Storage::disk('s3')->put($s3TempPath, file_get_contents($request->file('file')), 'public');
+                if (!$file->isValid()) {
+                    return back()->withErrors(['file' => 'The file is corrupt or not downloaded.']);
+                }
 
-                // Оновлюємо post з посиланням на оригінал і статусом processing
+                $localFilename = uniqid('video_') . '.' . $extension;
+
+                $localPath = $file->storeAs('public/tmp_for_processing', $localFilename);
+
                 $post->update([
-                    'file' => $s3TempPath,
+                    'file' => $localPath,
                     'type' => 'video',
                     'conversion_status' => 'processing',
                 ]);
 
-                // Локальна копія для ffmpeg конверсії
-                $localFullPath = storage_path('app/tmp_for_processing/' . $originalFileName);
-                if (!file_exists(dirname($localFullPath))) {
-                    mkdir(dirname($localFullPath), 0755, true);
-                }
-                file_put_contents($localFullPath, file_get_contents(Storage::disk('s3')->url($s3TempPath)));
-
-                $convertedFileName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.mp4';
-
-                // Запускаємо конверсію
-                ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
-
+                ConvertVideo::dispatch(storage_path('app/' . $localPath), 'mp4', pathinfo($localFilename, PATHINFO_FILENAME) . '.mp4', $post->id);
             } else {
-                // Якщо це зображення - одразу заливаємо на S3
                 $fileSrc = Storage::disk('s3')->putFile('uploads/posts/images', $request->file('file'), 'public');
                 $post->update([
                     'file' => $fileSrc,
@@ -237,39 +201,29 @@ class PostListController extends WebController
             $extension = strtolower($request->file('thumbnail')->getClientOriginalExtension());
 
             if (in_array($extension, $videoExtensions)) {
-                $originalFileName = uniqid('video_', true) . '.' . $extension;
-                $s3TempPath = 'uploads/tmp/' . $originalFileName;
+                $thumbnailFile = $request->file('thumbnail');
 
-                // Завантажуємо оригінальний файл на S3
-                Storage::disk('s3')->put($s3TempPath, file_get_contents($request->file('thumbnail')), 'public');
+                if (!$thumbnailFile->isValid()) {
+                    return back()->withErrors(['thumbnail' => 'The thumbnail file is corrupt or not downloaded.']);
+                }
 
-                // Оновлюємо post з посиланням на оригінал і статусом processing
+                $localFilename = uniqid('video_thumb_') . '.' . $extension;
+
+                $localPath = $thumbnailFile->storeAs('public/tmp_for_processing', $localFilename);
+
                 $post->update([
-                    'thumbnail' => $s3TempPath,
+                    'thumbnail' => $localPath,
                 ]);
 
-                // Локальна копія для ffmpeg конверсії
-                $localFullPath = storage_path('app/tmp_for_processing/' . $originalFileName);
-                if (!file_exists(dirname($localFullPath))) {
-                    mkdir(dirname($localFullPath), 0755, true);
-                }
-                file_put_contents($localFullPath, file_get_contents(Storage::disk('s3')->url($s3TempPath)));
-
-                $convertedFileName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.mp4';
-
-                // Запускаємо конверсію
-                ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
-
+                //ConvertVideo::dispatch(storage_path('app/' . $localPath), 'mp4', pathinfo($localFilename, PATHINFO_FILENAME) . '.mp4', $post->id, null, true);
             } else {
-                // Якщо це зображення - одразу заливаємо на S3
-                $fileSrc = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $request->file('file'), 'public');
+                $fileSrc = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $request->file('thumbnail'), 'public');
                 $post->update([
                     'thumbnail' => $fileSrc,
                 ]);
             }
         }
 
-        // Обробка thumbnails
         if ($request->hasFile('thumbnails')) {
             foreach ($request->file('thumbnails') as $index => $thumbnailFile) {
                 $thumbExt = strtolower($thumbnailFile->getClientOriginalExtension());
@@ -291,62 +245,20 @@ class PostListController extends WebController
                         'type' => 'image',
                     ]);
                 } elseif (in_array($thumbExt, $videoExtensions)) {
-                    $originalThumbName = uniqid('thumb_', true) . '.' . $thumbExt;
-                    $s3TempThumbPath = 'uploads/tmp/' . $originalThumbName;
+                    if (!$thumbnailFile->isValid()) {
+                        return back()->withErrors(['thumbnail' => 'The thumbnail video is corrupt or not downloaded.']);
+                    }
 
-                    // Завантажуємо оригінал на S3
-                    Storage::disk('s3')->put($s3TempThumbPath, file_get_contents($thumbnailFile), 'public');
+                    $localFilename = uniqid('thumb_', true) . '.' . $thumbExt;
 
-                    // Оновлюємо thumbnail з посиланням на оригінал і статусом processing
+                    $localPath = $thumbnailFile->storeAs('public/tmp_for_processing', $localFilename);
+
                     $postThumbnail->update([
-                        'thumbnail' => $s3TempThumbPath,
+                        'thumbnail' => $localPath,
                         'type' => 'video',
                     ]);
 
-                    // Локальна копія для конверсії
-                    $localFullPath = storage_path('app/tmp_for_processing/' . $originalThumbName);
-                    if (!file_exists(dirname($localFullPath))) {
-                        mkdir(dirname($localFullPath), 0755, true);
-                    }
-                    file_put_contents($localFullPath, file_get_contents(Storage::disk('s3')->url($s3TempThumbPath)));
-
-                    $convertedFileName = pathinfo($originalThumbName, PATHINFO_FILENAME) . '.mp4';
-
-                    ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id, $postThumbnail->id);
-                }
-
-                // Обробка додаткових файлів thumbnails_files
-                if ($request->hasFile("thumbnails_files.$index")) {
-                    $file = $request->file("thumbnails_files.$index");
-                    $fileExt = strtolower($file->getClientOriginalExtension());
-
-                    if (in_array($fileExt, $imageExtensions)) {
-                        $filePath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/files/images', $file, 'public');
-                        $fileType = 'image';
-                    } elseif (in_array($fileExt, $videoExtensions)) {
-                        $originalFileName = uniqid('thumbfile_', true) . '.' . $fileExt;
-                        $s3TempFilePath = 'uploads/tmp/' . $originalFileName;
-
-                        Storage::disk('s3')->put($s3TempFilePath, file_get_contents($file), 'public');
-
-                        $localFullPath = storage_path('app/tmp_for_processing/' . $originalFileName);
-                        if (!file_exists(dirname($localFullPath))) {
-                            mkdir(dirname($localFullPath), 0755, true);
-                        }
-                        file_put_contents($localFullPath, file_get_contents(Storage::disk('s3')->url($s3TempFilePath)));
-
-                        $convertedFileName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.mp4';
-
-                        ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id, $postThumbnail->id);
-
-                        $filePath = $s3TempFilePath;
-                        $fileType = 'video';
-                    }
-
-                    $postThumbnail->update([
-                        'file' => $filePath ?? '',
-                        'file_type' => $fileType ?? '',
-                    ]);
+                    ConvertVideo::dispatch(storage_path('app/' . $localPath), 'mp4', pathinfo($localFilename, PATHINFO_FILENAME) . '.mp4', $post->id, $postThumbnail->id);
                 }
             }
         }
@@ -464,12 +376,6 @@ class PostListController extends WebController
             'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
             'thumbnails' => 'nullable|array|max:4',
             'thumbnails.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:40960',
-            'thumbnails_files' => 'nullable|array|max:4',
-            'thumbnails_files.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,bmp,mp4,avi,mov,mkv,wmv,flv,m4v|max:51200',
-            'thumbnail_titles' => 'nullable|array|max:4',
-            'thumbnail_titles.*' => 'nullable|string|max:255',
-            'thumbnail_descriptions' => 'nullable|array|max:4',
-            'thumbnail_descriptions.*' => 'nullable|string|max:1000',
             'hours' => 'required|numeric',
             'minutes' => 'required|numeric',
             'serving_size' => 'nullable|numeric',
@@ -487,24 +393,22 @@ class PostListController extends WebController
             'minutes' => $request->minutes,
         ];
 
-        // Обробка відео/зображення для поля file
+        // Обробка video/image для поля file
         if ($request->hasFile('file')) {
             $extension = strtolower($request->file('file')->getClientOriginalExtension());
 
             if (in_array($extension, $videoExtensions)) {
-                // Унікальне ім'я для оригіналу
                 $originalFileName = uniqid('video_', true) . '.' . $extension;
                 $s3TempPath = 'uploads/tmp/' . $originalFileName;
 
-                // Завантажуємо оригінал на S3
+                // Завантажуємо оригінал відео на S3
                 Storage::disk('s3')->putFileAs('uploads/tmp', $request->file('file'), $originalFileName, 'public');
 
-                // Оновлюємо пост з посиланням на оригінал і статусом processing
                 $postData['file'] = $s3TempPath;
                 $postData['type'] = 'video';
                 $postData['conversion_status'] = 'processing';
 
-                // Локальна копія для ffmpeg
+                // Локальне кешування для конвертації
                 $localFullPath = storage_path('app/tmp_for_processing/' . $originalFileName);
                 if (!file_exists(dirname($localFullPath))) {
                     mkdir(dirname($localFullPath), 0755, true);
@@ -513,11 +417,8 @@ class PostListController extends WebController
 
                 $convertedFileName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.mp4';
 
-                // Викликаємо job конвертації
                 ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
-
             } elseif (in_array($extension, $imageExtensions)) {
-                // Для зображення - завантажуємо на s3 одразу
                 $fileSrc = $request->file('file')->store('uploads/posts/images', 's3');
                 $postData['file'] = $fileSrc;
                 $postData['type'] = 'image';
@@ -525,21 +426,18 @@ class PostListController extends WebController
             }
         }
 
+        // Обробка thumbnail
         if ($request->hasFile('thumbnail')) {
             $extension = strtolower($request->file('thumbnail')->getClientOriginalExtension());
 
             if (in_array($extension, $videoExtensions)) {
-                // Унікальне ім'я для оригіналу
-                $originalFileName = uniqid('video_', true) . '.' . $extension;
+                $originalFileName = uniqid('video_thumb_', true) . '.' . $extension;
                 $s3TempPath = 'uploads/tmp/' . $originalFileName;
 
-                // Завантажуємо оригінал на S3
                 Storage::disk('s3')->putFileAs('uploads/tmp', $request->file('thumbnail'), $originalFileName, 'public');
 
-                // Оновлюємо пост з посиланням на оригінал і статусом processing
                 $postData['thumbnail'] = $s3TempPath;
 
-                // Локальна копія для ffmpeg
                 $localFullPath = storage_path('app/tmp_for_processing/' . $originalFileName);
                 if (!file_exists(dirname($localFullPath))) {
                     mkdir(dirname($localFullPath), 0755, true);
@@ -548,17 +446,53 @@ class PostListController extends WebController
 
                 $convertedFileName = pathinfo($originalFileName, PATHINFO_FILENAME) . '.mp4';
 
-                // Викликаємо job конвертації
                 ConvertVideo::dispatch($localFullPath, 'mp4', $convertedFileName, $post->id);
-
             } elseif (in_array($extension, $imageExtensions)) {
-                // Для зображення - завантажуємо на s3 одразу
                 $fileSrc = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $request->file('thumbnail'), 'public');
                 $postData['thumbnail'] = $fileSrc;
             }
         }
 
         $post->update($postData);
+
+        // Обробка thumbnails (нові)
+        if ($request->hasFile('thumbnails')) {
+            foreach ($request->file('thumbnails') as $index => $thumbnailFile) {
+                $thumbExt = strtolower($thumbnailFile->getClientOriginalExtension());
+
+                $postThumbnail = PostThumbnail::create([
+                    'post_id' => $post->id,
+                    'file' => '',
+                    'thumbnail' => '',
+                    'type' => '',
+                    'file_type' => '',
+                    'title' => $request->thumbnail_titles[$index] ?? null,
+                    'description' => $request->thumbnail_descriptions[$index] ?? null,
+                ]);
+
+                if (in_array($thumbExt, $imageExtensions)) {
+                    $thumbPath = Storage::disk('s3')->putFile('uploads/posts/thumbnails/images', $thumbnailFile, 'public');
+                    $postThumbnail->update([
+                        'thumbnail' => $thumbPath,
+                        'type' => 'image',
+                    ]);
+                } elseif (in_array($thumbExt, $videoExtensions)) {
+                    if (!$thumbnailFile->isValid()) {
+                        return back()->withErrors(['thumbnail' => 'The thumbnail video is corrupt or not downloaded.']);
+                    }
+
+                    $localFilename = uniqid('thumb_', true) . '.' . $thumbExt;
+                    $localPath = $thumbnailFile->storeAs('public/tmp_for_processing', $localFilename);
+
+                    $postThumbnail->update([
+                        'thumbnail' => $localPath,
+                        'type' => 'video',
+                    ]);
+
+                    ConvertVideo::dispatch(storage_path('app/' . $localPath), 'mp4', pathinfo($localFilename, PATHINFO_FILENAME) . '.mp4', $post->id, $postThumbnail->id);
+                }
+            }
+        }
 
         // Синхронізація тегів, дієт, кухонь
         if ($request->has('tags')) {

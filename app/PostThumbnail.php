@@ -17,9 +17,35 @@ class PostThumbnail extends Model
         return $this->belongsTo(Post::class);
     }
 
+//    public function getFileAttribute($val)
+//    {
+//        if (!empty($val) && !preg_match('#^https?://#', $val)) {
+//            return Storage::disk('s3')->url($val);
+//        }
+//
+//        return $val;
+//    }
+//
+//    public function getThumbnailAttribute($val)
+//    {
+//        if (!empty($val) && !preg_match('#^https?://#', $val)) {
+//            return Storage::disk('s3')->url($val);
+//        }
+//
+//        return $val;
+//    }
+
     public function getFileAttribute($val)
     {
-        if (!empty($val) && !preg_match('#^https?://#', $val)) {
+        if (empty($val)) {
+            return null;
+        }
+
+        if (str_starts_with($val, 'public/tmp_for_processing/')) {
+            return asset('storage/' . substr($val, 7));
+        }
+
+        if (!preg_match('#^https?://#', $val)) {
             return Storage::disk('s3')->url($val);
         }
 
@@ -28,7 +54,15 @@ class PostThumbnail extends Model
 
     public function getThumbnailAttribute($val)
     {
-        if (!empty($val) && !preg_match('#^https?://#', $val)) {
+        if (empty($val)) {
+            return null;
+        }
+
+        if (str_starts_with($val, 'public/tmp_for_processing/')) {
+            return asset('storage/' . substr($val, 7));
+        }
+
+        if (!preg_match('#^https?://#', $val)) {
             return Storage::disk('s3')->url($val);
         }
 

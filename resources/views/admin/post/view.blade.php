@@ -35,7 +35,7 @@
                                 <div class="text-right" style="flex: 1;">
                                     @if(preg_match('/\.(jpg|jpeg|png|gif)$/i',  $data->file))
                                         <img src="{{ $data->file }}" alt="File" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;">
-                                    @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->file))
+                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv|m4v)$/i', $data->file))
                                         <video src="{{ $data->file }}" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;" controls></video>
                                     @endif
                                 </div>
@@ -48,7 +48,7 @@
                                 <div class="text-right" style="flex: 1;">
                                     @if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $data->thumbnail))
                                         <img src="{{ $data->thumbnail }}" alt="Thumbnail" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;">
-                                    @elseif(preg_match('/\.(mp4|webm|ogg)$/i', $data->thumbnail))
+                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv|m4v)$/i', $data->thumbnail))
                                         <video src="{{ $data->thumbnail }}" class="img-fluid" style="width: 100%; height: auto; object-fit: contain;" controls></video>
                                     @endif
                                 </div>

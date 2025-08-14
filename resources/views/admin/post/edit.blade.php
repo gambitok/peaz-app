@@ -152,7 +152,7 @@
                                                 <a href="{{ $data->file }}" target="_blank" id="file-link">
                                                     @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $urlPath))
                                                         <img src="{{ $data->file }}" alt="File" class="img-thumbnail" style="max-width: 200px; display: block; margin: 0 auto">
-                                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv)$/i', $urlPath))
+                                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv|m4v)$/i', $urlPath))
                                                         <video src="{{ $data->file }}" controls style="max-width: 100%; max-height: 300px; display: block; margin: 0 auto"></video>
                                                     @else
                                                         <span class="text-muted">Uploaded file</span>
@@ -186,7 +186,7 @@
                                                 <a href="{{ $data->thumbnail }}" target="_blank" id="thumbnail-link">
                                                     @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $urlPath))
                                                         <img src="{{ $data->thumbnail }}" alt="thumbnail" class="img-thumbnail" style="max-width: 200px; display: block; margin: 0 auto">
-                                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv)$/i', $urlPath))
+                                                    @elseif(preg_match('/\.(mp4|webm|ogg|avi|mov|mkv|wmv|flv|m4v)$/i', $urlPath))
                                                         <video src="{{ $data->thumbnail }}" controls style="max-width: 100%; max-height: 300px; display: block; margin: 0 auto"></video>
                                                     @else
                                                         <span class="text-muted">Uploaded thumbnail</span>

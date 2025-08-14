@@ -24,15 +24,17 @@ class ConvertVideo implements ShouldQueue
     private $outputFileName;
     private $postId;
     private $postThumbnailId;
+    private $isThumbnail;
 
 
-    public function __construct($inputFullPath, $outputExtension, $outputFileName, $postId = null, $postThumbnailId = null)
+    public function __construct($inputFullPath, $outputExtension, $outputFileName, $postId = null, $postThumbnailId = null, $isThumbnail = false)
     {
         $this->inputFullPath = $inputFullPath;
         $this->outputExtension = $outputExtension;
         $this->outputFileName = $outputFileName;
         $this->postId = $postId;
         $this->postThumbnailId = $postThumbnailId;
+        $this->isThumbnail = $isThumbnail;
 
         if ($this->postId && !$this->postThumbnailId) {
             $post = Post::find($this->postId);
@@ -114,8 +116,6 @@ class ConvertVideo implements ShouldQueue
         $process->setWorkingDirectory(base_path());
         $process->setTimeout($timeout);
 
-        Log::info('Test run!!!');
-
         $process->run(function ($type, $buffer) {
             if (Process::ERR === $type) {
                 Log::error('FFmpeg error output: ' . $buffer);
@@ -186,37 +186,37 @@ class ConvertVideo implements ShouldQueue
             'ContentType' => 'video/' . $this->outputExtension,
         ]);
 
-        Log::info('Upload of converted video completed successfully', [
+        Log::info('Upload completed', [
             'Location' => $result['ObjectURL'],
-            'Bucket' => env('AWS_BUCKET'),
-            'Key' => 'uploads/multipart/' . basename($outputFullPath),
-            'ETag' => $result['ETag'],
-            'new_file_name' => basename($outputFullPath),
-            'stored_in' => 'uploads/multipart',
-            'deleted' => $outputFullPath,
+            'Key' => $key,
         ]);
 
         $post = Post::find($this->postId);
         if ($post) {
+            $savePath = $result['ObjectURL'];
+
             if ($this->postThumbnailId) {
-                // Оновлюємо PostThumbnail
                 $thumbnail = PostThumbnail::find($this->postThumbnailId);
                 if ($thumbnail) {
-                    $thumbnail->thumbnail = $key; // або інше поле, де зберігається шлях відео
+                    $thumbnail->thumbnail = $savePath;
                     $thumbnail->save();
-                    Log::info("PostThumbnail ID {$this->postThumbnailId} updated with new thumbnail path: {$key}");
+                    Log::info("PostThumbnail ID {$this->postThumbnailId} updated with new thumbnail path: {$savePath}");
                 }
             } else {
-                // Оновлюємо основний файл у пості
-                $post->file = $key;
+                if ($this->isThumbnail) {
+                    $post->thumbnail = $savePath;
+                    Log::info("Post ID {$this->postId} updated with new thumbnail path: {$savePath}");
+                } else {
+                    $post->file = $savePath;
+                    Log::info("Post ID {$this->postId} updated with new file path: {$savePath}");
+                }
                 $post->save();
-                Log::info("Post ID {$this->postId} updated with new file path: {$key}");
             }
         }
 
         if (file_exists($outputFullPath)) {
             unlink($outputFullPath);
-            Log::info('Deleted output file after successful upload', [
+            Log::info('Deleted output file after upload', [
                 'output' => $outputFullPath,
             ]);
         }
