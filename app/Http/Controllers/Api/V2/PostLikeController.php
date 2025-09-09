@@ -64,15 +64,15 @@ class PostLikeController extends Controller
                     ->get();
 
                 foreach ($posts as $post) {
-                    $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($post->file, '/');
-                    $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($post->thumbnail, '/');
+                    $post->file = formatFileUrl($post->file);
+                    $post->thumbnail = formatFileUrl($post->thumbnail);
 
                     $thumbnails = DB::table('post_thumbnails')
                         ->where('post_id', $post->id)
                         ->get(['thumbnail', 'type']);
 
                     foreach ($thumbnails as $thumbnail) {
-                        $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0 ? $thumbnail->thumbnail : rtrim($awsUrl, '/') . '/' . $awsBucket . '/' . ltrim($thumbnail->thumbnail, '/');
+                        $thumbnail->thumbnail = formatFileUrl($thumbnail->thumbnail);
                     }
 
                     $post->thumbnails = $thumbnails;

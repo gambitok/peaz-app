@@ -100,7 +100,7 @@ class User extends Authenticatable
 
     public static function password_reset($email = "", $flash = true)
     {
-        $user = User::where('type','admin')->where('email', $email)->first();
+        $user = User::where('email', $email)->first();
         if ($user) {
             if ($user->status == "active") {
                 $user->update([

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V2;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PostCommentController extends Controller
 {
@@ -86,14 +87,12 @@ class PostCommentController extends Controller
                 ->get(['thumbnail', 'type']);
 
             foreach ($thumbnails as $thumbnail) {
-                $thumbnail->thumbnail = strpos($thumbnail->thumbnail, $awsUrl) === 0
-                    ? $thumbnail->thumbnail
-                    : $awsUrl . '/' . $awsBucket . $thumbnail->thumbnail;
+                $thumbnail->thumbnail = formatFileUrl($thumbnail->thumbnail);
             }
 
             $post->thumbnails = $thumbnails;
-            $post->file = strpos($post->file, $awsUrl) === 0 ? $post->file : $awsUrl . '/' . $awsBucket . $post->file;
-            $post->thumbnail = strpos($post->thumbnail, $awsUrl) === 0 ? $post->thumbnail : $awsUrl . '/' . $awsBucket . $post->thumbnail;
+            $post->file = formatFileUrl($post->file);
+            $post->thumbnail = formatFileUrl($post->thumbnail);
 
             $comment->post = $post;
 

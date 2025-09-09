@@ -7,8 +7,10 @@ use App\InterestedList;
 use App\UserRelationship;
 use Illuminate\Http\Request;
 use App\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use DateTime;
 use App\Http\Resources\UserResource;
@@ -399,5 +401,38 @@ class UserController extends Controller
             'message' => 'Password updated successfully'
         ]);
     }
+
+//    public function forgotPassword(Request $request)
+//    {
+//        $request->validate([
+//            'email' => 'required|email|exists:users,email',
+//        ]);
+//
+//        $result = User::password_reset($request->email, false);
+//
+//        return response()->json($result);
+//    }
+//
+//    public function resetPassword(Request $request)
+//    {
+//        $request->validate([
+//            'reset_token' => 'required|string',
+//            'password' => 'required|min:4|confirmed',
+//        ]);
+//
+//        $updated = $this->updatePassword($request);
+//
+//        if ($updated) {
+//            return response()->json([
+//                'status' => 'success',
+//                'message' => 'Password updated successfully'
+//            ]);
+//        }
+//
+//        return response()->json([
+//            'status' => 'error',
+//            'message' => 'Invalid or expired reset token'
+//        ], 400);
+//    }
 
 }

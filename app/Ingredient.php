@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Ingredient extends Model
 {
     public $table = "ingredients";
-    protected $fillable = ['id','name','type','weight'];
+    protected $fillable = ['id', 'name', 'type', 'weight',
+        'post_id',
+        'user_id'
+    ];
 
     public function post()
     {

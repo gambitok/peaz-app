@@ -775,6 +775,23 @@ function upload_file($file_name = "", $path = null)
     }
 }
 
+function formatFileUrl($val)
+{
+    if (empty($val)) {
+        return null;
+    }
+
+    if (str_starts_with($val, 'public/tmp_for_processing/')) {
+        return asset('storage/' . substr($val, 7));
+    }
+
+    if (!preg_match('#^https?://#', $val)) {
+        return Storage::disk('s3')->url($val);
+    }
+
+    return $val;
+}
+
 function get_fancy_box_html_new($path = "", $class = "img_75"): string
 {
     return '<a class="fancybox" href="' . $path . '"><img class="' . $class . '" src="' . $path . '" alt="image" width=40 height=40></a>';

@@ -31,6 +31,8 @@ Route::post('login', [UserController::class, 'login']);
 Route::post('register', [UserController::class, 'register']);
 //Route::post('signup', [UserController::class, 'register']);
 Route::post('logout', [UserController::class, 'logout'])->middleware('auth:api');
+//Route::post('forgot-password', [UserController::class, 'forgotPassword']);
+//Route::post('reset-password', [UserController::class, 'resetPassword']);
 
 Route::post('comments/{comment}/rate', [CommentRatingController::class, 'rate'])->middleware('auth:api');
 
@@ -104,6 +106,7 @@ Route::prefix('v2')->middleware('auth:api')->group(function () {
     Route::get('posts/by-filter/{filter_id}', [PostController::class, 'byFilter']);
 
     Route::get('ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
+    Route::post('ingredients', [IngredientController::class, 'store'])->name('ingredients.store');
 
     Route::get('post-ingredients', [PostIngredientController::class, 'index'])->name('posts.ingredients.index');
     Route::get('post-ingredients/{id}', [PostIngredientController::class, 'show'])->name('posts.ingredients.show');
